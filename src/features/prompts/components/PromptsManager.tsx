@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { PromptForm } from './PromptForm';
 import { PromptsList } from './PromptList';
-import { Plus, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import { Upload, Download } from 'lucide-react';
 import type { Prompt } from '@/types/story';
 import { cn } from '@/lib/utils';
 import { toast } from 'react-toastify';
 import { dbSeeder } from '@/services/dbSeed';
 import { usePromptStore } from '../store/promptStore';
+import { attemptPromise } from '@jfdi/attempt';
 
 export function PromptsManager() {
     const [selectedPrompt, setSelectedPrompt] = useState<Prompt | undefined>(undefined);
@@ -18,7 +19,7 @@ export function PromptsManager() {
     const { fetchPrompts } = usePromptStore();
     const { exportPrompts, importPrompts } = usePromptStore();
     const [isImporting, setIsImporting] = useState(false);
-    const fileInputRef = useState<HTMLInputElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const handleNewPrompt = () => {
         setSelectedPrompt(undefined);
@@ -32,12 +33,6 @@ export function PromptsManager() {
         setShowMobileForm(true);
     };
 
-    const handleBack = () => {
-        setShowMobileForm(false);
-        if (!selectedPrompt) {
-            setIsCreating(false);
-        }
-    };
 
     const handleSave = () => {
         setShowMobileForm(false);
@@ -51,17 +46,18 @@ export function PromptsManager() {
     };
 
     const handleReseedSystemPrompts = async () => {
-        try {
-            setIsReseeding(true);
+        setIsReseeding(true);
+        const [error] = await attemptPromise(async () => {
             await dbSeeder.forceReseedSystemPrompts();
             await fetchPrompts();
-            toast.success('System prompts reseeded successfully');
-        } catch (error) {
+        });
+        if (error) {
             toast.error('Failed to reseed system prompts');
             console.error('Error reseeding system prompts:', error);
-        } finally {
-            setIsReseeding(false);
+        } else {
+            toast.success('System prompts reseeded successfully');
         }
+        setIsReseeding(false);
     };
 
     return (
@@ -84,12 +80,12 @@ export function PromptsManager() {
                             variant="outline"
                             size="icon"
                             onClick={async () => {
-                                try {
-                                    await exportPrompts();
-                                    toast.success('Prompts exported');
-                                } catch (error) {
+                                const [error] = await attemptPromise(async () => exportPrompts());
+                                if (error) {
                                     console.error('Export failed', error);
                                     toast.error('Failed to export prompts');
+                                } else {
+                                    toast.success('Prompts exported');
                                 }
                             }}
                             title="Export prompts"
@@ -101,29 +97,25 @@ export function PromptsManager() {
                             type="file"
                             accept="application/json"
                             style={{ display: 'none' }}
-                            ref={el => {
-                                // maintain ref in state to avoid using useRef for simplicity
-                                // @ts-ignore
-                                fileInputRef[1](el);
-                            }}
+                            ref={fileInputRef}
                             onChange={async (e) => {
                                 const file = e.target.files?.[0];
                                 if (!file) return;
                                 setIsImporting(true);
-                                try {
+                                const [error] = await attemptPromise(async () => {
                                     const text = await file.text();
                                     await importPrompts(text);
                                     await fetchPrompts();
-                                    toast.success('Prompts imported successfully');
-                                } catch (error) {
+                                });
+                                if (error) {
                                     console.error('Import failed', error);
                                     toast.error('Failed to import prompts');
-                                } finally {
-                                    setIsImporting(false);
-                                    // clear the input so the same file can be reselected if needed
-                                    // @ts-ignore
-                                    if (fileInputRef[0]) fileInputRef[0].value = '';
+                                } else {
+                                    toast.success('Prompts imported successfully');
                                 }
+                                setIsImporting(false);
+                                // clear the input so the same file can be reselected if needed
+                                if (fileInputRef.current) fileInputRef.current.value = '';
                             }}
                         />
 
@@ -131,8 +123,7 @@ export function PromptsManager() {
                             variant="outline"
                             size="icon"
                             onClick={() => {
-                                // @ts-ignore
-                                if (fileInputRef[0]) fileInputRef[0].click();
+                                if (fileInputRef.current) fileInputRef.current.click();
                             }}
                             disabled={isImporting}
                             title="Import prompts"

@@ -1,30 +1,37 @@
 import { useEffect, useState } from 'react';
+import { attemptPromise } from '@jfdi/attempt';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { aiService } from '@/services/ai/AIService';
 import { toast } from 'react-toastify';
 import { AIModel } from '@/types/story';
 import { cn } from '@/lib/utils';
+import { API_URLS } from '@/constants/urls';
 
 export default function AISettingsPage() {
     const [openaiKey, setOpenaiKey] = useState('');
     const [openrouterKey, setOpenrouterKey] = useState('');
-    const [localApiUrl, setLocalApiUrl] = useState('http://localhost:1234/v1');
+    const [localApiUrl, setLocalApiUrl] = useState<string>(API_URLS.LOCAL_AI_DEFAULT);
     const [isLoading, setIsLoading] = useState(false);
     const [openaiModels, setOpenaiModels] = useState<AIModel[]>([]);
     const [openrouterModels, setOpenrouterModels] = useState<AIModel[]>([]);
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+    const [defaultLocalModel, setDefaultLocalModel] = useState<string | undefined>();
+    const [defaultOpenAIModel, setDefaultOpenAIModel] = useState<string | undefined>();
+    const [defaultOpenRouterModel, setDefaultOpenRouterModel] = useState<string | undefined>();
+    const [localModels, setLocalModels] = useState<AIModel[]>([]);
 
     useEffect(() => {
         loadInitialData();
     }, []);
 
     const loadInitialData = async () => {
-        try {
+        const [error] = await attemptPromise(async () => {
             console.log('[AISettingsPage] Initializing AI service');
             await aiService.initialize();
 
@@ -49,9 +56,23 @@ export default function AISettingsPage() {
 
             console.log(`[AISettingsPage] Filtered models - Local: ${localModels.length}, OpenAI: ${openaiModels.length}, OpenRouter: ${openrouterModels.length}`);
 
+            setLocalModels(localModels);
             setOpenaiModels(openaiModels);
             setOpenrouterModels(openrouterModels);
-        } catch (error) {
+
+            // Load default models
+            const defaultLocal = aiService.getDefaultLocalModel();
+            const defaultOpenAI = aiService.getDefaultOpenAIModel();
+            const defaultOpenRouter = aiService.getDefaultOpenRouterModel();
+
+            setDefaultLocalModel(defaultLocal);
+            setDefaultOpenAIModel(defaultOpenAI);
+            setDefaultOpenRouterModel(defaultOpenRouter);
+
+            console.log(`[AISettingsPage] Default models - Local: ${defaultLocal}, OpenAI: ${defaultOpenAI}, OpenRouter: ${defaultOpenRouter}`);
+        });
+
+        if (error) {
             console.error('Error loading AI settings:', error);
             toast.error('Failed to load AI settings');
         }
@@ -62,7 +83,8 @@ export default function AISettingsPage() {
 
         setIsLoading(true);
         console.log(`[AISettingsPage] Updating key for provider: ${provider}`);
-        try {
+
+        const [error] = await attemptPromise(async () => {
             await aiService.updateKey(provider, key);
             console.log(`[AISettingsPage] Key updated for ${provider}, fetching models`);
             const models = await aiService.getAvailableModels(provider);
@@ -76,28 +98,25 @@ export default function AISettingsPage() {
                 setOpenSections(prev => ({ ...prev, openrouter: true }));
             } else if (provider === 'local') {
                 console.log(`[AISettingsPage] Updating local models, received ${models.length} models`);
-                setOpenaiModels(prev => {
-                    const filtered = prev.filter(m => m.provider !== 'local');
-                    console.log(`[AISettingsPage] Filtered out ${prev.length - filtered.length} old local models`);
-                    const newModels = [...filtered, ...models];
-                    console.log(`[AISettingsPage] New models array has ${newModels.length} models`);
-                    return newModels;
-                });
+                setLocalModels(models);
                 setOpenSections(prev => ({ ...prev, local: true }));
             }
 
             toast.success(`${provider === 'openai' ? 'OpenAI' : provider === 'openrouter' ? 'OpenRouter' : 'Local'} models updated successfully`);
-        } catch (error) {
+        });
+
+        if (error) {
             toast.error(`Failed to update ${provider} models`);
-        } finally {
-            setIsLoading(false);
         }
+
+        setIsLoading(false);
     };
 
     const handleRefreshModels = async (provider: 'openai' | 'openrouter' | 'local') => {
         setIsLoading(true);
         console.log(`[AISettingsPage] Refreshing models for provider: ${provider}`);
-        try {
+
+        const [error] = await attemptPromise(async () => {
             // Force refresh by passing true as the second parameter
             const models = await aiService.getAvailableModels(provider, true);
             console.log(`[AISettingsPage] Received ${models.length} models for ${provider}`);
@@ -113,24 +132,20 @@ export default function AISettingsPage() {
                     break;
                 case 'local':
                     console.log(`[AISettingsPage] Updating local models, received ${models.length} models`);
-                    setOpenaiModels(prev => {
-                        const filtered = prev.filter(m => m.provider !== 'local');
-                        console.log(`[AISettingsPage] Filtered out ${prev.length - filtered.length} old local models`);
-                        const newModels = [...filtered, ...models];
-                        console.log(`[AISettingsPage] New models array has ${newModels.length} models`);
-                        return newModels;
-                    });
+                    setLocalModels(models);
                     setOpenSections(prev => ({ ...prev, local: true }));
                     break;
             }
 
             toast.success(`${provider === 'openai' ? 'OpenAI' : provider === 'openrouter' ? 'OpenRouter' : 'Local'} models refreshed`);
-        } catch (error) {
+        });
+
+        if (error) {
             console.error(`Error refreshing ${provider} models:`, error);
             toast.error(`Failed to refresh ${provider} models`);
-        } finally {
-            setIsLoading(false);
         }
+
+        setIsLoading(false);
     };
 
     const handleLocalApiUrlUpdate = async (url: string) => {
@@ -138,33 +153,51 @@ export default function AISettingsPage() {
 
         setIsLoading(true);
         console.log(`[AISettingsPage] Updating local API URL to: ${url}`);
-        try {
+
+        const [error] = await attemptPromise(async () => {
             await aiService.updateLocalApiUrl(url);
             console.log(`[AISettingsPage] Local API URL updated, fetching models`);
             // Force refresh by passing true as the second parameter
             const models = await aiService.getAvailableModels('local', true);
             console.log(`[AISettingsPage] Received ${models.length} local models`);
 
-            setOpenaiModels(prev => {
-                const filtered = prev.filter(m => m.provider !== 'local');
-                console.log(`[AISettingsPage] Filtered out ${prev.length - filtered.length} old local models`);
-                const newModels = [...filtered, ...models];
-                console.log(`[AISettingsPage] New models array has ${newModels.length} models`);
-                return newModels;
-            });
+            setLocalModels(models);
             setOpenSections(prev => ({ ...prev, local: true }));
 
             toast.success('Local API URL updated successfully');
-        } catch (error) {
+        });
+
+        if (error) {
             console.error('Error updating local API URL:', error);
             toast.error('Failed to update local API URL');
-        } finally {
-            setIsLoading(false);
         }
+
+        setIsLoading(false);
     };
 
     const toggleSection = (section: string) => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
+
+    const handleDefaultModelChange = async (provider: 'local' | 'openai' | 'openrouter', modelId: string | undefined) => {
+        const [error] = await attemptPromise(async () => {
+            await aiService.updateDefaultModel(provider, modelId);
+
+            if (provider === 'local') {
+                setDefaultLocalModel(modelId);
+            } else if (provider === 'openai') {
+                setDefaultOpenAIModel(modelId);
+            } else if (provider === 'openrouter') {
+                setDefaultOpenRouterModel(modelId);
+            }
+
+            toast.success('Default model updated');
+        });
+
+        if (error) {
+            console.error('Error updating default model:', error);
+            toast.error('Failed to update default model');
+        }
     };
 
     return (
@@ -209,25 +242,30 @@ export default function AISettingsPage() {
                             </div>
 
                             {openaiModels.length > 0 && (
-                                <Collapsible
-                                    open={openSections.openai}
-                                    onOpenChange={() => toggleSection('openai')}
-                                >
-                                    <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                                        <ChevronRight className={cn(
-                                            "h-4 w-4 transition-transform",
-                                            openSections.openai && "transform rotate-90"
-                                        )} />
-                                        Available Models
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent className="mt-2 space-y-2">
-                                        {openaiModels.map(model => (
-                                            <div key={model.id} className="text-sm pl-6">
-                                                {model.name}
-                                            </div>
-                                        ))}
-                                    </CollapsibleContent>
-                                </Collapsible>
+                                <>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="openai-default">Default Model</Label>
+                                        <Select
+                                            value={defaultOpenAIModel || 'none'}
+                                            onValueChange={(value) => handleDefaultModelChange('openai', value === 'none' ? undefined : value)}
+                                        >
+                                            <SelectTrigger id="openai-default">
+                                                <SelectValue placeholder="Select default model" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">None</SelectItem>
+                                                {openaiModels.map(model => (
+                                                    <SelectItem key={model.id} value={model.id}>
+                                                        {model.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Select a default model for OpenAI generation
+                                        </p>
+                                    </div>
+                                </>
                             )}
                         </CardContent>
                     </Card>
@@ -268,25 +306,30 @@ export default function AISettingsPage() {
                             </div>
 
                             {openrouterModels.length > 0 && (
-                                <Collapsible
-                                    open={openSections.openrouter}
-                                    onOpenChange={() => toggleSection('openrouter')}
-                                >
-                                    <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                                        <ChevronRight className={cn(
-                                            "h-4 w-4 transition-transform",
-                                            openSections.openrouter && "transform rotate-90"
-                                        )} />
-                                        Available Models
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent className="mt-2 space-y-2">
-                                        {openrouterModels.map(model => (
-                                            <div key={model.id} className="text-sm pl-6">
-                                                {model.name}
-                                            </div>
-                                        ))}
-                                    </CollapsibleContent>
-                                </Collapsible>
+                                <>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="openrouter-default">Default Model</Label>
+                                        <Select
+                                            value={defaultOpenRouterModel || 'none'}
+                                            onValueChange={(value) => handleDefaultModelChange('openrouter', value === 'none' ? undefined : value)}
+                                        >
+                                            <SelectTrigger id="openrouter-default">
+                                                <SelectValue placeholder="Select default model" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">None</SelectItem>
+                                                {openrouterModels.map(model => (
+                                                    <SelectItem key={model.id} value={model.id}>
+                                                        {model.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Select a default model for OpenRouter generation
+                                        </p>
+                                    </div>
+                                </>
                             )}
                         </CardContent>
                     </Card>
@@ -337,7 +380,7 @@ export default function AISettingsPage() {
                                             <Input
                                                 id="local-api-url"
                                                 type="text"
-                                                placeholder="http://localhost:1234/v1"
+                                                placeholder={API_URLS.LOCAL_AI_DEFAULT}
                                                 value={localApiUrl}
                                                 onChange={(e) => setLocalApiUrl(e.target.value)}
                                             />
@@ -349,33 +392,36 @@ export default function AISettingsPage() {
                                             </Button>
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            The URL of your local LLM server. Default is http://localhost:1234/v1
+                                            The URL of your local LLM server. Default is {API_URLS.LOCAL_AI_DEFAULT}
                                         </p>
                                     </div>
                                 </CollapsibleContent>
                             </Collapsible>
 
-                            <Collapsible
-                                open={openSections.local}
-                                onOpenChange={() => toggleSection('local')}
-                            >
-                                <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                                    <ChevronRight className={cn(
-                                        "h-4 w-4 transition-transform",
-                                        openSections.local && "transform rotate-90"
-                                    )} />
-                                    Available Models
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="mt-2 space-y-2">
-                                    {openaiModels
-                                        .filter(m => m.provider === 'local')
-                                        .map(model => (
-                                            <div key={model.id} className="text-sm pl-6">
-                                                {model.name}
-                                            </div>
-                                        ))}
-                                </CollapsibleContent>
-                            </Collapsible>
+                            {localModels.length > 0 && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="local-default">Default Model</Label>
+                                    <Select
+                                        value={defaultLocalModel || 'none'}
+                                        onValueChange={(value) => handleDefaultModelChange('local', value === 'none' ? undefined : value)}
+                                    >
+                                        <SelectTrigger id="local-default">
+                                            <SelectValue placeholder="Select default model" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">None</SelectItem>
+                                            {localModels.map(model => (
+                                                <SelectItem key={model.id} value={model.id}>
+                                                    {model.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">
+                                        Select a default model for local generation
+                                    </p>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLorebookStore } from "../stores/useLorebookStore";
 import { CreateEntryDialog } from "./CreateEntryDialog";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Search, Filter, EyeOff, Eye } from "lucide-react";
+import { Edit, Trash2, Search, EyeOff, Eye } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,6 +20,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import type { LorebookEntry } from "@/types/story";
+import { attemptPromise } from '@jfdi/attempt';
 
 interface LorebookEntryListProps {
     entries: LorebookEntry[];
@@ -35,52 +36,59 @@ export function LorebookEntryList({ entries: allEntries }: LorebookEntryListProp
     const [deletingEntry, setDeletingEntry] = useState<LorebookEntry | null>(null);
     const [showDisabled, setShowDisabled] = useState(false);
 
-    // Filter entries based on search term and disabled status only
-    const filteredEntries = allEntries.filter(entry => {
-        // Apply search filter
-        const searchMatch = !searchTerm || [
-            entry.name,
-            entry.description,
-            ...(entry.tags || [])
-        ].some(field =>
-            field?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+    // Filter entries based on search term and disabled status
+    const filteredEntries = useMemo(() =>
+        allEntries.filter(entry => {
+            // Apply search filter
+            const searchMatch = !searchTerm || [
+                entry.name,
+                entry.description,
+                ...(entry.tags || [])
+            ].some(field =>
+                field?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
 
-        // Apply disabled filter
-        const disabledMatch = showDisabled || !entry.isDisabled;
+            // Apply disabled filter
+            const disabledMatch = showDisabled || !entry.isDisabled;
 
-        return searchMatch && disabledMatch;
-    });
+            return searchMatch && disabledMatch;
+        }),
+        [allEntries, searchTerm, showDisabled]
+    );
 
     // Sort entries
-    const sortedEntries = [...filteredEntries].sort((a, b) => {
-        switch (sortBy) {
-            case 'name':
-                return a.name.localeCompare(b.name);
-            case 'category':
-                return a.category.localeCompare(b.category);
-            case 'importance':
-                return (a.metadata?.importance || '').localeCompare(b.metadata?.importance || '');
-            case 'created':
-                return b.createdAt.getTime() - a.createdAt.getTime();
-            default:
-                return 0;
-        }
-    });
+    const sortedEntries = useMemo(() =>
+        [...filteredEntries].sort((a, b) => {
+            switch (sortBy) {
+                case 'name':
+                    return a.name.localeCompare(b.name);
+                case 'category':
+                    return a.category.localeCompare(b.category);
+                case 'importance':
+                    return (a.metadata?.importance || '').localeCompare(b.metadata?.importance || '');
+                case 'created':
+                    return b.createdAt.getTime() - a.createdAt.getTime();
+                default:
+                    return 0;
+            }
+        }),
+        [filteredEntries, sortBy]
+    );
 
     const handleDelete = async (entry: LorebookEntry) => {
-        try {
-            await deleteEntry(entry.id);
-            setDeletingEntry(null);
-        } catch (error) {
+        const [error] = await attemptPromise(async () => deleteEntry(entry.id));
+        if (error) {
             console.error('Failed to delete entry:', error);
+            return;
         }
+        setDeletingEntry(null);
     };
 
     const toggleDisabled = async (entry: LorebookEntry) => {
-        try {
-            await updateEntry(entry.id, { isDisabled: !entry.isDisabled });
-        } catch (error) {
+        const [error] = await attemptPromise(async () =>
+            updateEntry(entry.id, { isDisabled: !entry.isDisabled })
+        );
+        if (error) {
             console.error('Failed to update entry:', error);
         }
     };
@@ -178,9 +186,9 @@ export function LorebookEntryList({ entries: allEntries }: LorebookEntryListProp
                                 )}
                             </div>
                             <div className="flex flex-wrap gap-1 mb-2">
-                                {entry.tags && entry.tags.map((tag, index) => (
+                                {entry.tags && entry.tags.map((tag) => (
                                     <Badge
-                                        key={index}
+                                        key={tag}
                                         variant="secondary"
                                         className="bg-primary/10 text-xs px-2 py-0.5"
                                     >

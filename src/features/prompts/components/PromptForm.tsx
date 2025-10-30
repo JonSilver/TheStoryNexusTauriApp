@@ -6,12 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { usePromptStore } from '../store/promptStore';
 import { useAIStore } from '@/features/ai/stores/useAIStore';
+import { aiService } from '@/services/ai/AIService';
 import type { Prompt, PromptMessage, AIModel, AllowedModel } from '@/types/story';
-import { Plus, ArrowUp, ArrowDown, Trash2, X } from 'lucide-react';
+import { Plus, ArrowUp, ArrowDown, Trash2, X, Wand2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { attemptPromise } from '@jfdi/attempt';
 
 type PromptType = Prompt['promptType'];
 
@@ -42,14 +44,22 @@ interface PromptFormProps {
     prompt?: Prompt;
     onSave?: () => void;
     onCancel?: () => void;
+    fixedType?: PromptType;
 }
 
-export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
+type MessageWithId = PromptMessage & { _id: string };
+
+const createMessageWithId = (message: PromptMessage): MessageWithId => ({
+    ...message,
+    _id: crypto.randomUUID(),
+});
+
+export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormProps) {
     const [name, setName] = useState(prompt?.name || '');
-    const [messages, setMessages] = useState<PromptMessage[]>(
-        prompt?.messages || [{ role: 'system', content: '' }]
+    const [messages, setMessages] = useState<MessageWithId[]>(
+        prompt?.messages.map(createMessageWithId) || [createMessageWithId({ role: 'system', content: '' })]
     );
-    const [promptType, setPromptType] = useState<PromptType>(prompt?.promptType || 'scene_beat');
+    const [promptType, setPromptType] = useState<PromptType>(fixedType || prompt?.promptType || 'scene_beat');
     const [availableModels, setAvailableModels] = useState<AIModel[]>([]);
     const [selectedModels, setSelectedModels] = useState<AllowedModel[]>(prompt?.allowedModels || []);
     const { createPrompt, updatePrompt } = usePromptStore();
@@ -68,7 +78,7 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
         initialize,
         getAvailableModels,
         isInitialized,
-        isLoading: isAILoading
+        isLoading: _isAILoading
     } = useAIStore();
 
     useEffect(() => {
@@ -76,16 +86,18 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
     }, []);
 
     const loadAvailableModels = async () => {
-        try {
+        const [error, models] = await attemptPromise(async () => {
             if (!isInitialized) {
                 await initialize();
             }
-            const models = await getAvailableModels();
-            setAvailableModels(models);
-        } catch (error) {
+            return await getAvailableModels();
+        });
+        if (error) {
             console.error('Error loading AI models:', error);
             toast.error('Failed to load AI models');
+            return;
         }
+        setAvailableModels(models);
     };
 
     const modelGroups = useMemo(() => {
@@ -135,7 +147,7 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
     // Simple search state for the popover-based selector (placed after modelGroups memo)
     const [modelSearch, setModelSearch] = useState('');
 
-    const filteredModelGroups = useMemo(() => {
+    const getFilteredModelGroups = () => {
         if (!modelSearch.trim()) return modelGroups;
         const q = modelSearch.toLowerCase();
         const filtered: ModelsByProvider = {};
@@ -146,7 +158,9 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
             if (matched.length > 0) filtered[provider] = matched;
         });
         return filtered;
-    }, [modelGroups, modelSearch]);
+    };
+
+    const filteredModelGroups = getFilteredModelGroups();
 
     const handleModelSelect = (modelId: string) => {
         const selectedModel = availableModels.find(m => m.id === modelId);
@@ -164,13 +178,8 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
         setSelectedModels(selectedModels.filter(m => m.id !== modelId));
     };
 
-    const getModelDisplayName = (modelId: string): string => {
-        const model = availableModels.find(m => m.id === modelId);
-        return model?.name || modelId;
-    };
-
     const handleAddMessage = (role: 'system' | 'user' | 'assistant') => {
-        setMessages([...messages, { role, content: '' }]);
+        setMessages([...messages, createMessageWithId({ role, content: '' })]);
     };
 
     const handleRemoveMessage = (index: number) => {
@@ -193,6 +202,63 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
         setMessages(newMessages);
     };
 
+    const handleUseDefaultModels = async () => {
+        const [error] = await attemptPromise(async () => {
+            await aiService.initialize();
+            const defaultLocal = aiService.getDefaultLocalModel();
+            const defaultOpenAI = aiService.getDefaultOpenAIModel();
+            const defaultOpenRouter = aiService.getDefaultOpenRouterModel();
+
+            const defaultModels: AllowedModel[] = [];
+
+            if (defaultLocal) {
+                const localModel = availableModels.find(m => m.id === defaultLocal);
+                if (localModel) {
+                    defaultModels.push({
+                        id: localModel.id,
+                        name: localModel.name,
+                        provider: localModel.provider
+                    });
+                }
+            }
+
+            if (defaultOpenAI) {
+                const openaiModel = availableModels.find(m => m.id === defaultOpenAI);
+                if (openaiModel) {
+                    defaultModels.push({
+                        id: openaiModel.id,
+                        name: openaiModel.name,
+                        provider: openaiModel.provider
+                    });
+                }
+            }
+
+            if (defaultOpenRouter) {
+                const openrouterModel = availableModels.find(m => m.id === defaultOpenRouter);
+                if (openrouterModel) {
+                    defaultModels.push({
+                        id: openrouterModel.id,
+                        name: openrouterModel.name,
+                        provider: openrouterModel.provider
+                    });
+                }
+            }
+
+            if (defaultModels.length === 0) {
+                toast.error('No default models configured. Please set default models in AI Settings.');
+                return;
+            }
+
+            // Replace existing models with default models
+            setSelectedModels(defaultModels);
+            toast.success(`Added ${defaultModels.length} default model(s)`);
+        });
+        if (error) {
+            console.error('Error loading default models:', error);
+            toast.error('Failed to load default models');
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -211,20 +277,20 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
             return;
         }
 
-        try {
-            const promptData = {
-                name,
-                messages,
-                promptType,
-                allowedModels: selectedModels,
-                temperature,
-                maxTokens,
-                top_p: topP,
-                top_k: topK,
-                repetition_penalty: repetitionPenalty,
-                min_p: minP
-            };
+        const promptData = {
+            name,
+            messages: messages.map(({ _id, ...msg }) => msg),
+            promptType,
+            allowedModels: selectedModels,
+            temperature,
+            maxTokens,
+            top_p: topP,
+            top_k: topK,
+            repetition_penalty: repetitionPenalty,
+            min_p: minP
+        };
 
+        const [error] = await attemptPromise(async () => {
             if (prompt?.id) {
                 await updatePrompt(prompt.id, promptData);
                 toast.success('Prompt updated successfully');
@@ -233,7 +299,8 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
                 toast.success('Prompt created successfully');
             }
             onSave?.();
-        } catch (error) {
+        });
+        if (error) {
             toast.error((error as Error).message || 'Failed to save prompt');
         }
     };
@@ -248,7 +315,7 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
 
             <div className="space-y-4">
                 {messages.map((message, index) => (
-                    <div key={index} className="space-y-2 p-4 border rounded-lg">
+                    <div key={message._id} className="space-y-2 p-4 border rounded-lg">
                         <div className="flex items-center justify-between gap-2">
                             <Select
                                 value={message.role}
@@ -345,14 +412,26 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
             </div>
 
             <div className="border-t border-input pt-6">
-                <h3 className="font-medium mb-4">Available Models</h3>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-medium">Available Models</h3>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleUseDefaultModels}
+                        className="flex items-center gap-2"
+                    >
+                        <Wand2 className="h-4 w-4" />
+                        Use Default Models
+                    </Button>
+                </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
                     {selectedModels.map((model) => (
                         <Badge
                             key={model.id}
                             variant="secondary"
-                            className="flex items-center gap-1 px-3 py-1" 
+                            className="flex items-center gap-1 px-3 py-1"
                         >
                             {model.name}
                             <button
@@ -408,7 +487,11 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
 
             <div className="border-t border-input pt-6">
                 <h3 className="font-medium mb-4">Prompt Type</h3>
-                <Select value={promptType} onValueChange={(value: PromptType) => setPromptType(value)}>
+                <Select
+                    value={promptType}
+                    onValueChange={(value: PromptType) => setPromptType(value)}
+                    disabled={!!fixedType}
+                >
                     <SelectTrigger>
                         <SelectValue placeholder="Select prompt type" />
                     </SelectTrigger>
@@ -420,6 +503,11 @@ export function PromptForm({ prompt, onSave, onCancel }: PromptFormProps) {
                         ))}
                     </SelectContent>
                 </Select>
+                {fixedType && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                        Prompt type is fixed for this context
+                    </p>
+                )}
             </div>
 
             <div className="border-t border-input pt-6">

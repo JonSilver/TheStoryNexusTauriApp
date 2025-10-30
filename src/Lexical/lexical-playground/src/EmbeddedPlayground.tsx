@@ -1,6 +1,6 @@
 import { useStoryContext } from '@/features/stories/context/StoryContext';
 import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
-import { useEffect, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import PlaygroundApp from './App' // using the lexical playground App component
 import './index.css' // Ensure the CSS is imported
 
@@ -10,13 +10,9 @@ interface EmbeddedPlaygroundProps {
 
 export default function EmbeddedPlayground({ maximizeButton }: EmbeddedPlaygroundProps) {
     const { currentChapterId } = useStoryContext();
-    const { getChapter, currentChapter } = useChapterStore();
+    const { currentChapter } = useChapterStore();
 
-    useEffect(() => {
-        if (currentChapterId) {
-            getChapter(currentChapterId);
-        }
-    }, [currentChapterId, getChapter]);
+    // Note: getChapter is called by LoadChapterContentPlugin, no need to duplicate here
 
     if (!currentChapterId || !currentChapter) {
         return (

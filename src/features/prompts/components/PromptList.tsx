@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { usePromptStore } from '../store/promptStore';
 import { Button } from "@/components/ui/button";
-import { Trash2, Copy, Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { Trash2, Copy, ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { Prompt } from '@/types/story';
 import { cn } from '@/lib/utils';
+import { attemptPromise } from '@jfdi/attempt';
 
 interface PromptsListProps {
     onPromptSelect: (prompt: Prompt) => void;
     selectedPromptId?: string;
     onPromptDelete: (promptId: string) => void;
+    filterByType?: Prompt['promptType'];
 }
 
 const getPromptTypeLabel = (type: Prompt['promptType']) => {
@@ -24,8 +26,13 @@ const getPromptTypeLabel = (type: Prompt['promptType']) => {
     return labels[type];
 };
 
-export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete }: PromptsListProps) {
+export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, filterByType }: PromptsListProps) {
     const { prompts, fetchPrompts, deletePrompt, clonePrompt, isLoading, error } = usePromptStore();
+
+    // Filter prompts by type if specified
+    const filteredPrompts = filterByType
+        ? prompts.filter(p => p.promptType === filterByType)
+        : prompts;
     // Track which groups are expanded (default all expanded)
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
@@ -56,25 +63,27 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete }
 
     const handleDelete = async (e: React.MouseEvent, promptId: string) => {
         e.stopPropagation();
-        try {
+        const [error] = await attemptPromise(async () => {
             await deletePrompt(promptId);
             onPromptDelete(promptId);
-            toast.success('Prompt deleted successfully');
-        } catch (error) {
+        });
+        if (error) {
             toast.error('Failed to delete prompt');
             console.error('Error deleting prompt:', error);
+            return;
         }
+        toast.success('Prompt deleted successfully');
     };
 
     const handleClone = async (e: React.MouseEvent, promptId: string) => {
         e.stopPropagation();
-        try {
-            await clonePrompt(promptId);
-            toast.success('Prompt cloned successfully');
-        } catch (error) {
+        const [error] = await attemptPromise(async () => clonePrompt(promptId));
+        if (error) {
             toast.error('Failed to clone prompt');
             console.error('Error cloning prompt:', error);
+            return;
         }
+        toast.success('Prompt cloned successfully');
     };
 
     if (error) {
@@ -93,16 +102,16 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete }
         );
     }
 
-    if (!prompts.length) {
+    if (!filteredPrompts.length) {
         return (
             <div className="p-4 text-muted-foreground h-full">
-                No prompts available
+                {filterByType ? `No ${getPromptTypeLabel(filterByType)} prompts available` : 'No prompts available'}
             </div>
         );
     }
 
     // Group prompts by promptType
-    const groupedPrompts = prompts.reduce((acc, prompt) => {
+    const groupedPrompts = filteredPrompts.reduce((acc, prompt) => {
         if (!acc[prompt.promptType]) {
             acc[prompt.promptType] = [];
         }

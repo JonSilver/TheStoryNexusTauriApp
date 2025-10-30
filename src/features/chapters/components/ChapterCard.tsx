@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import { attemptPromise } from "@jfdi/attempt";
 import { Button } from "../../../components/ui/button";
 import {
   Pencil,
@@ -44,9 +45,8 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardFooter,
 } from "../../../components/ui/card";
-import { Bounce, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
 import { useAIStore } from "@/features/ai/stores/useAIStore";
 import { usePromptStore } from "@/features/prompts/store/promptStore";
@@ -99,9 +99,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     (state) => state.getChapterPlainText
   );
   const { entries } = useLorebookStore();
-  const characterEntries = useMemo(() => {
-    return entries.filter((entry) => entry.category === "character");
-  }, [entries]);
+  const characterEntries = entries.filter((entry) => entry.category === "character");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const {
@@ -127,20 +125,14 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     }
   }, []);
 
-  useEffect(() => {
+  // Adjust textarea height when expanded or summary changes
+  useLayoutEffect(() => {
     if (isExpanded) {
-      // Add a small delay to ensure the content is rendered
-      const timer = setTimeout(() => {
-        adjustTextareaHeight();
-      }, 0);
-      return () => clearTimeout(timer);
+      adjustTextareaHeight();
     }
-  }, [isExpanded, adjustTextareaHeight]);
+  }, [isExpanded, summary, adjustTextareaHeight]);
 
-  useEffect(() => {
-    adjustTextareaHeight();
-  }, [summary, adjustTextareaHeight]);
-
+  // Save expanded state to localStorage
   useEffect(() => {
     localStorage.setItem(expandedStateKey, JSON.stringify(isExpanded));
   }, [isExpanded, expandedStateKey]);
@@ -153,61 +145,74 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
   }, [povType, form]);
 
   const handleDelete = async () => {
-    try {
-      await deleteChapter(chapter.id);
-      setShowDeleteDialog(false);
-      toast.success(`Chapter ${chapter.order}: ${chapter.title} deleted`);
-    } catch (error) {
+    const [error] = await attemptPromise(async () =>
+      deleteChapter(chapter.id)
+    );
+
+    if (error) {
       console.error("Failed to delete chapter:", error);
       toast.error("Failed to delete chapter");
+      return;
     }
+
+    setShowDeleteDialog(false);
+    toast.success(`Chapter ${chapter.order}: ${chapter.title} deleted`);
   };
 
   const handleEdit = async (data: EditChapterForm) => {
-    try {
-      // Only include povCharacter if not omniscient
-      const povCharacter =
-        data.povType !== "Third Person Omniscient"
-          ? data.povCharacter
-          : undefined;
+    // Only include povCharacter if not omniscient
+    const povCharacter =
+      data.povType !== "Third Person Omniscient"
+        ? data.povCharacter
+        : undefined;
 
-      await updateChapter(chapter.id, {
+    const [error] = await attemptPromise(async () =>
+      updateChapter(chapter.id, {
         ...data,
         povCharacter,
-      });
-      setShowEditDialog(false);
-      toast.success("Chapter updated successfully", {
-        position: "bottom-center",
-        autoClose: 1000,
-        closeOnClick: true,
-      });
-    } catch (error) {
+      })
+    );
+
+    if (error) {
       console.error("Failed to update chapter:", error);
       toast.error("Failed to update chapter");
+      return;
     }
+
+    setShowEditDialog(false);
+    toast.success("Chapter updated successfully", {
+      position: "bottom-center",
+      autoClose: 1000,
+      closeOnClick: true,
+    });
   };
 
   const handleSaveSummary = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (summary !== chapter.summary) {
-      try {
-        await updateChapterSummaryOptimistic(chapter.id, summary);
-        toast.success("Summary saved successfully", {
-          position: "bottom-center",
-          autoClose: 1000,
-          closeOnClick: true,
-        });
-      } catch (error) {
+      const [error] = await attemptPromise(async () =>
+        updateChapterSummaryOptimistic(chapter.id, summary)
+      );
+
+      if (error) {
         console.error("Failed to save summary:", error);
         toast.error("Failed to save summary");
+        return;
       }
+
+      toast.success("Summary saved successfully", {
+        position: "bottom-center",
+        autoClose: 1000,
+        closeOnClick: true,
+      });
     }
   };
 
   const handleGenerateSummary = async (prompt: Prompt, model: AllowedModel) => {
-    try {
-      setIsGenerating(true);
+    setIsGenerating(true);
+
+    const [error] = await attemptPromise(async () => {
       const plainTextContent = await getChapterPlainText(chapter.id);
 
       const config: PromptParserConfig = {
@@ -236,69 +241,26 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
 
       await updateChapterSummaryOptimistic(chapter.id, text);
       toast.success("Summary generated successfully");
-    } catch (error) {
+    });
+
+    if (error) {
       console.error("Failed to generate summary:", error);
       toast.error("Failed to generate summary");
-    } finally {
-      setIsGenerating(false);
     }
+
+    setIsGenerating(false);
   };
 
   const toggleExpanded = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsExpanded((prev) => !prev);
+    setIsExpanded((prev: boolean) => !prev);
   };
 
   const handleWriteClick = () => {
     setCurrentChapterId(chapter.id);
     navigate(`/dashboard/${storyId}/chapters/${chapter.id}`);
   };
-
-  const cardContent = useMemo(
-    () => (
-      <CardContent className="p-4">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor={`summary-${chapter.id}`}>Chapter Summary</Label>
-            <Textarea
-              ref={textareaRef}
-              id={`summary-${chapter.id}`}
-              placeholder="Enter a brief summary of this chapter..."
-              value={summary}
-              onChange={(e) => {
-                setSummary(e.target.value);
-              }}
-              className="min-h-[100px] overflow-hidden"
-            />
-            <div className="flex justify-between items-center">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={handleSaveSummary}
-              >
-                Save Summary
-              </Button>
-              <AIGenerateMenu
-                isGenerating={isGenerating}
-                isLoading={isLoading}
-                error={error}
-                prompts={prompts}
-                promptType="gen_summary"
-                buttonText="Generate Summary"
-                onGenerate={handleGenerateSummary}
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-3 border-t">
-              <DownloadMenu type="chapter" id={chapter.id} />
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    ),
-    [summary, chapter.id, isGenerating, isLoading, error, prompts]
-  );
 
   return (
     <div ref={setNodeRef} style={style}>
@@ -358,7 +320,47 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
             </div>
           </div>
         </CardHeader>
-        {isExpanded && cardContent}
+        {isExpanded && (
+          <CardContent className="p-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor={`summary-${chapter.id}`}>Chapter Summary</Label>
+                <Textarea
+                  ref={textareaRef}
+                  id={`summary-${chapter.id}`}
+                  placeholder="Enter a brief summary of this chapter..."
+                  value={summary}
+                  onChange={(e) => {
+                    setSummary(e.target.value);
+                  }}
+                  className="min-h-[100px] overflow-hidden"
+                />
+                <div className="flex justify-between items-center">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleSaveSummary}
+                  >
+                    Save Summary
+                  </Button>
+                  <AIGenerateMenu
+                    isGenerating={isGenerating}
+                    isLoading={isLoading}
+                    error={error}
+                    prompts={prompts}
+                    promptType="gen_summary"
+                    buttonText="Generate Summary"
+                    onGenerate={handleGenerateSummary}
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-3 border-t">
+                  <DownloadMenu type="chapter" id={chapter.id} />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

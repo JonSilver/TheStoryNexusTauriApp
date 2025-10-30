@@ -20,13 +20,14 @@ import { useLorebookStore } from "../stores/useLorebookStore";
 import { toast } from "react-toastify";
 import type { LorebookEntry } from "@/types/story";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
+import { attemptPromise } from '@jfdi/attempt';
 
 interface CreateEntryDialogProps {
   open: boolean;
@@ -105,7 +106,7 @@ export function CreateEntryDialog({
     e.stopPropagation();
     setIsSubmitting(true);
 
-    try {
+    const [error] = await attemptPromise(async () => {
       const processedTags = tagInput
         .split(",")
         .map((tag) => tag.trim())
@@ -128,11 +129,11 @@ export function CreateEntryDialog({
         resetForm();
       }
       onOpenChange(false);
-    } catch (error) {
+    });
+    if (error) {
       toast.error(entry ? "Failed to update entry" : "Failed to create entry");
-    } finally {
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
   };
 
   return (
@@ -225,9 +226,9 @@ export function CreateEntryDialog({
           {tagInput && (
             <div className="flex flex-wrap gap-2">
               {tagInput.split(",").map(
-                (tag, index) =>
+                (tag) =>
                   tag.trim() && (
-                    <Badge key={index} variant="secondary" className="group">
+                    <Badge key={tag.trim()} variant="secondary" className="group">
                       {tag.trim()}
                     </Badge>
                   )

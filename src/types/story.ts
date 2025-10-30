@@ -119,6 +119,9 @@ export interface AISettings extends BaseEntity {
     availableModels: AIModel[];
     lastModelsFetch?: Date;
     localApiUrl?: string;
+    defaultLocalModel?: string;
+    defaultOpenAIModel?: string;
+    defaultOpenRouterModel?: string;
 }
 
 // Note types
@@ -161,7 +164,7 @@ export interface PromptParserConfig {
     cursorPosition?: number;
     previousWords?: string;
     matchedEntries?: Set<LorebookEntry>;
-    additionalContext?: Record<string, any>;
+    additionalContext?: Record<string, unknown>;
     chapterMatchedEntries?: Set<LorebookEntry>;
     sceneBeatMatchedEntries?: Set<LorebookEntry>;
     povCharacter?: string;
@@ -184,7 +187,7 @@ export interface PromptContext {
     matchedEntries?: Set<LorebookEntry>;
     chapters?: Chapter[];
     currentChapter?: Chapter;
-    additionalContext?: Record<string, any>;
+    additionalContext?: Record<string, unknown>;
     chapterMatchedEntries?: Set<LorebookEntry>;
     sceneBeatMatchedEntries?: Set<LorebookEntry>;
     povCharacter?: string;
@@ -204,3 +207,15 @@ export interface ParsedPrompt {
 }
 
 export type VariableResolver = (context: PromptContext, ...args: string[]) => Promise<string>;
+
+// Story Export/Import types
+export interface StoryExport {
+    version: string;
+    type: 'story';
+    exportDate: string;
+    story: Story;
+    chapters: Chapter[];
+    lorebookEntries: LorebookEntry[];
+    sceneBeats: SceneBeat[];
+    aiChats: AIChat[];
+}

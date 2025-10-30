@@ -32,8 +32,6 @@ import {
   Underline,
   Wand2,
   Loader2,
-  Check,
-  X,
 } from "lucide-react";
 
 import { getDOMRangeRect } from "../../utils/getDOMRangeRect";
@@ -56,6 +54,7 @@ import { useStoryStore } from "@/features/stories/stores/useStoryStore";
 import { PromptPreviewDialog } from "@/components/ui/prompt-preview-dialog";
 import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
 import { $isSceneBeatNode } from "../../nodes/SceneBeatNode";
+import { attemptPromise } from '@jfdi/attempt';
 
 function TextFormatFloatingToolbar({
   editor,
@@ -79,7 +78,6 @@ function TextFormatFloatingToolbar({
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt>();
   const [selectedModel, setSelectedModel] = useState<AllowedModel>();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedText, setGeneratedText] = useState("");
 
   // Add these states for prompt preview
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
@@ -111,7 +109,7 @@ function TextFormatFloatingToolbar({
       }
     }
   }
-  function mouseUpListener(e: MouseEvent) {
+  function mouseUpListener(_e: MouseEvent) {
     if (popupCharStylesEditorRef?.current) {
       if (popupCharStylesEditorRef.current.style.pointerEvents !== "auto") {
         popupCharStylesEditorRef.current.style.pointerEvents = "auto";
@@ -129,6 +127,7 @@ function TextFormatFloatingToolbar({
         document.removeEventListener("mouseup", mouseUpListener);
       };
     }
+    return undefined;
   }, [popupCharStylesEditorRef]);
 
   const $updateTextFormatFloatingToolbar = useCallback(() => {
@@ -322,9 +321,8 @@ function TextFormatFloatingToolbar({
     }
 
     setIsGenerating(true);
-    setGeneratedText("");
 
-    try {
+    const [error] = await attemptPromise(async () => {
       const config = createPromptConfig(selectedPrompt);
       const response = await generateWithPrompt(config, selectedModel);
 
@@ -347,24 +345,18 @@ function TextFormatFloatingToolbar({
           });
 
           // Reset state
-          setIsGenerating(false);
           toast.success("Text generated and inserted");
         },
         (error) => {
           console.error("Error streaming response:", error);
           toast.error("Failed to generate text");
-          setIsGenerating(false);
         }
       );
-    } catch (error) {
+    });
+    if (error) {
       console.error("Error generating text:", error);
       toast.error("Failed to generate text");
-      setIsGenerating(false);
     }
-  };
-
-  const resetGenerationState = () => {
-    setGeneratedText("");
     setIsGenerating(false);
   };
 
@@ -378,25 +370,24 @@ function TextFormatFloatingToolbar({
     setPreviewError(null);
     setPreviewMessages(undefined);
 
-    try {
-      const promptParser = createPromptParser();
-      const config = createPromptConfig(selectedPrompt);
-      const result = await promptParser.parse(config);
+    const promptParser = createPromptParser();
+    const config = createPromptConfig(selectedPrompt);
 
-      if (result.error) {
-        setPreviewError(result.error);
-      } else {
-        setPreviewMessages(result.messages);
-      }
-    } catch (error) {
+    const [error, result] = await attemptPromise(async () =>
+      promptParser.parse(config)
+    );
+    if (error) {
       console.error("Error previewing prompt:", error);
       setPreviewError(
         error instanceof Error ? error.message : "Failed to preview prompt"
       );
-    } finally {
-      setPreviewLoading(false);
-      setShowPreviewDialog(true);
+    } else if (result.error) {
+      setPreviewError(result.error);
+    } else {
+      setPreviewMessages(result.messages);
     }
+    setPreviewLoading(false);
+    setShowPreviewDialog(true);
   };
 
   return (
