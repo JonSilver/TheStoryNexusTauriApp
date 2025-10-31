@@ -25,7 +25,7 @@ Replace Dexie/IndexedDB with SQLite via Tauri SQL plugin + Drizzle ORM.
 
 ## Implementation Steps
 
-### 1. Setup (30 mins)
+### 1. Setup
 
 **Install dependencies**:
 ```bash
@@ -53,7 +53,7 @@ src/db/
   migrate.ts      # One-time IndexedDB→SQLite
 ```
 
-### 2. Define Schema (1-2 hours)
+### 2. Define Schema
 
 **src/db/schema.ts** - single file with all tables:
 ```typescript
@@ -95,7 +95,7 @@ export const chapters = sqliteTable('chapters', {
 - JSON columns for complex data (outline, tags, metadata)
 - Indexes on storyId for common queries
 
-### 3. Database Client (30 mins)
+### 3. Database Client
 
 **src/db/client.ts**:
 ```typescript
@@ -121,7 +121,7 @@ export const getDb = () => db;
 
 Run `npx drizzle-kit generate` once to create initial SQL migration, then `initDb()` on app startup.
 
-### 4. Query Functions (2-3 hours)
+### 4. Query Functions
 
 **src/db/queries.ts** - simple functions matching existing Dexie API:
 ```typescript
@@ -160,7 +160,7 @@ export const getLorebookByCategory = (storyId: string, category: string) =>
 
 **Benefits**: Simple, functional, type-safe. No classes/inheritance/repositories nonsense.
 
-### 5. Update Stores (2-3 hours)
+### 5. Update Stores
 
 Change imports and method calls in each store (useStoryStore, useChapterStore, etc.):
 
@@ -184,7 +184,7 @@ await deleteStory(id); // CASCADE handles related records
 
 Work through stores one at a time, test each.
 
-### 6. Data Migration (1-2 hours)
+### 6. Data Migration
 
 **src/db/migrate.ts**:
 ```typescript
@@ -231,20 +231,6 @@ Check:
 **Post-migration**: SQLite file at `~/.local/share/story-nexus/story_nexus.db` (or platform equivalent). User can copy file for backup.
 
 Future: Add "Export Database" button to copy `.db` file somewhere safe.
-
----
-
-## Timeline
-
-Not 5 weeks. More like:
-- **Setup**: 30 mins
-- **Schema**: 1-2 hours
-- **Client + queries**: 2-3 hours
-- **Update stores**: 2-3 hours (one at a time)
-- **Migration script**: 1-2 hours
-- **Testing**: 2-3 hours manual testing
-
-**Total**: 1-2 days actual work.
 
 ---
 
