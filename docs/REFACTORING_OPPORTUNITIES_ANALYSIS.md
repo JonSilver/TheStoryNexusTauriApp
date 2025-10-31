@@ -1039,27 +1039,25 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 
 ## 5. Implementation Priority Matrix
 
-| Priority | Category | Items | Estimated Impact | Estimated Effort |
-|----------|----------|-------|------------------|------------------|
-| **HIGH** | Duplication | Stream wrapping code | High - Immediate DRY gains | Low - 2 hours |
-| **HIGH** | Duplication | Lexical text extraction | High - Prevents bugs | Medium - 4 hours |
-| **HIGH** | Abstraction | CRUD store factory | Very High - ~1,200 lines | High - 16 hours |
-| **HIGH** | Library | Zod validation | High - Type safety | Medium - 8 hours |
-| **HIGH** | Dependencies | ID generator removal | Medium - Less noise | Low - 2 hours |
-| **MEDIUM** | Duplication | Import/export utils | Medium - Consistency | Medium - 6 hours |
-| **MEDIUM** | Duplication | String normalization | Low - Maintainability | Low - 1 hour |
-| **MEDIUM** | Library | date-fns integration | Medium - Better UX | Medium - 6 hours |
-| **MEDIUM** | Library | Better lodash use | Medium - Code quality | Low - 4 hours |
-| **MEDIUM** | Dependencies | Logger enforcement | Medium - Debugging | Low - 2 hours |
-| **MEDIUM** | Dependencies | Lorebook filter methods | Medium - DRY | Medium - 4 hours |
-| **LOW** | Library | file-saver | Low - Reliability | Low - 1 hour |
-| **LOW** | Library | p-retry | Low - Reliability | Low - 2 hours |
-| **LOW** | Library | eventsource-parser | Low - Robustness | Low - 2 hours |
-| **LOW** | Pattern | Fetch-after-update | Low - Performance | Medium - 4 hours |
+| Priority | Category | Items | Estimated Impact |
+|----------|----------|-------|------------------|
+| **HIGH** | Duplication | Stream wrapping code | High - Immediate DRY gains |
+| **HIGH** | Duplication | Lexical text extraction | High - Prevents bugs |
+| **HIGH** | Abstraction | CRUD store factory | Very High - ~1,200 lines |
+| **HIGH** | Library | Zod validation | High - Type safety |
+| **HIGH** | Dependencies | ID generator removal | Medium - Less noise |
+| **MEDIUM** | Duplication | Import/export utils | Medium - Consistency |
+| **MEDIUM** | Duplication | String normalization | Low - Maintainability |
+| **MEDIUM** | Library | date-fns integration | Medium - Better UX |
+| **MEDIUM** | Library | Better lodash use | Medium - Code quality |
+| **MEDIUM** | Dependencies | Logger enforcement | Medium - Debugging |
+| **MEDIUM** | Dependencies | Lorebook filter methods | Medium - DRY |
+| **LOW** | Library | file-saver | Low - Reliability |
+| **LOW** | Library | p-retry | Low - Reliability |
+| **LOW** | Library | eventsource-parser | Low - Robustness |
+| **LOW** | Pattern | Fetch-after-update | Low - Performance |
 
-**Total Estimated Effort**: ~64 hours for all recommendations
-
-**Quick Wins** (< 4 hours, high impact):
+**Quick Wins** (high impact):
 1. Stream wrapping extraction
 2. ID generator removal
 3. String normalization utility
@@ -1069,28 +1067,28 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 
 ## 6. Migration Strategy
 
-### Phase 1: Quick Wins (Week 1)
+### Phase 1: Quick Wins
 - Remove ID generator wrappers
 - Extract stream wrapping code
 - Create string normalization utility
 - Enforce logger usage
 
-### Phase 2: Validation & Types (Week 2)
+### Phase 2: Validation & Types
 - Add Zod schemas for all entities
 - Migrate validation logic
 - Add runtime validation to import/export
 
-### Phase 3: Utilities (Week 3)
+### Phase 3: Utilities
 - Unify Lexical text extraction
 - Create import/export utilities
 - Add date-fns and migrate date operations
 
-### Phase 4: Major Refactor (Week 4-5)
+### Phase 4: Major Refactor
 - Design and implement CRUD store factory
 - Migrate stores one-by-one
 - Comprehensive testing
 
-### Phase 5: Polish (Week 6)
+### Phase 5: Polish
 - Better lodash integration
 - Add p-retry for network operations
 - Feature-level error boundaries
@@ -1119,8 +1117,8 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 - **TypeScript errors**: Zero increase when strict mode enabled
 
 ### Developer Experience Metrics
-- **Time to add new entity**: Should decrease by ~50% with CRUD factory
-- **Time to debug validation errors**: Should decrease with Zod detailed errors
+- **New entity development**: Should improve significantly with CRUD factory
+- **Validation error debugging**: Should improve with Zod detailed errors
 - **Code review feedback cycles**: Should decrease with consistent patterns
 
 ### Reliability Metrics
@@ -1149,4 +1147,4 @@ The Story Nexus codebase is well-structured with clear separation of concerns an
 ---
 
 **Report Version**: 1.0
-**Next Review**: After Phase 2 completion or 2026-01-31
+**Next Review**: 2026-01-31
