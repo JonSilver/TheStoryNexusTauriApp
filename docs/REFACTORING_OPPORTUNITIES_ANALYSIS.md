@@ -176,7 +176,64 @@ logger.info('[OpenAIProvider] Fetching models');
 logger.error('[OpenAIProvider] Error fetching models', error);
 ```
 
-**Impact**: Improved log filtering, structured logging, potential future log aggregation integration.
+**Recommendation**: Replace with `loglevel` library.
+
+**Why loglevel**:
+- Industry-standard logging library (8K+ GitHub stars, 13M+ weekly downloads)
+- Minimal API surface - drop-in replacement for console
+- Runtime log level control (suppress debug logs in production)
+- Plugin system for custom output handling
+- TypeScript support
+- Only 2KB minified
+
+```typescript
+// src/utils/logger.ts - Replace with loglevel
+import log from 'loglevel';
+
+// Configure once at app startup
+if (import.meta.env.PROD) {
+    log.setLevel('warn');  // Production: only warnings and errors
+} else {
+    log.setLevel('debug'); // Development: all logs
+}
+
+export const logger = log;
+
+// Usage - identical API to current logger
+logger.info('[OpenAIProvider] Fetching models');
+logger.error('[OpenAIProvider] Error fetching models', error);
+logger.debug('Detailed debug info', { context });
+
+// Runtime control (useful for debugging production issues)
+logger.setLevel('debug');  // Enable debug logs temporarily
+```
+
+**Additional capabilities**:
+```typescript
+// Per-module log levels
+const editorLogger = log.getLogger('editor');
+editorLogger.setLevel('debug');
+
+const dbLogger = log.getLogger('database');
+dbLogger.setLevel('warn');
+
+// Custom plugins for remote logging
+import loglevel from 'loglevel';
+import remote from 'loglevel-plugin-remote';
+
+remote.apply(loglevel, {
+    url: '/api/logs',  // Send errors to backend
+    level: 'error'
+});
+```
+
+**Installation**:
+```bash
+npm install loglevel
+npm install --save-dev @types/loglevel
+```
+
+**Impact**: Better control over logging, production-ready, extensible for future needs (analytics, error reporting).
 
 ---
 
@@ -791,46 +848,54 @@ npm install --save-dev @types/file-saver
 
 ---
 
-### 3.4 Better Lodash Utilisation (MEDIUM PRIORITY)
+### 3.4 Native JavaScript vs Lodash (MEDIUM PRIORITY)
 
 **Current Status**: **Lodash is already in dependencies** (`package.json:50`)
 
-**Issue**: Lodash imported but underutilised. Many manual operations could use lodash.
+**Issue**: Lodash imported but many operations now have native JavaScript equivalents.
 
-**Opportunities**:
+**Recommendation**: Prefer native JavaScript where available, keep lodash for specialized utilities.
 
-#### 3.4.1 groupBy for Lorebook Filtering
+#### 3.4.1 Use Native `Object.groupBy()` for Grouping
 
 ```typescript
-// Instead of LorebookFilterService category methods:
-import { groupBy, filter } from 'lodash';
-
-const activeEntries = filter(entries, e => !e.isDisabled);
-const byCategory = groupBy(activeEntries, 'category');
+// Instead of LorebookFilterService category methods, use native groupBy:
+const activeEntries = entries.filter(e => !e.isDisabled);
+const byCategory = Object.groupBy(activeEntries, e => e.category);
 
 const characters = byCategory.character || [];
 const locations = byCategory.location || [];
+
+// Browser support: Chrome 117+, Firefox 119+, Safari 17+ (2023+)
+// No polyfill needed for Electron/Tauri with modern webview
 ```
 
-#### 3.4.2 uniqBy for Deduplication
+#### 3.4.2 Use Native Set for Deduplication
 
 ```typescript
 // When combining lorebook entries from different sources
-import { uniqBy } from 'lodash';
-
 const allEntries = [
     ...matchedChapterEntries,
     ...matchedSceneBeatEntries,
     ...customEntries
 ];
 
-const uniqueEntries = uniqBy(allEntries, 'id');
+// Deduplicate by ID using Map
+const uniqueEntries = [...new Map(allEntries.map(e => [e.id, e])).values()];
+
+// Or filter approach
+const seen = new Set();
+const uniqueEntries = allEntries.filter(e => {
+    if (seen.has(e.id)) return false;
+    seen.add(e.id);
+    return true;
+});
 ```
 
-#### 3.4.3 debounce for Auto-save
+#### 3.4.3 Keep Lodash `debounce`
 
 ```typescript
-// In Lexical SaveChapterContent plugin
+// In Lexical SaveChapterContent plugin - lodash debounce is still best
 import { debounce } from 'lodash';
 
 const debouncedSave = debounce(
@@ -839,29 +904,52 @@ const debouncedSave = debounce(
     },
     1000
 );
+
+// Native alternative would require manual implementation
 ```
 
-#### 3.4.4 partition for Filtering
+#### 3.4.4 Use Native `Array.partition()` Pattern
 
 ```typescript
-// Separate enabled/disabled entries
-import { partition } from 'lodash';
+// Separate enabled/disabled entries - native approach
+const enabled = entries.filter(e => !e.isDisabled);
+const disabled = entries.filter(e => e.isDisabled);
 
-const [enabled, disabled] = partition(entries, e => !e.isDisabled);
-```
-
-#### 3.4.5 pick/omit for Object Transformation
-
-```typescript
-// When preparing data for export
-import { omit } from 'lodash';
-
-const exportData = prompts.map(p =>
-    omit(p, ['isSystem', 'lastUsed', 'usageCount'])
+// Or single-pass with reduce
+const { enabled, disabled } = entries.reduce(
+    (acc, e) => {
+        (e.isDisabled ? acc.disabled : acc.enabled).push(e);
+        return acc;
+    },
+    { enabled: [], disabled: [] }
 );
 ```
 
-**Impact**: More concise, functional code that's self-documenting.
+#### 3.4.5 Use Destructuring for Object Transformation
+
+```typescript
+// When preparing data for export - use destructuring
+const exportData = prompts.map(({ isSystem, lastUsed, usageCount, ...rest }) => rest);
+
+// Or keep specific fields
+const exportData = prompts.map(({ id, name, messages, temperature }) =>
+    ({ id, name, messages, temperature })
+);
+```
+
+**Keep Lodash For**:
+- `debounce` / `throttle` - no native equivalent
+- `cloneDeep` - native structuredClone exists but lodash handles edge cases
+- Complex path operations - `get(obj, 'deeply.nested.path', defaultValue)`
+
+**Replace with Native**:
+- `groupBy` → `Object.groupBy()` / `Map.groupBy()`
+- `uniqBy` → Set-based deduplication
+- `partition` → reduce or double filter
+- `pick` / `omit` → destructuring
+- `filter` / `map` / `forEach` - always use native
+
+**Impact**: Smaller bundle size, better performance, less dependency surface area.
 
 ---
 
@@ -1049,8 +1137,8 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 | **MEDIUM** | Duplication | Import/export utils | Medium - Consistency |
 | **MEDIUM** | Duplication | String normalization | Low - Maintainability |
 | **MEDIUM** | Library | date-fns integration | Medium - Better UX |
-| **MEDIUM** | Library | Better lodash use | Medium - Code quality |
-| **MEDIUM** | Dependencies | Logger enforcement | Medium - Debugging |
+| **MEDIUM** | Library | Native JS vs lodash migration | Medium - Bundle size |
+| **MEDIUM** | Library | Replace logger with loglevel | Medium - Production readiness |
 | **MEDIUM** | Dependencies | Lorebook filter methods | Medium - DRY |
 | **LOW** | Library | file-saver | Low - Reliability |
 | **LOW** | Library | p-retry | Low - Reliability |
@@ -1060,8 +1148,8 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 **Quick Wins** (high impact):
 1. Stream wrapping extraction
 2. ID generator removal
-3. String normalization utility
-4. Better lodash utilisation
+3. Replace logger with loglevel
+4. String normalization utility
 
 ---
 
@@ -1070,8 +1158,8 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 ### Phase 1: Quick Wins
 - Remove ID generator wrappers
 - Extract stream wrapping code
+- Replace logger utility with loglevel
 - Create string normalization utility
-- Enforce logger usage
 
 ### Phase 2: Validation & Types
 - Add Zod schemas for all entities
@@ -1089,7 +1177,7 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 - Comprehensive testing
 
 ### Phase 5: Polish
-- Better lodash integration
+- Migrate lodash usage to native JS where appropriate
 - Add p-retry for network operations
 - Feature-level error boundaries
 - Documentation updates
@@ -1134,7 +1222,7 @@ The Story Nexus codebase is well-structured with clear separation of concerns an
 
 1. **Elimination of unnecessary abstractions** - ID generators, category filter wrappers
 2. **Consolidation of duplicated patterns** - CRUD operations, text extraction, import/export
-3. **Better utilisation of existing & new dependencies** - Zod validation, date-fns, improved lodash usage
+3. **Better utilisation of existing & new dependencies** - Zod validation, loglevel, date-fns, native JS over lodash
 
 **Key Takeaway**: Most opportunities fall into "good code made better" rather than "fixing broken code". The codebase follows functional programming principles and error handling best practices. This refactoring work would primarily improve maintainability, reduce future bug surface area, and accelerate feature development.
 
