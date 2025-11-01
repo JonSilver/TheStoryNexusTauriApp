@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
-import is from '@sindresorhus/is';
+import { z } from 'zod';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { logger } from '@/utils/logger';
+import { promptsExportSchema } from '@/schemas/entities';
 import type { Prompt, PromptMessage } from '@/types/story';
 
 interface PromptStore {
@@ -34,13 +35,11 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
     error: null,
 
     validatePromptData: (messages) => {
-        return messages.every(msg =>
-            is.plainObject(msg) &&
-            ('role' in msg) &&
-            ('content' in msg) &&
-            ['system', 'user', 'assistant'].includes(msg.role) &&
-            is.string(msg.content)
-        );
+        const messageSchema = z.array(z.object({
+            role: z.enum(['system', 'user', 'assistant']),
+            content: z.string(),
+        }));
+        return messageSchema.safeParse(messages).success;
     },
 
     fetchPrompts: async () => {
@@ -238,22 +237,16 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
 
     // Import prompts from JSON string. Creates new IDs and createdAt. Ensures unique names.
     importPrompts: async (jsonData) => {
-        const data = JSON.parse(jsonData);
+        const parsed = JSON.parse(jsonData);
 
-        if (!data.type || data.type !== 'prompts' || !is.array(data.prompts)) {
-            throw new Error('Invalid prompts data format');
+        const result = promptsExportSchema.safeParse(parsed);
+        if (!result.success) {
+            throw new Error(`Invalid prompts data format: ${result.error.message}`);
         }
 
-        const imported: Prompt[] = data.prompts;
+        const imported: Prompt[] = result.data.prompts;
 
         for (const p of imported) {
-            // Minimal validation of messages
-            if (!p.messages || !is.array(p.messages) || !get().validatePromptData(p.messages)) {
-                // Skip invalid prompt
-                logger.warn('Skipping invalid prompt during import (messages invalid)', { name: p.name });
-                continue;
-            }
-
             // Ensure unique name - check DB for existing name and append suffix if needed
             const newName = await get().findUniqueName(p.name || 'Imported Prompt');
 
