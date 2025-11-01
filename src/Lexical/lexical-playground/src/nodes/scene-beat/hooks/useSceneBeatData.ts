@@ -17,8 +17,8 @@ const isSceneBeatNode = (node: unknown): node is SceneBeatNodeType => {
     is.plainObject(node) &&
     "getSceneBeatId" in node &&
     "setSceneBeatId" in node &&
-    is.function_((node as SceneBeatNodeType).getSceneBeatId) &&
-    is.function_((node as SceneBeatNodeType).setSceneBeatId)
+    is.function((node as unknown as SceneBeatNodeType).getSceneBeatId) &&
+    is.function((node as unknown as SceneBeatNodeType).setSceneBeatId)
   );
 };
 
