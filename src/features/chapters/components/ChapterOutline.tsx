@@ -4,6 +4,7 @@ import { Button } from "../../../components/ui/button";
 import { Textarea } from "../../../components/ui/textarea";
 import { useChapterStore } from "../stores/useChapterStore";
 import { Save } from "lucide-react";
+import { logger } from '@/utils/logger';
 
 export function ChapterOutline() {
     const { currentChapter, updateChapterOutline } = useChapterStore();
@@ -32,7 +33,7 @@ export function ChapterOutline() {
         );
 
         if (error) {
-            console.error("Failed to save outline:", error);
+            logger.error("Failed to save outline:", error);
         }
 
         setIsSaving(false);

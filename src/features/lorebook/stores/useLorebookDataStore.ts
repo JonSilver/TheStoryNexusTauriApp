@@ -3,7 +3,8 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { generateLorebookEntryId } from '@/utils/idGenerator';
+import { lorebookEntrySchema } from '@/schemas/entities';
+import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 import type { LorebookEntry } from '@/types/story';
 
 interface LorebookDataState {
@@ -49,12 +50,18 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
     },
 
     createEntry: async (entryData) => {
-        const newEntry: LorebookEntry = {
-            ...entryData,
-            id: generateLorebookEntryId(),
-            createdAt: new Date(),
-            isDisabled: false,
-        };
+        let newEntry: LorebookEntry;
+        try {
+            newEntry = createValidatedEntity(
+                entryData,
+                lorebookEntrySchema,
+                { isDisabled: false }
+            );
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Validation failed';
+            set({ error: message });
+            throw error;
+        }
 
         const [error] = await attemptPromise(() => db.lorebookEntries.add(newEntry));
 
@@ -68,6 +75,14 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
     },
 
     updateEntry: async (id, data) => {
+        try {
+            validatePartialUpdate(data, lorebookEntrySchema);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Validation failed';
+            set({ error: message });
+            throw error;
+        }
+
         const [error] = await attemptPromise(() => db.lorebookEntries.update(id, data));
 
         if (error) {

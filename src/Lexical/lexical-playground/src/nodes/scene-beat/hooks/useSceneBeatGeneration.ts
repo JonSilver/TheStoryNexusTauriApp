@@ -1,10 +1,12 @@
 import { useState } from "react";
 import type { AllowedModel, PromptMessage } from "@/types/story";
+import is from '@sindresorhus/is';
 import { useAIStore } from "@/features/ai/stores/useAIStore";
 import { toast } from "react-toastify";
 import { createPromptParser } from "@/features/prompts/services/promptParser";
 import type { PromptParserConfig } from "@/types/story";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 interface UseSceneBeatGenerationResult {
   streaming: boolean;
@@ -70,13 +72,13 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
           setStreamComplete(true);
         },
         (error) => {
-          console.error("Error streaming response:", error);
+          logger.error("Error streaming response:", error);
           toast.error("Failed to generate text");
         }
       );
     });
     if (error) {
-      console.error("Error generating text:", error);
+      logger.error("Error generating text:", error);
       toast.error("Failed to generate text");
     }
     setStreaming(false);
@@ -93,7 +95,7 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
       promptParser.parse(config)
     );
     if (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = is.error(error) ? error.message : String(error);
       setPreviewError(errorMessage);
       toast.error(`Error previewing prompt: ${errorMessage}`);
       setPreviewLoading(false);

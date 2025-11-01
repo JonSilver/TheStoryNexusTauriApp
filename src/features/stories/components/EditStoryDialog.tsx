@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 
 
@@ -53,7 +54,7 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
             })
         );
         if (error) {
-            console.error("Failed to update story:", error);
+            logger.error("Failed to update story:", error);
             return;
         }
         onOpenChange(false);

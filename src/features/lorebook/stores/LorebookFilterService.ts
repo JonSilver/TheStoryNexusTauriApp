@@ -1,4 +1,5 @@
 import type { LorebookEntry } from '@/types/story';
+import { normalizeString, stringEquals } from '@/utils/stringUtils';
 
 export class LorebookFilterService {
     static getFilteredEntries(entries: LorebookEntry[], includeDisabled: boolean = false): LorebookEntry[] {
@@ -13,47 +14,14 @@ export class LorebookFilterService {
     }
 
     static getEntriesByTag(entries: LorebookEntry[], tag: string): LorebookEntry[] {
-        const normalizedTag = tag.toLowerCase();
         return this.getFilteredEntries(entries).filter(entry =>
-            entry.tags.some(t => t.toLowerCase() === normalizedTag) ||
-            entry.name.toLowerCase() === normalizedTag
+            entry.tags.some(t => stringEquals(t, tag)) ||
+            stringEquals(entry.name, tag)
         );
     }
 
     static getEntriesByCategory(entries: LorebookEntry[], category: LorebookEntry['category']): LorebookEntry[] {
         return this.getFilteredEntries(entries).filter(entry => entry.category === category);
-    }
-
-    static getAllCharacters(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'character');
-    }
-
-    static getAllLocations(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'location');
-    }
-
-    static getAllItems(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'item');
-    }
-
-    static getAllEvents(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'event');
-    }
-
-    static getAllNotes(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'note');
-    }
-
-    static getAllSynopsis(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'synopsis');
-    }
-
-    static getAllStartingScenarios(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'starting scenario');
-    }
-
-    static getAllTimelines(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'timeline');
     }
 
     static getAllEntries(entries: LorebookEntry[]): LorebookEntry[] {
@@ -74,7 +42,7 @@ export class LorebookFilterService {
 
     static getEntriesByType(entries: LorebookEntry[], type: string): LorebookEntry[] {
         return this.getFilteredEntries(entries).filter(entry =>
-            entry.metadata?.type?.toLowerCase() === type.toLowerCase()
+            entry.metadata?.type && stringEquals(entry.metadata.type, type)
         );
     }
 
@@ -99,11 +67,11 @@ export class LorebookFilterService {
         entries.forEach(entry => {
             if (entry.isDisabled) return;
 
-            const normalizedName = entry.name.toLowerCase().trim();
+            const normalizedName = normalizeString(entry.name);
             tagMap[normalizedName] = entry;
 
             entry.tags.forEach(tag => {
-                const normalizedTag = tag.toLowerCase().trim();
+                const normalizedTag = normalizeString(tag);
                 tagMap[normalizedTag] = entry;
 
                 if (!normalizedTag.includes(' ')) {
@@ -112,7 +80,7 @@ export class LorebookFilterService {
 
                 const words = normalizedTag.split(' ');
                 words.forEach(word => {
-                    if (entry.tags.some(t => t.toLowerCase() === word)) {
+                    if (entry.tags.some(t => stringEquals(t, word))) {
                         tagMap[word] = entry;
                     }
                 });

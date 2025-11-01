@@ -94,8 +94,8 @@ export class AllCharactersResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
     async resolve(_context: PromptContext): Promise<string> {
-        const { getAllCharacters } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getAllCharacters());
+        const { getEntriesByCategory } = useLorebookStore.getState();
+        return this.formatter.formatEntries(getEntriesByCategory('character'));
     }
 }
 
@@ -103,8 +103,8 @@ export class AllLocationsResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
     async resolve(_context: PromptContext): Promise<string> {
-        const { getAllLocations } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getAllLocations());
+        const { getEntriesByCategory } = useLorebookStore.getState();
+        return this.formatter.formatEntries(getEntriesByCategory('location'));
     }
 }
 
@@ -112,8 +112,8 @@ export class AllItemsResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
     async resolve(_context: PromptContext): Promise<string> {
-        const { getAllItems } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getAllItems());
+        const { getEntriesByCategory } = useLorebookStore.getState();
+        return this.formatter.formatEntries(getEntriesByCategory('item'));
     }
 }
 
@@ -121,8 +121,8 @@ export class AllEventsResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
     async resolve(_context: PromptContext): Promise<string> {
-        const { getAllEvents } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getAllEvents());
+        const { getEntriesByCategory } = useLorebookStore.getState();
+        return this.formatter.formatEntries(getEntriesByCategory('event'));
     }
 }
 
@@ -130,8 +130,8 @@ export class AllNotesResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
     async resolve(_context: PromptContext): Promise<string> {
-        const { getAllNotes } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getAllNotes());
+        const { getEntriesByCategory } = useLorebookStore.getState();
+        return this.formatter.formatEntries(getEntriesByCategory('note'));
     }
 }
 
@@ -139,8 +139,8 @@ export class AllSynopsisResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
     async resolve(_context: PromptContext): Promise<string> {
-        const { getAllSynopsis } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getAllSynopsis());
+        const { getEntriesByCategory } = useLorebookStore.getState();
+        return this.formatter.formatEntries(getEntriesByCategory('synopsis'));
     }
 }
 
@@ -148,8 +148,8 @@ export class AllStartingScenariosResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
     async resolve(_context: PromptContext): Promise<string> {
-        const { getAllStartingScenarios } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getAllStartingScenarios());
+        const { getEntriesByCategory } = useLorebookStore.getState();
+        return this.formatter.formatEntries(getEntriesByCategory('starting scenario'));
     }
 }
 
@@ -157,8 +157,8 @@ export class AllTimelinesResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
     async resolve(_context: PromptContext): Promise<string> {
-        const { getAllTimelines } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getAllTimelines());
+        const { getEntriesByCategory } = useLorebookStore.getState();
+        return this.formatter.formatEntries(getEntriesByCategory('timeline'));
     }
 }
 

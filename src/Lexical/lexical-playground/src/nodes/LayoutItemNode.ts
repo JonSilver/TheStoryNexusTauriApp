@@ -13,6 +13,7 @@ import type {
   LexicalNode,
   SerializedElementNode,
 } from 'lexical';
+import is from '@sindresorhus/is';
 
 import {addClassNamesToElement} from '@lexical/utils';
 import {ElementNode} from 'lexical';
@@ -35,7 +36,7 @@ export class LayoutItemNode extends ElementNode {
   createDOM(config: EditorConfig): HTMLElement {
     const dom = document.createElement('div');
     dom.setAttribute('data-lexical-layout-item', 'true');
-    if (typeof config.theme.layoutItem === 'string') {
+    if (is.string(config.theme.layoutItem)) {
       addClassNamesToElement(dom, config.theme.layoutItem);
     }
     return dom;

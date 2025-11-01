@@ -7,6 +7,7 @@
  */
 
 import type { JSX } from "react";
+import is from '@sindresorhus/is';
 
 import "./index.css";
 
@@ -55,6 +56,7 @@ import { PromptPreviewDialog } from "@/components/ui/prompt-preview-dialog";
 import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
 import { $isSceneBeatNode } from "../../nodes/SceneBeatNode";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 function TextFormatFloatingToolbar({
   editor,
@@ -88,7 +90,7 @@ function TextFormatFloatingToolbar({
   // Fetch prompts when the component mounts
   useEffect(() => {
     fetchPrompts().catch((error) => {
-      console.error("Error loading prompts:", error);
+      logger.error("Error loading prompts:", error);
     });
   }, [fetchPrompts]);
 
@@ -262,7 +264,7 @@ function TextFormatFloatingToolbar({
           }
 
           // Traverse children
-          if (!$isTextNode(node) && typeof node.getChildren === "function") {
+          if (!$isTextNode(node) && is.function(node.getChildren)) {
             const children = node.getChildren();
             for (const child of children) {
               if (traverseNodes(child)) {
@@ -348,13 +350,13 @@ function TextFormatFloatingToolbar({
           toast.success("Text generated and inserted");
         },
         (error) => {
-          console.error("Error streaming response:", error);
+          logger.error("Error streaming response:", error);
           toast.error("Failed to generate text");
         }
       );
     });
     if (error) {
-      console.error("Error generating text:", error);
+      logger.error("Error generating text:", error);
       toast.error("Failed to generate text");
     }
     setIsGenerating(false);
@@ -377,9 +379,9 @@ function TextFormatFloatingToolbar({
       promptParser.parse(config)
     );
     if (error) {
-      console.error("Error previewing prompt:", error);
+      logger.error("Error previewing prompt:", error);
       setPreviewError(
-        error instanceof Error ? error.message : "Failed to preview prompt"
+        is.error(error) ? error.message : "Failed to preview prompt"
       );
     } else if (result.error) {
       setPreviewError(result.error);

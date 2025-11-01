@@ -3,7 +3,8 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { generateChatId } from '@/utils/idGenerator';
+import { aiChatSchema } from '@/schemas/entities';
+import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 import type { AIChat, ChatMessage } from '@/types/story';
 
 interface BrainstormState {
@@ -59,14 +60,18 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
     },
 
     addChat: async (storyId: string, title: string, messages: ChatMessage[]) => {
-        const newChat: AIChat = {
-            id: generateChatId(),
-            storyId,
-            title,
-            messages,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
+        let newChat: AIChat;
+        try {
+            newChat = createValidatedEntity(
+                { storyId, title, messages },
+                aiChatSchema,
+                { updatedAt: new Date() }
+            );
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Validation failed';
+            set({ error: message });
+            throw error;
+        }
 
         const [error] = await attemptPromise(() => db.aiChats.add(newChat));
 
@@ -89,14 +94,22 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
     },
 
     createNewChat: async (storyId: string) => {
-        const newChat: AIChat = {
-            id: generateChatId(),
-            storyId,
-            title: `New Chat ${new Date().toLocaleString()}`,
-            messages: [],
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
+        let newChat: AIChat;
+        try {
+            newChat = createValidatedEntity(
+                {
+                    storyId,
+                    title: `New Chat ${new Date().toLocaleString()}`,
+                    messages: []
+                },
+                aiChatSchema,
+                { updatedAt: new Date() }
+            );
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Validation failed';
+            set({ error: message });
+            throw error;
+        }
 
         const [error] = await attemptPromise(() => db.aiChats.add(newChat));
 
@@ -130,6 +143,14 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
     },
 
     updateChat: async (chatId: string, data: Partial<AIChat>) => {
+        try {
+            validatePartialUpdate(data, aiChatSchema);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Validation failed';
+            set({ error: message });
+            throw error;
+        }
+
         // Update the timestamp to move the chat to the top of the list
         const updatedData = {
             ...data,

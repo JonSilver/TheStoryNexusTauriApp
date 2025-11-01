@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "react-toastify";
 import { attempt, attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export default function LorebookPage() {
     const { storyId } = useParams<{ storyId: string }>();
@@ -47,7 +48,7 @@ export default function LorebookPage() {
         if (storyId) {
             const [error] = attempt(() => exportEntries(storyId));
             if (error) {
-                console.error("Export failed:", error);
+                logger.error("Export failed:", error);
                 toast.error("Failed to export lorebook entries");
                 return;
             }
@@ -71,7 +72,7 @@ export default function LorebookPage() {
                 buildTagMap();
             });
             if (error) {
-                console.error("Import failed:", error);
+                logger.error("Import failed:", error);
                 toast.error("Failed to import lorebook entries");
                 return;
             }
@@ -97,10 +98,10 @@ export default function LorebookPage() {
         : entries.filter(entry => entry.category === activeTab);
 
     // Debug logging to help identify issues
-    console.log("Active tab:", activeTab);
-    console.log("Category counts:", categoryCounts);
-    console.log("Total entries:", entries.length);
-    console.log("Filtered entries:", filteredEntries.length);
+    logger.info("Active tab:", activeTab);
+    logger.info("Category counts:", categoryCounts);
+    logger.info("Total entries:", entries.length);
+    logger.info("Filtered entries:", filteredEntries.length);
 
     return (
         <div className="container mx-auto p-6 space-y-6">

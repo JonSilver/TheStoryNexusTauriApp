@@ -45,6 +45,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Chapter } from "@/types/story";
+import { logger } from '@/utils/logger';
 
 interface CreateChapterForm {
   title: string;
@@ -128,7 +129,7 @@ export default function Chapters() {
     );
 
     if (error) {
-      console.error("Failed to create chapter:", error);
+      logger.error("Failed to create chapter:", error);
       toast.error("Failed to create chapter");
       return;
     }
@@ -167,7 +168,7 @@ export default function Chapters() {
     );
 
     if (error) {
-      console.error("Failed to update chapter order:", error);
+      logger.error("Failed to update chapter order:", error);
       toast.error("Failed to update chapter order");
       // Refetch to ensure UI is in sync with database
       if (storyId) {

@@ -3,6 +3,8 @@ import { AIModel, AIProvider, PromptMessage } from '@/types/story';
 import { IAIProvider } from './IAIProvider';
 import { attemptPromise } from '@jfdi/attempt';
 import { API_URLS } from '@/constants/urls';
+import { wrapOpenAIStream } from '../streamUtils';
+import { logger } from '@/utils/logger';
 
 interface OpenRouterModelResponse {
     id: string;
@@ -37,23 +39,23 @@ export class OpenRouterProvider implements IAIProvider {
 
     async fetchModels(): Promise<AIModel[]> {
         if (!this.client) {
-            console.warn('[OpenRouterProvider] Client not initialized');
+            logger.warn('[OpenRouterProvider] Client not initialized');
             return [];
         }
 
-        console.log('[OpenRouterProvider] Fetching models');
+        logger.info('[OpenRouterProvider] Fetching models');
 
         const [fetchError, response] = await attemptPromise(() =>
             fetch(`${API_URLS.OPENROUTER_BASE}/models`)
         );
 
         if (fetchError || !response) {
-            console.error('[OpenRouterProvider] Error fetching models:', fetchError);
+            logger.error('[OpenRouterProvider] Error fetching models:', fetchError);
             return [];
         }
 
         if (!response.ok) {
-            console.error('[OpenRouterProvider] Failed to fetch OpenRouter models');
+            logger.error('[OpenRouterProvider] Failed to fetch OpenRouter models');
             return [];
         }
 
@@ -62,7 +64,7 @@ export class OpenRouterProvider implements IAIProvider {
         );
 
         if (jsonError || !result) {
-            console.error('[OpenRouterProvider] Error parsing models:', jsonError);
+            logger.error('[OpenRouterProvider] Error parsing models:', jsonError);
             return [];
         }
 
@@ -74,7 +76,7 @@ export class OpenRouterProvider implements IAIProvider {
             enabled: true
         }));
 
-        console.log(`[OpenRouterProvider] Fetched ${models.length} models`);
+        logger.info(`[OpenRouterProvider] Fetched ${models.length} models`);
         return models;
     }
 
@@ -97,26 +99,7 @@ export class OpenRouterProvider implements IAIProvider {
             stream: true
         }, { signal });
 
-        return new Response(
-            new ReadableStream({
-                async start(controller) {
-                    const [error] = await attemptPromise(async () => {
-                        for await (const chunk of stream) {
-                            const content = chunk.choices[0]?.delta?.content;
-                            if (content) {
-                                controller.enqueue(new TextEncoder().encode(content));
-                            }
-                        }
-                    });
-
-                    if (error) {
-                        controller.error(error);
-                    } else {
-                        controller.close();
-                    }
-                }
-            })
-        );
+        return wrapOpenAIStream(stream);
     }
 
     isInitialized(): boolean {

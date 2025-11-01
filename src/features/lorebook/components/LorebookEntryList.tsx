@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import type { LorebookEntry } from "@/types/story";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 interface LorebookEntryListProps {
     entries: LorebookEntry[];
@@ -78,7 +79,7 @@ export function LorebookEntryList({ entries: allEntries }: LorebookEntryListProp
     const handleDelete = async (entry: LorebookEntry) => {
         const [error] = await attemptPromise(async () => deleteEntry(entry.id));
         if (error) {
-            console.error('Failed to delete entry:', error);
+            logger.error('Failed to delete entry:', error);
             return;
         }
         setDeletingEntry(null);
@@ -89,7 +90,7 @@ export function LorebookEntryList({ entries: allEntries }: LorebookEntryListProp
             updateEntry(entry.id, { isDisabled: !entry.isDisabled })
         );
         if (error) {
-            console.error('Failed to update entry:', error);
+            logger.error('Failed to update entry:', error);
         }
     };
 

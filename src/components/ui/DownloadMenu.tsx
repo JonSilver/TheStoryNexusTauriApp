@@ -9,6 +9,7 @@ import {
 import { toast } from "react-toastify";
 import { downloadChapter, downloadStory } from "@/utils/exportUtils";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 interface DownloadMenuProps {
     type: 'story' | 'chapter';
@@ -39,7 +40,7 @@ export function DownloadMenu({
             }
         });
         if (error) {
-            console.error(`Failed to download ${type}:`, error);
+            logger.error(`Failed to download ${type}:`, error);
             toast.error(`Failed to download ${type}`, {
                 position: "bottom-center",
                 autoClose: 2000,

@@ -18,6 +18,7 @@ import Editor from './Editor';
 import PlaygroundNodes from './nodes/PlaygroundNodes';
 import { TableContext } from './plugins/TablePlugin';
 import PlaygroundEditorTheme from './themes/PlaygroundEditorTheme';
+import { logger } from '@/utils/logger';
 
 function App(): JSX.Element {
 
@@ -25,7 +26,7 @@ function App(): JSX.Element {
     namespace: 'Playground',
     nodes: [...PlaygroundNodes],
     onError: (error: Error) => {
-      console.error('Lexical Error:', error);
+      logger.error('Lexical Error:', error);
     },
     theme: PlaygroundEditorTheme,
   };

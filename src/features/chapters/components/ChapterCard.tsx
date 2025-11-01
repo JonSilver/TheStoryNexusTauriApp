@@ -1,5 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { attemptPromise } from "@jfdi/attempt";
+import { z } from "zod";
+import { parseLocalStorage } from "@/schemas/entities";
 import { Button } from "../../../components/ui/button";
 import {
   Pencil,
@@ -56,6 +58,7 @@ import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
 import { DownloadMenu } from "@/components/ui/DownloadMenu";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { logger } from '@/utils/logger';
 
 interface ChapterCardProps {
   chapter: Chapter;
@@ -73,8 +76,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const expandedStateKey = `chapter-${chapter.id}-expanded`;
   const [isExpanded, setIsExpanded] = useState(() => {
-    const stored = localStorage.getItem(expandedStateKey);
-    return stored ? JSON.parse(stored) : false;
+    return parseLocalStorage(z.boolean(), expandedStateKey, false);
   });
   const [summary, setSummary] = useState(chapter.summary || "");
   const deleteChapter = useChapterStore((state) => state.deleteChapter);
@@ -150,7 +152,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     );
 
     if (error) {
-      console.error("Failed to delete chapter:", error);
+      logger.error("Failed to delete chapter:", error);
       toast.error("Failed to delete chapter");
       return;
     }
@@ -174,7 +176,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     );
 
     if (error) {
-      console.error("Failed to update chapter:", error);
+      logger.error("Failed to update chapter:", error);
       toast.error("Failed to update chapter");
       return;
     }
@@ -196,7 +198,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
       );
 
       if (error) {
-        console.error("Failed to save summary:", error);
+        logger.error("Failed to save summary:", error);
         toast.error("Failed to save summary");
         return;
       }
@@ -244,7 +246,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     });
 
     if (error) {
-      console.error("Failed to generate summary:", error);
+      logger.error("Failed to generate summary:", error);
       toast.error("Failed to generate summary");
     }
 

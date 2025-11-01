@@ -1,10 +1,13 @@
 import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
+import { z } from 'zod';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { generatePromptId } from '@/utils/idGenerator';
 import { logger } from '@/utils/logger';
+import { promptsExportSchema, promptSchema, parseJSON } from '@/schemas/entities';
+import { downloadJSONDataURI, generateExportFilename } from '@/utils/jsonExportUtils';
+import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 import type { Prompt, PromptMessage } from '@/types/story';
 
 interface PromptStore {
@@ -34,13 +37,11 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
     error: null,
 
     validatePromptData: (messages) => {
-        return messages.every(msg =>
-            typeof msg === 'object' &&
-            ('role' in msg) &&
-            ('content' in msg) &&
-            ['system', 'user', 'assistant'].includes(msg.role) &&
-            typeof msg.content === 'string'
-        );
+        const messageSchema = z.array(z.object({
+            role: z.enum(['system', 'user', 'assistant']),
+            content: z.string(),
+        }));
+        return messageSchema.safeParse(messages).success;
     },
 
     fetchPrompts: async () => {
@@ -74,17 +75,23 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw new Error('A prompt with this name already exists');
         }
 
-        const prompt: Prompt = {
-            ...promptData,
-            id: generatePromptId(),
-            createdAt: new Date(),
-            temperature: promptData.temperature || 1.0,
-            maxTokens: promptData.maxTokens || 4096,
-            top_p: promptData.top_p !== undefined ? promptData.top_p : 1.0,
-            top_k: promptData.top_k !== undefined ? promptData.top_k : 50,
-            repetition_penalty: promptData.repetition_penalty !== undefined ? promptData.repetition_penalty : 1.0,
-            min_p: promptData.min_p !== undefined ? promptData.min_p : 0.0
-        };
+        let prompt: Prompt;
+        try {
+            prompt = createValidatedEntity(
+                promptData,
+                promptSchema,
+                {
+                    temperature: promptData.temperature || 1.0,
+                    maxTokens: promptData.maxTokens || 4096,
+                    top_p: promptData.top_p !== undefined ? promptData.top_p : 1.0,
+                    top_k: promptData.top_k !== undefined ? promptData.top_k : 50,
+                    repetition_penalty: promptData.repetition_penalty !== undefined ? promptData.repetition_penalty : 1.0,
+                    min_p: promptData.min_p !== undefined ? promptData.min_p : 0.0
+                }
+            );
+        } catch (error) {
+            throw error instanceof Error ? error : new Error('Validation failed');
+        }
 
         const [addError] = await attemptPromise(() => db.prompts.add(prompt));
 
@@ -102,8 +109,10 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
     },
 
     updatePrompt: async (id, promptData) => {
-        if (promptData.messages && !get().validatePromptData(promptData.messages)) {
-            throw new Error('Invalid prompt data structure');
+        try {
+            validatePartialUpdate(promptData, promptSchema);
+        } catch (error) {
+            throw error instanceof Error ? error : new Error('Validation failed');
         }
 
         // If name is being updated, check for duplicates
@@ -181,13 +190,19 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw fetchError || new Error('Prompt not found');
         }
 
-        const clonedPrompt: Prompt = {
-            ...originalPrompt,
-            id: generatePromptId(),
-            name: `${originalPrompt.name} (Copy)`,
-            createdAt: new Date(),
-            isSystem: false // Always set to false for cloned prompts
-        };
+        let clonedPrompt: Prompt;
+        try {
+            clonedPrompt = createValidatedEntity(
+                { ...originalPrompt },
+                promptSchema,
+                {
+                    name: `${originalPrompt.name} (Copy)`,
+                    isSystem: false // Always set to false for cloned prompts
+                }
+            );
+        } catch (error) {
+            throw error instanceof Error ? error : new Error('Validation failed');
+        }
 
         const [addError] = await attemptPromise(() => db.prompts.add(clonedPrompt));
 
@@ -221,45 +236,32 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
         // Only export non-system prompts
         const prompts = allPrompts.filter(p => !p.isSystem);
 
-        const dataStr = JSON.stringify({
+        const exportData = {
             version: '1.0',
             type: 'prompts',
             prompts
-        }, null, 2);
+        };
 
-        const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-        const exportName = `prompts-export-${new Date().toISOString().slice(0, 10)}.json`;
-
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportName);
-        linkElement.click();
+        const filename = generateExportFilename('prompts-export');
+        downloadJSONDataURI(exportData, filename);
     },
 
     // Import prompts from JSON string. Creates new IDs and createdAt. Ensures unique names.
     importPrompts: async (jsonData) => {
-        const data = JSON.parse(jsonData);
-
-        if (!data.type || data.type !== 'prompts' || !Array.isArray(data.prompts)) {
-            throw new Error('Invalid prompts data format');
+        const result = parseJSON(promptsExportSchema, jsonData);
+        if (!result.success) {
+            throw new Error(`Invalid prompts data: ${result.error.message}`);
         }
 
-        const imported: Prompt[] = data.prompts;
+        const imported: Prompt[] = result.data.prompts;
 
         for (const p of imported) {
-            // Minimal validation of messages
-            if (!p.messages || !Array.isArray(p.messages) || !get().validatePromptData(p.messages)) {
-                // Skip invalid prompt
-                logger.warn('Skipping invalid prompt during import (messages invalid)', { name: p.name });
-                continue;
-            }
-
             // Ensure unique name - check DB for existing name and append suffix if needed
             const newName = await get().findUniqueName(p.name || 'Imported Prompt');
 
             const newPrompt: Prompt = {
                 ...p,
-                id: generatePromptId(),
+                id: crypto.randomUUID(),
                 name: newName,
                 createdAt: new Date(),
                 // Ensure imported prompts are not treated as system prompts

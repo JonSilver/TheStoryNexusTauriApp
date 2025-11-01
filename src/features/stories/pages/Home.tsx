@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { storyExportService } from "@/services/storyExportService";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export default function Home() {
     const { stories, fetchStories } = useStoryStore();
@@ -52,7 +53,7 @@ export default function Home() {
                 await fetchStories();
             });
             if (error) {
-                console.error("Import failed:", error);
+                logger.error("Import failed:", error);
             }
         };
 

@@ -4,8 +4,10 @@ import { Note } from '@/types/story';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { generateNoteId } from '@/utils/idGenerator';
-import { toast } from 'react-toastify';
+import { toastCRUD } from '@/utils/toastUtils';
+import { noteSchema } from '@/schemas/entities';
+import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
+import { logger } from '@/utils/logger';
 
 interface NotesState {
     notes: Note[];
@@ -39,7 +41,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
         if (error) {
             const errorMessage = formatError(error, ERROR_MESSAGES.FETCH_FAILED('notes'));
             set({ error: errorMessage, isLoading: false });
-            toast.error(errorMessage);
+            toastCRUD.loadError('notes', error);
             return;
         }
 
@@ -48,21 +50,23 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
 
     createNote: async (storyId: string, title: string, content: string, type: Note['type']) => {
         const now = new Date();
-        const newNote: Note = {
-            id: generateNoteId(),
-            storyId,
-            title,
-            content,
-            type,
-            createdAt: now,
-            updatedAt: now
-        };
+
+        let newNote: Note;
+        try {
+            newNote = createValidatedEntity(
+                { storyId, title, content, type },
+                noteSchema,
+                { updatedAt: now }
+            );
+        } catch (error) {
+            toastCRUD.createError('note', error);
+            throw error;
+        }
 
         const [addError] = await attemptPromise(() => db.notes.add(newNote));
 
         if (addError) {
-            const errorMessage = formatError(addError, ERROR_MESSAGES.CREATE_FAILED('note'));
-            toast.error(errorMessage);
+            toastCRUD.createError('note', addError);
             throw addError;
         }
 
@@ -76,21 +80,27 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
 
         if (fetchError) {
             // Note was created but refresh failed - not critical
-            console.error(formatError(fetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), fetchError);
+            logger.error(formatError(fetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), fetchError);
         } else {
             set({ notes });
         }
 
-        toast.success('Note created successfully');
+        toastCRUD.createSuccess('Note');
         return newNote.id;
     },
 
     updateNote: async (noteId: string, data: Partial<Note>) => {
+        try {
+            validatePartialUpdate(data, noteSchema);
+        } catch (error) {
+            toastCRUD.updateError('note', error);
+            throw error;
+        }
+
         const [fetchError, note] = await attemptPromise(() => db.notes.get(noteId));
 
         if (fetchError || !note) {
-            const errorMessage = formatError(fetchError || new Error('Note not found'), ERROR_MESSAGES.NOT_FOUND('note'));
-            toast.error(errorMessage);
+            toastCRUD.loadError('note', fetchError || new Error('Note not found'));
             throw fetchError || new Error('Note not found');
         }
 
@@ -103,8 +113,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
         const [updateError] = await attemptPromise(() => db.notes.update(noteId, updatedNote));
 
         if (updateError) {
-            const errorMessage = formatError(updateError, ERROR_MESSAGES.UPDATE_FAILED('note'));
-            toast.error(errorMessage);
+            toastCRUD.updateError('note', updateError);
             throw updateError;
         }
 
@@ -117,28 +126,26 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
         );
 
         if (refetchError) {
-            console.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), refetchError);
+            logger.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), refetchError);
         } else {
             set({ notes });
         }
 
-        toast.success('Note updated successfully');
+        toastCRUD.updateSuccess('Note');
     },
 
     deleteNote: async (noteId: string) => {
         const [fetchError, note] = await attemptPromise(() => db.notes.get(noteId));
 
         if (fetchError || !note) {
-            const errorMessage = formatError(fetchError || new Error('Note not found'), ERROR_MESSAGES.NOT_FOUND('note'));
-            toast.error(errorMessage);
+            toastCRUD.deleteError('note', fetchError || new Error('Note not found'));
             throw fetchError || new Error('Note not found');
         }
 
         const [deleteError] = await attemptPromise(() => db.notes.delete(noteId));
 
         if (deleteError) {
-            const errorMessage = formatError(deleteError, ERROR_MESSAGES.DELETE_FAILED('note'));
-            toast.error(errorMessage);
+            toastCRUD.deleteError('note', deleteError);
             throw deleteError;
         }
 
@@ -151,12 +158,12 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
         );
 
         if (refetchError) {
-            console.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), refetchError);
+            logger.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), refetchError);
         } else {
             set({ notes, selectedNote: null });
         }
 
-        toast.success('Note deleted successfully');
+        toastCRUD.deleteSuccess('Note');
     },
 
     selectNote: (note: Note | null) => {

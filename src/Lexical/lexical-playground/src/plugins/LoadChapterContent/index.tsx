@@ -3,6 +3,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
 import { useStoryContext } from '@/features/stories/context/StoryContext';
 import { attempt } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export function LoadChapterContentPlugin(): null {
     const [editor] = useLexicalComposerContext();
@@ -30,7 +31,7 @@ export function LoadChapterContentPlugin(): null {
                     setHasLoaded(true);
                 });
                 if (error) {
-                    console.error('LoadChapterContent - Failed to load content:', error);
+                    logger.error('LoadChapterContent - Failed to load content:', error);
 
                     // Only in case of error, try to create an empty editor state
                     const [recoveryError] = attempt(() => {
@@ -38,7 +39,7 @@ export function LoadChapterContentPlugin(): null {
                         setHasLoaded(true);
                     });
                     if (recoveryError) {
-                        console.error('LoadChapterContent - Recovery failed:', recoveryError);
+                        logger.error('LoadChapterContent - Recovery failed:', recoveryError);
                     }
                 }
             });

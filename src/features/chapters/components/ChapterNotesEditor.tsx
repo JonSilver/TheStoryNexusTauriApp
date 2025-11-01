@@ -5,6 +5,7 @@ import Editor from 'react-simple-wysiwyg';
 import { cn } from '@/lib/utils';
 import type { ChapterNotes } from '@/types/story';
 import debounce from 'lodash/debounce';
+import { logger } from '@/utils/logger';
 
 interface ChapterNotesEditorProps {
     onClose: () => void;
@@ -30,7 +31,7 @@ export function ChapterNotesEditor({ onClose: _onClose }: ChapterNotesEditorProp
             );
 
             if (error) {
-                console.error('Failed to save notes:', error);
+                logger.error('Failed to save notes:', error);
                 return;
             }
 
