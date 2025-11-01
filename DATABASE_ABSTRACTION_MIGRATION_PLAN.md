@@ -1,10 +1,13 @@
-# Database Migration Plan: Dexie → SQLite
+# Database Migration Plan: Dexie → SQLite + Zustand → Tanstack Query
 
 ## Summary
 
 Replace Dexie/IndexedDB with SQLite via Tauri SQL plugin + Drizzle ORM.
+Replace Zustand stores with Tanstack Query for proper data fetching/caching.
 
-**Why**: Better performance, easier backup (single file), proper foreign keys, standard SQL tooling.
+**Why**:
+- **SQLite**: Better performance, easier backup (single file), proper foreign keys, standard SQL tooling
+- **Tanstack Query**: Built for server/backend state, handles caching/invalidation/optimistic updates properly
 
 ---
 
@@ -15,11 +18,18 @@ Replace Dexie/IndexedDB with SQLite via Tauri SQL plugin + Drizzle ORM.
 - Foreign key relationships managed manually (e.g., `deleteStoryWithRelated`)
 - Direct Dexie access from Zustand stores
 
-**Problems**:
+**Problems with Dexie**:
 - Binary blob storage (hard to backup/inspect)
 - No real foreign keys
 - Browser-only (limits future options)
 - Poor query performance with complex filters
+
+**Problems with Zustand for data access**:
+- Manual cache management
+- No automatic refetching
+- Manual loading/error states
+- No cache invalidation strategy
+- Not designed for server/backend state
 
 ---
 
@@ -29,8 +39,13 @@ Replace Dexie/IndexedDB with SQLite via Tauri SQL plugin + Drizzle ORM.
 
 **Install dependencies**:
 ```bash
-npm install drizzle-orm @tauri-apps/plugin-sql
+npm install drizzle-orm @tauri-apps/plugin-sql @tanstack/react-query
 npm install -D drizzle-kit
+```
+
+**Remove**:
+```bash
+npm uninstall zustand
 ```
 
 **Configure Tauri** (`src-tauri/Cargo.toml`):
@@ -51,6 +66,30 @@ src/db/
   client.ts       # Init DB
   queries.ts      # Query functions
   migrate.ts      # One-time IndexedDB→SQLite
+src/hooks/
+  useStories.ts   # Tanstack Query hooks
+  useChapters.ts
+  useLorebook.ts
+  ... etc
+```
+
+**Setup QueryClient** (`src/App.tsx` or `src/main.tsx`):
+```typescript
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// Wrap app
+<QueryClientProvider client={queryClient}>
+  <App />
+</QueryClientProvider>
 ```
 
 ### 2. Define Schema
@@ -160,29 +199,94 @@ export const getLorebookByCategory = (storyId: string, category: string) =>
 
 **Benefits**: Simple, functional, type-safe. No classes/inheritance/repositories nonsense.
 
-### 5. Update Stores
+### 5. Create Tanstack Query Hooks
 
-Change imports and method calls in each store (useStoryStore, useChapterStore, etc.):
+Replace Zustand stores with query/mutation hooks. Example **src/hooks/useStories.ts**:
 
-**Before**:
 ```typescript
-import { db } from '@/services/database';
-const stories = await db.stories.toArray();
-const story = await db.stories.get(id);
-await db.stories.add(data);
-await db.deleteStoryWithRelated(id);
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAllStories, getStory, createStory, updateStory, deleteStory } from '@/db/queries';
+import type { Story } from '@/types/story';
+
+// Query: Get all stories
+export const useStories = () => {
+  return useQuery({
+    queryKey: ['stories'],
+    queryFn: getAllStories,
+  });
+};
+
+// Query: Get single story
+export const useStory = (id: string) => {
+  return useQuery({
+    queryKey: ['stories', id],
+    queryFn: () => getStory(id),
+    enabled: !!id,
+  });
+};
+
+// Mutation: Create story
+export const useCreateStory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createStory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stories'] });
+    },
+  });
+};
+
+// Mutation: Update story
+export const useUpdateStory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Story> }) =>
+      updateStory(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['stories'] });
+      queryClient.invalidateQueries({ queryKey: ['stories', id] });
+    },
+  });
+};
+
+// Mutation: Delete story
+export const useDeleteStory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteStory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stories'] });
+    },
+  });
+};
 ```
 
-**After**:
+**Similar pattern for chapters, lorebook, etc.**
+
+**Usage in components** (replaces old Zustand):
+
 ```typescript
-import { getAllStories, getStory, createStory, deleteStory } from '@/db/queries';
-const stories = await getAllStories();
-const story = await getStory(id);
-await createStory(data);
-await deleteStory(id); // CASCADE handles related records
+// Before (Zustand)
+const { stories, loading, fetchStories } = useStoryStore();
+useEffect(() => { fetchStories(); }, []);
+
+// After (Tanstack Query)
+const { data: stories, isLoading } = useStories();
+const createMutation = useCreateStory();
+
+// Create story
+createMutation.mutate(newStory);
 ```
 
-Work through stores one at a time, test each.
+**Benefits**:
+- Auto caching, no manual state sync
+- Built-in loading/error states
+- Auto invalidation on mutations
+- Optimistic updates easy to add
+- Deduplication of requests
 
 ### 6. Data Migration
 
@@ -236,12 +340,21 @@ Future: Add "Export Database" button to copy `.db` file somewhere safe.
 
 ## Benefits
 
+**SQLite + Drizzle**:
 1. **Single-file backup**: Copy `story_nexus.db`, done
 2. **Proper foreign keys**: CASCADE delete, no manual cleanup
 3. **Better performance**: Real SQL engine vs IndexedDB
 4. **Standard tooling**: Can inspect DB with any SQLite browser
 5. **Type safety**: Drizzle excellent TypeScript support
 6. **Portable**: Move `.db` file between machines
+
+**Tanstack Query**:
+7. **Automatic caching**: No manual cache management, smart refetching
+8. **Built-in states**: Loading, error, success states out of box
+9. **Cache invalidation**: Proper mutation → query invalidation
+10. **Optimistic updates**: Easy to implement for snappy UI
+11. **Request deduplication**: Multiple components can use same query
+12. **Designed for data**: Built specifically for server/backend state
 
 ---
 
@@ -256,18 +369,30 @@ Future: Add "Export Database" button to copy `.db` file somewhere safe.
 
 ---
 
-## Why Not Keep Dexie?
+## Why Not Keep Dexie + Zustand?
 
+**Dexie**:
 - IndexedDB browser API clunky for complex queries
 - Binary storage format (can't easily inspect/recover)
 - Tied to browser environment
 - Manual foreign key management error-prone
 - SQLite is standard, well-tested, portable
 
+**Zustand for data**:
+- Manual loading/error state management
+- No cache invalidation strategy
+- Manual refetch orchestration
+- Not designed for server/backend state
+- Zustand good for UI state, not data fetching
+
 ---
 
 ## Recommendation
 
-Do it. Addresses TODO in CLAUDE.md ("replace with better, portable solution"). Simple migration, big wins.
+Do both migrations together:
+- **Dexie → SQLite + Drizzle**: Better database, proper SQL, portable
+- **Zustand → Tanstack Query**: Proper data fetching/caching layer
 
-**Next**: Approve plan, start with schema definition, test incrementally.
+Addresses TODO in CLAUDE.md ("replace with better, portable solution"). Clean slate, modern stack.
+
+**Next**: Approve plan, implement incrementally, test as you go.
