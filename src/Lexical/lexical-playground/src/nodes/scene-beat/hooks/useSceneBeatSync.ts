@@ -3,6 +3,7 @@ import { debounce } from "lodash";
 import { sceneBeatService } from "@/features/scenebeats/services/sceneBeatService";
 import type { SceneBeat } from "@/types/story";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 const DEBOUNCE_DELAY_MS = 500;
 
@@ -25,7 +26,7 @@ export const useSceneBeatSync = (sceneBeatId: string) => {
           sceneBeatService.updateSceneBeat(sceneBeatId, { command })
         );
         if (error) {
-          console.error("Error saving SceneBeat command:", error);
+          logger.error("Error saving SceneBeat command:", error);
         }
       }, DEBOUNCE_DELAY_MS),
     [sceneBeatId]
@@ -52,7 +53,7 @@ export const useSceneBeatSync = (sceneBeatId: string) => {
             sceneBeatService.updateSceneBeat(sceneBeatId, updatedSceneBeat)
           );
           if (error) {
-            console.error("Error updating scene beat toggle states:", error);
+            logger.error("Error updating scene beat toggle states:", error);
           }
         },
         DEBOUNCE_DELAY_MS
@@ -77,7 +78,7 @@ export const useSceneBeatSync = (sceneBeatId: string) => {
       })
     );
     if (error) {
-      console.error("Error saving POV settings:", error);
+      logger.error("Error saving POV settings:", error);
     }
   };
 
@@ -94,7 +95,7 @@ export const useSceneBeatSync = (sceneBeatId: string) => {
       })
     );
     if (error) {
-      console.error("Error saving generated content:", error);
+      logger.error("Error saving generated content:", error);
     }
   };
 
@@ -105,7 +106,7 @@ export const useSceneBeatSync = (sceneBeatId: string) => {
       sceneBeatService.updateSceneBeat(sceneBeatId, { accepted })
     );
     if (error) {
-      console.error("Error updating accepted status:", error);
+      logger.error("Error updating accepted status:", error);
     }
   };
 

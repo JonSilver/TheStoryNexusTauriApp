@@ -6,10 +6,11 @@ import { Plus, RefreshCw } from 'lucide-react';
 import { Upload, Download } from 'lucide-react';
 import type { Prompt } from '@/types/story';
 import { cn } from '@/lib/utils';
-import { toast } from 'react-toastify';
+import { toastCRUD } from '@/utils/toastUtils';
 import { dbSeeder } from '@/services/dbSeed';
 import { usePromptStore } from '../store/promptStore';
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export function PromptsManager() {
     const [selectedPrompt, setSelectedPrompt] = useState<Prompt | undefined>(undefined);
@@ -52,10 +53,10 @@ export function PromptsManager() {
             await fetchPrompts();
         });
         if (error) {
-            toast.error('Failed to reseed system prompts');
-            console.error('Error reseeding system prompts:', error);
+            toastCRUD.generic.error('Failed to reseed system prompts', error);
+            logger.error('Error reseeding system prompts:', error);
         } else {
-            toast.success('System prompts reseeded successfully');
+            toastCRUD.generic.success('System prompts reseeded successfully');
         }
         setIsReseeding(false);
     };
@@ -82,10 +83,10 @@ export function PromptsManager() {
                             onClick={async () => {
                                 const [error] = await attemptPromise(async () => exportPrompts());
                                 if (error) {
-                                    console.error('Export failed', error);
-                                    toast.error('Failed to export prompts');
+                                    logger.error('Export failed', error);
+                                    toastCRUD.exportError('prompts', error);
                                 } else {
-                                    toast.success('Prompts exported');
+                                    toastCRUD.exportSuccess('Prompts');
                                 }
                             }}
                             title="Export prompts"
@@ -108,10 +109,10 @@ export function PromptsManager() {
                                     await fetchPrompts();
                                 });
                                 if (error) {
-                                    console.error('Import failed', error);
-                                    toast.error('Failed to import prompts');
+                                    logger.error('Import failed', error);
+                                    toastCRUD.importError('prompts', error);
                                 } else {
-                                    toast.success('Prompts imported successfully');
+                                    toastCRUD.importSuccess('Prompts');
                                 }
                                 setIsImporting(false);
                                 // clear the input so the same file can be reselected if needed

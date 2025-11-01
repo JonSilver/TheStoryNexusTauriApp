@@ -2,6 +2,7 @@ import { AIModel, AIProvider, PromptMessage } from '@/types/story';
 import { IAIProvider } from './IAIProvider';
 import { attemptPromise } from '@jfdi/attempt';
 import { API_URLS } from '@/constants/urls';
+import { logger } from '@/utils/logger';
 
 export class LocalAIProvider implements IAIProvider {
     private apiUrl: string;
@@ -17,14 +18,14 @@ export class LocalAIProvider implements IAIProvider {
     }
 
     async fetchModels(): Promise<AIModel[]> {
-        console.log(`[LocalAIProvider] Fetching models from: ${this.apiUrl}`);
+        logger.info(`[LocalAIProvider] Fetching models from: ${this.apiUrl}`);
 
         const [fetchError, response] = await attemptPromise(() =>
             fetch(`${this.apiUrl}/models`)
         );
 
         if (fetchError || !response) {
-            console.warn('[LocalAIProvider] Failed to fetch models:', fetchError);
+            logger.warn('[LocalAIProvider] Failed to fetch models:', fetchError);
             return [{
                 id: 'local',
                 name: 'Local Model',
@@ -35,7 +36,7 @@ export class LocalAIProvider implements IAIProvider {
         }
 
         if (!response.ok) {
-            console.error(`[LocalAIProvider] Failed to fetch models: ${response.status}`);
+            logger.error(`[LocalAIProvider] Failed to fetch models: ${response.status}`);
             return [{
                 id: 'local',
                 name: 'Local Model',
@@ -48,7 +49,7 @@ export class LocalAIProvider implements IAIProvider {
         const [jsonError, result] = await attemptPromise(() => response.json());
 
         if (jsonError || !result) {
-            console.warn('[LocalAIProvider] Failed to parse models:', jsonError);
+            logger.warn('[LocalAIProvider] Failed to parse models:', jsonError);
             return [{
                 id: 'local',
                 name: 'Local Model',
@@ -58,7 +59,7 @@ export class LocalAIProvider implements IAIProvider {
             }];
         }
 
-        console.log(`[LocalAIProvider] Received ${result.data.length} models`);
+        logger.info(`[LocalAIProvider] Received ${result.data.length} models`);
 
         const models = result.data.map((model: { id: string }) => ({
             id: `local/${model.id}`,

@@ -1,6 +1,7 @@
 import { PromptContext } from '@/types/story';
 import { IVariableResolver, IVariableResolverRegistry } from './types';
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export class VariableResolverRegistry implements IVariableResolverRegistry {
     private resolvers = new Map<string, IVariableResolver>();
@@ -19,7 +20,7 @@ export class VariableResolverRegistry implements IVariableResolverRegistry {
     async resolve(name: string, context: PromptContext, ...params: string[]): Promise<string> {
         const resolver = this.resolvers.get(name);
         if (!resolver) {
-            console.warn(`Unknown variable: ${name}`);
+            logger.warn(`Unknown variable: ${name}`);
             return `[Unknown variable: ${name}]`;
         }
 
@@ -28,7 +29,7 @@ export class VariableResolverRegistry implements IVariableResolverRegistry {
         );
 
         if (error) {
-            console.error(`Error resolving variable ${name}:`, error);
+            logger.error(`Error resolving variable ${name}:`, error);
             return `[Error: ${(error as Error).message}]`;
         }
 

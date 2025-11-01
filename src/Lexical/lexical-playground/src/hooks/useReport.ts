@@ -7,6 +7,7 @@
  */
 
 import {useCallback, useEffect, useRef} from 'react';
+import { logger } from '@/utils/logger';
 
 const getElement = (): HTMLElement => {
   let element = document.getElementById('report-container');
@@ -53,7 +54,7 @@ export default function useReport(): (
   return useCallback(
     (content) => {
       // eslint-disable-next-line no-console
-      console.log(content);
+      logger.info(content);
       const element = getElement();
       if (timer.current !== null) {
         clearTimeout(timer.current);

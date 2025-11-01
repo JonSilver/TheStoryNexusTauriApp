@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 type PromptType = Prompt['promptType'];
 
@@ -93,7 +94,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
             return await getAvailableModels();
         });
         if (error) {
-            console.error('Error loading AI models:', error);
+            logger.error('Error loading AI models:', error);
             toast.error('Failed to load AI models');
             return;
         }
@@ -254,7 +255,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
             toast.success(`Added ${defaultModels.length} default model(s)`);
         });
         if (error) {
-            console.error('Error loading default models:', error);
+            logger.error('Error loading default models:', error);
             toast.error('Failed to load default models');
         }
     };

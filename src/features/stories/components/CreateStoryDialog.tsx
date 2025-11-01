@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusCircle } from "lucide-react";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 
 export function CreateStoryDialog() {
@@ -36,7 +37,7 @@ export function CreateStoryDialog() {
             })
         );
         if (error) {
-            console.error("Failed to create story:", error);
+            logger.error("Failed to create story:", error);
             return;
         }
         setOpen(false);

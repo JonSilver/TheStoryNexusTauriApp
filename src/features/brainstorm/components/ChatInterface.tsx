@@ -12,6 +12,7 @@ import {
 } from "@/types/story";
 import { useEffect, useReducer, useRef } from "react";
 import { toast } from "react-toastify";
+import is from '@sindresorhus/is';
 import { chatReducer, initialChatState } from "../reducers/chatReducer";
 import { useBrainstormStore } from "../stores/useBrainstormStore";
 import { ChatMessageList } from "./ChatMessageList";
@@ -19,6 +20,7 @@ import { ContextSelector } from "./ContextSelector";
 import { MessageInputArea } from "./MessageInputArea";
 import { PromptControls } from "./PromptControls";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 interface ChatInterfaceProps {
     storyId: string;
@@ -161,7 +163,7 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
             promptParser.parse(config)
         );
         if (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorMessage = is.error(error) ? error.message : String(error);
             dispatch({ type: "PREVIEW_ERROR", payload: errorMessage });
             toast.error(`Error previewing prompt: ${errorMessage}`);
             return;
@@ -225,7 +227,7 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
             }
 
             if (response.status === 204) {
-                console.log("Generation was aborted.");
+                logger.info("Generation was aborted.");
                 dispatch({ type: "ABORT_GENERATION" });
                 return;
             }
@@ -266,7 +268,7 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
                     });
                 },
                 (error) => {
-                    console.error("Streaming error:", error);
+                    logger.error("Streaming error:", error);
                     dispatch({
                         type: "SET_PREVIEW_ERROR",
                         payload: "Failed to stream response",
@@ -276,11 +278,11 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
             );
         });
         if (error) {
-            console.error("Error during generation:", error);
+            logger.error("Error during generation:", error);
             dispatch({
                 type: "SET_PREVIEW_ERROR",
                 payload:
-                    error instanceof Error
+                    is.error(error)
                         ? error.message
                         : "An unknown error occurred",
             });
@@ -339,7 +341,7 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
             );
         });
         if (error) {
-            console.error("Failed to save edit", error);
+            logger.error("Failed to save edit", error);
             toast.error("Failed to save edit");
 
             if (selectedChat) {

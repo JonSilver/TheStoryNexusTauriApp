@@ -1,9 +1,12 @@
 import { AIModel, AIProvider, AISettings, PromptMessage } from '@/types/story';
 import { db } from '../database';
 import { AIProviderFactory } from './AIProviderFactory';
+import { IAIProvider } from './providers/IAIProvider';
 import { attemptPromise } from '@jfdi/attempt';
 import { formatSSEChunk, formatSSEDone } from '@/constants/aiConstants';
 import { API_URLS } from '@/constants/urls';
+import { aiSettingsSchema } from '@/schemas/entities';
+import { logger } from '@/utils/logger';
 
 export class AIService {
     private static instance: AIService;
@@ -50,6 +53,11 @@ export class AIService {
             availableModels: localModels,
         };
 
+        const result = aiSettingsSchema.safeParse(settings);
+        if (!result.success) {
+            throw new Error(`Invalid AI settings data: ${result.error.message}`);
+        }
+
         await db.aiSettings.add(settings);
         return settings;
     }
@@ -57,12 +65,17 @@ export class AIService {
     async updateKey(provider: AIProvider, key: string) {
         if (!this.settings) throw new Error('AIService not initialized');
 
-        console.log(`[AIService] Updating key for provider: ${provider}`);
+        logger.info(`[AIService] Updating key for provider: ${provider}`);
 
         const update: Partial<AISettings> = {
             ...(provider === 'openai' && { openaiKey: key }),
             ...(provider === 'openrouter' && { openrouterKey: key })
         };
+
+        const result = aiSettingsSchema.partial().safeParse(update);
+        if (!result.success) {
+            throw new Error(`Invalid AI settings update data: ${result.error.message}`);
+        }
 
         await db.aiSettings.update(this.settings.id, update);
         Object.assign(this.settings, update);
@@ -77,26 +90,33 @@ export class AIService {
     private async fetchAvailableModels(provider: AIProvider) {
         if (!this.settings) throw new Error('AIService not initialized');
 
-        console.log(`[AIService] Fetching available models for provider: ${provider}`);
+        logger.info(`[AIService] Fetching available models for provider: ${provider}`);
 
         const aiProvider = this.providerFactory.getProvider(provider);
         const [error, models] = await attemptPromise(() => aiProvider.fetchModels());
 
         if (error) {
-            console.error('Error fetching models:', error);
+            logger.error('Error fetching models:', error);
             throw error;
         }
 
-        console.log(`[AIService] Fetched ${models.length} models for ${provider}`);
+        logger.info(`[AIService] Fetched ${models.length} models for ${provider}`);
 
         // Update only models from this provider, keep others
         const existingModels = this.settings.availableModels.filter(m => m.provider !== provider);
         const updatedModels = [...existingModels, ...models];
 
-        await db.aiSettings.update(this.settings.id, {
+        const updateData = {
             availableModels: updatedModels,
             lastModelsFetch: new Date()
-        });
+        };
+
+        const result = aiSettingsSchema.partial().safeParse(updateData);
+        if (!result.success) {
+            throw new Error(`Invalid AI settings update data: ${result.error.message}`);
+        }
+
+        await db.aiSettings.update(this.settings.id, updateData);
 
         this.settings.availableModels = updatedModels;
         this.settings.lastModelsFetch = new Date();
@@ -205,30 +225,13 @@ export class AIService {
             this.providerFactory.initializeProvider('openai', this.settings.openaiKey);
         }
 
-        this.abortController = new AbortController();
-
-        const [error, response] = await attemptPromise(() =>
-            provider.generate(
-                messages,
-                modelId,
-                temperature,
-                maxTokens,
-                this.abortController!.signal
-            )
+        return await this.generateWithSSEFormatting(
+            provider,
+            messages,
+            modelId,
+            temperature,
+            maxTokens
         );
-
-        if (error) {
-            if ((error as Error).name === 'AbortError') {
-                return new Response(null, { status: 204 });
-            }
-            throw error;
-        }
-
-        if (!response) {
-            throw new Error('No response from provider');
-        }
-
-        return this.formatStreamAsSSE(response);
     }
 
     async generateWithOpenRouter(
@@ -250,6 +253,22 @@ export class AIService {
             this.providerFactory.initializeProvider('openrouter', this.settings.openrouterKey);
         }
 
+        return await this.generateWithSSEFormatting(
+            provider,
+            messages,
+            modelId,
+            temperature,
+            maxTokens
+        );
+    }
+
+    private async generateWithSSEFormatting(
+        provider: IAIProvider,
+        messages: PromptMessage[],
+        modelId: string,
+        temperature: number,
+        maxTokens: number
+    ): Promise<Response> {
         this.abortController = new AbortController();
 
         const [error, response] = await attemptPromise(() =>
@@ -321,7 +340,7 @@ export class AIService {
 
         if (error) {
             if ((error as Error).name === 'AbortError') {
-                console.log('Stream reading aborted.');
+                logger.info('Stream reading aborted.');
                 onComplete();
             } else {
                 onError(error as Error);
@@ -361,23 +380,39 @@ export class AIService {
             throw new Error('AI settings not initialized');
         }
 
+        let updateData: Partial<AISettings>;
         if (provider === 'local') {
-            await db.aiSettings.update(this.settings.id, { defaultLocalModel: modelId });
-            this.settings.defaultLocalModel = modelId;
+            updateData = { defaultLocalModel: modelId };
         } else if (provider === 'openai') {
-            await db.aiSettings.update(this.settings.id, { defaultOpenAIModel: modelId });
-            this.settings.defaultOpenAIModel = modelId;
+            updateData = { defaultOpenAIModel: modelId };
         } else if (provider === 'openrouter') {
-            await db.aiSettings.update(this.settings.id, { defaultOpenRouterModel: modelId });
-            this.settings.defaultOpenRouterModel = modelId;
+            updateData = { defaultOpenRouterModel: modelId };
+        } else {
+            return;
         }
+
+        const result = aiSettingsSchema.partial().safeParse(updateData);
+        if (!result.success) {
+            throw new Error(`Invalid AI settings update data: ${result.error.message}`);
+        }
+
+        await db.aiSettings.update(this.settings.id, updateData);
+        Object.assign(this.settings, updateData);
     }
 
     async updateLocalApiUrl(url: string): Promise<void> {
         if (!this.settings) {
             throw new Error('Settings not initialized');
         }
-        await db.aiSettings.update(this.settings.id, { localApiUrl: url });
+
+        const updateData = { localApiUrl: url };
+
+        const result = aiSettingsSchema.partial().safeParse(updateData);
+        if (!result.success) {
+            throw new Error(`Invalid AI settings update data: ${result.error.message}`);
+        }
+
+        await db.aiSettings.update(this.settings.id, updateData);
         this.settings.localApiUrl = url;
 
         // Update provider and re-fetch models
@@ -391,7 +426,7 @@ export class AIService {
 
     abortStream(): void {
         if (this.abortController) {
-            console.log('[AIService] Aborting stream');
+            logger.info('[AIService] Aborting stream');
             this.abortController.abort();
             this.abortController = null;
         }

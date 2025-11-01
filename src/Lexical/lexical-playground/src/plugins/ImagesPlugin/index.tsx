@@ -7,6 +7,7 @@
  */
 
 import type {JSX} from 'react';
+import is from '@sindresorhus/is';
 
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {$wrapNodeInElement, mergeRegister} from '@lexical/utils';
@@ -102,7 +103,7 @@ export function InsertImageUploadedDialogBody({
   const loadImage = (files: FileList | null) => {
     const reader = new FileReader();
     reader.onload = function () {
-      if (typeof reader.result === 'string') {
+      if (is.string(reader.result)) {
         setSrc(reader.result);
       }
       return '';

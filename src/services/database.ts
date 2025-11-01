@@ -1,5 +1,6 @@
 import Dexie, { Table } from 'dexie';
 import systemPrompts from '@/data/systemPrompts';
+import { sceneBeatSchema } from '@/schemas/entities';
 import {
     Story,
     Chapter,
@@ -11,6 +12,7 @@ import {
     Note,
     AllowedModel
 } from '../types/story';
+import { logger } from '@/utils/logger';
 
 export class StoryDatabase extends Dexie {
     stories!: Table<Story>;
@@ -47,7 +49,7 @@ export class StoryDatabase extends Dexie {
             sceneBeats: 'id, storyId, chapterId',
             notes: 'id, storyId, title, type, createdAt, updatedAt',
         }).upgrade(async (tx) => {
-            console.log('Upgraded to v13: Added default model fields to aiSettings');
+            logger.info('Upgraded to v13: Added default model fields to aiSettings');
 
             // Fix system prompts with placeholder "local" model
             const systemPrompts = await tx.table('prompts').where('isSystem').equals(1).toArray();
@@ -62,13 +64,13 @@ export class StoryDatabase extends Dexie {
                     await tx.table('prompts').update(prompt.id, {
                         allowedModels: []
                     });
-                    console.log(`Cleared placeholder models from system prompt: ${prompt.name}`);
+                    logger.info(`Cleared placeholder models from system prompt: ${prompt.name}`);
                 }
             }
         });
 
         this.on('populate', async () => {
-            console.log('Populating database with initial data...');
+            logger.info('Populating database with initial data...');
 
             // Add system prompts
             for (const promptData of systemPrompts) {
@@ -79,7 +81,7 @@ export class StoryDatabase extends Dexie {
                 } as Prompt);
             }
 
-            console.log('Database successfully populated with initial data');
+            logger.info('Database successfully populated with initial data');
         });
     }
 
@@ -154,15 +156,27 @@ export class StoryDatabase extends Dexie {
 
     async createSceneBeat(data: Omit<SceneBeat, 'id' | 'createdAt'>): Promise<string> {
         const id = crypto.randomUUID();
-        await this.sceneBeats.add({
+        const newSceneBeat = {
             id,
             createdAt: new Date(),
             ...data
-        } as SceneBeat);
+        } as SceneBeat;
+
+        const result = sceneBeatSchema.safeParse(newSceneBeat);
+        if (!result.success) {
+            throw new Error(`Invalid scene beat data: ${result.error.message}`);
+        }
+
+        await this.sceneBeats.add(newSceneBeat);
         return id;
     }
 
     async updateSceneBeat(id: string, data: Partial<SceneBeat>): Promise<void> {
+        const result = sceneBeatSchema.partial().safeParse(data);
+        if (!result.success) {
+            throw new Error(`Invalid scene beat update data: ${result.error.message}`);
+        }
+
         await this.sceneBeats.update(id, data);
     }
 
@@ -206,7 +220,7 @@ export class StoryDatabase extends Dexie {
                 // Finally delete the story itself
                 await this.stories.delete(storyId);
 
-                console.log(`Deleted story ${storyId} and all related data`);
+                logger.info(`Deleted story ${storyId} and all related data`);
             });
     }
 }

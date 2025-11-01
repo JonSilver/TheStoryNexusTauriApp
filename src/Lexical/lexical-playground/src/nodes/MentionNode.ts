@@ -18,6 +18,7 @@ import {
   type Spread,
   TextNode,
 } from 'lexical';
+import is from '@sindresorhus/is';
 
 export type SerializedMentionNode = Spread<
   {
@@ -34,7 +35,7 @@ function $convertMentionElement(
 
   if (textContent !== null) {
     const node = $createMentionNode(
-      typeof mentionName === 'string' ? mentionName : textContent,
+      is.string(mentionName) ? mentionName : textContent,
       textContent,
     );
     return {

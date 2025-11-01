@@ -7,6 +7,7 @@
  */
 import type {Position} from '../../nodes/InlineImageNode/InlineImageNode';
 import type {JSX} from 'react';
+import is from '@sindresorhus/is';
 
 import '../../nodes/InlineImageNode/InlineImageNode.css';
 
@@ -79,7 +80,7 @@ export function InsertInlineImageDialog({
   const loadImage = (files: FileList | null) => {
     const reader = new FileReader();
     reader.onload = function () {
-      if (typeof reader.result === 'string') {
+      if (is.string(reader.result)) {
         setSrc(reader.result);
       }
       return '';

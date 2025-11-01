@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import type { Prompt } from '@/types/story';
 import { cn } from '@/lib/utils';
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 interface PromptsListProps {
     onPromptSelect: (prompt: Prompt) => void;
@@ -39,7 +40,7 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
     useEffect(() => {
         fetchPrompts().catch(error => {
             toast.error('Failed to load prompts');
-            console.error('Error loading prompts:', error);
+            logger.error('Error loading prompts:', error);
         });
     }, [fetchPrompts]);
 
@@ -69,7 +70,7 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
         });
         if (error) {
             toast.error('Failed to delete prompt');
-            console.error('Error deleting prompt:', error);
+            logger.error('Error deleting prompt:', error);
             return;
         }
         toast.success('Prompt deleted successfully');
@@ -80,7 +81,7 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
         const [error] = await attemptPromise(async () => clonePrompt(promptId));
         if (error) {
             toast.error('Failed to clone prompt');
-            console.error('Error cloning prompt:', error);
+            logger.error('Error cloning prompt:', error);
             return;
         }
         toast.success('Prompt cloned successfully');

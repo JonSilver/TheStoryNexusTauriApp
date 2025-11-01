@@ -3,6 +3,7 @@ import { StoryExportService } from './export/StoryExportService';
 import { StoryImportService } from './export/StoryImportService';
 import { FileDownloadUtil } from './export/FileDownloadUtil';
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 const exportService = new StoryExportService();
 const importService = new StoryImportService();
@@ -17,7 +18,7 @@ export const storyExportService = {
         );
 
         if (error) {
-            console.error('Story export failed:', error);
+            logger.error('Story export failed:', error);
             toast.error(`Export failed: ${error.message}`);
             throw error;
         }
@@ -36,7 +37,7 @@ export const storyExportService = {
         );
 
         if (parseError) {
-            console.error('Story import failed:', parseError);
+            logger.error('Story import failed:', parseError);
             toast.error(`Import failed: ${parseError.message}`);
             throw parseError;
         }
@@ -46,7 +47,7 @@ export const storyExportService = {
         );
 
         if (importError) {
-            console.error('Story import failed:', importError);
+            logger.error('Story import failed:', importError);
             toast.error(`Import failed: ${importError.message}`);
             throw importError;
         }

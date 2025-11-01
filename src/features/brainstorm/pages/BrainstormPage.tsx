@@ -2,8 +2,35 @@ import { useParams } from 'react-router';
 import ChatList from '../components/ChatList';
 import ChatInterface from '../components/ChatInterface';
 import { useBrainstormStore } from '../stores/useBrainstormStore';
-import { MessageSquarePlus } from 'lucide-react';
+import { MessageSquarePlus, AlertCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+const ChatErrorFallback = (error: Error, resetError: () => void) => (
+    <div className="flex items-center justify-center h-full p-4">
+        <Alert variant="destructive" className="max-w-2xl">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Chat Error</AlertTitle>
+            <AlertDescription className="mt-2">
+                <p className="mb-4">The chat interface encountered an error: {error.message}</p>
+                <div className="flex gap-2">
+                    <Button onClick={resetError} variant="outline" size="sm">
+                        <RefreshCcw className="h-4 w-4 mr-2" />
+                        Reset Chat
+                    </Button>
+                    <Button
+                        onClick={() => window.location.reload()}
+                        variant="outline"
+                        size="sm"
+                    >
+                        Reload Page
+                    </Button>
+                </div>
+            </AlertDescription>
+        </Alert>
+    </div>
+);
 
 export default function BrainstormPage() {
     const { storyId } = useParams<{ storyId: string }>();
@@ -18,7 +45,9 @@ export default function BrainstormPage() {
             <ChatList storyId={storyId} />
             <div className="flex-1 h-full">
                 {selectedChat ? (
-                    <ChatInterface storyId={storyId} />
+                    <ErrorBoundary fallback={ChatErrorFallback} resetKeys={[selectedChat]}>
+                        <ChatInterface storyId={storyId} />
+                    </ErrorBoundary>
                 ) : (
                     <div className="flex items-center justify-center h-full flex-col gap-6 text-muted-foreground p-4">
                         <MessageSquarePlus className="h-16 w-16 text-muted-foreground/50" />

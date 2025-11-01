@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import type { LexicalEditor, NodeKey } from "lexical";
 import { $getNodeByKey } from "lexical";
+import is from '@sindresorhus/is';
 import { sceneBeatService } from "@/features/scenebeats/services/sceneBeatService";
 import type { POVType } from "../components/POVSettingsPopover";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 // Type guard for SceneBeatNode (duck typing to avoid circular dependency)
 interface SceneBeatNodeType {
@@ -13,12 +15,11 @@ interface SceneBeatNodeType {
 
 const isSceneBeatNode = (node: unknown): node is SceneBeatNodeType => {
   return (
-    typeof node === "object" &&
-    node !== null &&
+    is.plainObject(node) &&
     "getSceneBeatId" in node &&
     "setSceneBeatId" in node &&
-    typeof (node as SceneBeatNodeType).getSceneBeatId === "function" &&
-    typeof (node as SceneBeatNodeType).setSceneBeatId === "function"
+    is.function((node as unknown as SceneBeatNodeType).getSceneBeatId) &&
+    is.function((node as unknown as SceneBeatNodeType).setSceneBeatId)
   );
 };
 
@@ -90,7 +91,7 @@ export const useSceneBeatData = ({
           sceneBeatService.getSceneBeat(nodeSceneBeatId)
         );
         if (loadError) {
-          console.error("Error loading SceneBeat:", loadError);
+          logger.error("Error loading SceneBeat:", loadError);
         } else if (data) {
           setInitialCommand(data.command || "");
           setInitialPovType(data.povType || defaultPovType);
@@ -98,13 +99,13 @@ export const useSceneBeatData = ({
 
           // Load toggle states from metadata
           if (data.metadata) {
-            if (typeof data.metadata.useMatchedChapter === "boolean") {
+            if (is.boolean(data.metadata.useMatchedChapter)) {
               setUseMatchedChapter(data.metadata.useMatchedChapter);
             }
-            if (typeof data.metadata.useMatchedSceneBeat === "boolean") {
+            if (is.boolean(data.metadata.useMatchedSceneBeat)) {
               setUseMatchedSceneBeat(data.metadata.useMatchedSceneBeat);
             }
-            if (typeof data.metadata.useCustomContext === "boolean") {
+            if (is.boolean(data.metadata.useCustomContext)) {
               setUseCustomContext(data.metadata.useCustomContext);
             }
           }
@@ -124,7 +125,7 @@ export const useSceneBeatData = ({
           })
         );
         if (createError) {
-          console.error("Error creating SceneBeat:", createError);
+          logger.error("Error creating SceneBeat:", createError);
         } else {
           // Update the node with the new ID
           editor.update(() => {

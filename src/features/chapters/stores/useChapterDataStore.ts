@@ -3,9 +3,12 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { generateChapterId } from '@/utils/idGenerator';
 import { storageService, STORAGE_KEYS } from '@/utils/storageService';
+import { chapterSchema } from '@/schemas/entities';
+import { countWords } from '@/utils/textUtils';
+import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 import type { Chapter } from '@/types/story';
+import { logger } from '@/utils/logger';
 
 interface ChapterDataState {
     chapters: Chapter[];
@@ -98,17 +101,24 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
             ? 1
             : Math.max(...storyChapters.map(chapter => chapter.order)) + 1;
 
-        const chapterId = generateChapterId();
+        const chapterId = crypto.randomUUID();
 
-        const [addError] = await attemptPromise(() =>
-            db.chapters.add({
-                ...chapterData,
-                id: chapterId,
-                order: nextOrder,
-                createdAt: new Date(),
-                wordCount: chapterData.content.split(/\s+/).length
-            })
-        );
+        let newChapterData: Chapter;
+        try {
+            newChapterData = createValidatedEntity(
+                { ...chapterData, order: nextOrder, wordCount: countWords(chapterData.content) },
+                chapterSchema
+            );
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
+            set({ error: errorMessage, loading: false });
+            throw error;
+        }
+
+        // Override the auto-generated ID to use our pre-generated one for tracking
+        newChapterData = { ...newChapterData, id: chapterId };
+
+        const [addError] = await attemptPromise(() => db.chapters.add(newChapterData));
 
         if (addError) {
             set({
@@ -139,10 +149,18 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
     },
 
     updateChapter: async (id: string, chapterData: Partial<Chapter>) => {
+        try {
+            validatePartialUpdate(chapterData, chapterSchema);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
+            set({ error: errorMessage, loading: false });
+            throw error;
+        }
+
         set({ loading: true, error: null });
 
         if (chapterData.content) {
-            chapterData.wordCount = chapterData.content.split(/\s+/).length;
+            chapterData.wordCount = countWords(chapterData.content);
             const [getError, chapter] = await attemptPromise(() => db.chapters.get(id));
             if (!getError && chapter) {
                 const { lastEditedChapterIds } = get();
@@ -260,7 +278,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
         );
 
         if (getCurrentError || !currentChapter) {
-            console.error('Error getting previous chapter:', getCurrentError);
+            logger.error('Error getting previous chapter:', getCurrentError);
             return null;
         }
 
@@ -273,7 +291,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
         );
 
         if (getPrevError) {
-            console.error('Error getting previous chapter:', getPrevError);
+            logger.error('Error getting previous chapter:', getPrevError);
             return null;
         }
 

@@ -5,6 +5,7 @@ import {
     ParsedPrompt,
     PromptContext,
 } from '@/types/story';
+import is from '@sindresorhus/is';
 import { useLorebookStore } from '@/features/lorebook/stores/useLorebookStore';
 import { ContextBuilder } from './ContextBuilder';
 import { attemptPromise } from '@jfdi/attempt';
@@ -37,6 +38,7 @@ import {
     UserInputResolver,
     BrainstormContextResolver,
 } from './resolvers';
+import { logger } from '@/utils/logger';
 
 export class PromptParser {
     private readonly registry: VariableResolverRegistry;
@@ -199,7 +201,7 @@ export class PromptParser {
 
     private getAdditionalContextFormatted(context: PromptContext): string {
         const selectedItems = context.additionalContext?.selectedItems;
-        if (!selectedItems || !Array.isArray(selectedItems) || selectedItems.length === 0) {
+        if (!selectedItems || !is.array(selectedItems) || selectedItems.length === 0) {
             return '';
         }
 
@@ -245,7 +247,7 @@ export class PromptParser {
                 return acc.replace(fullMatch, resolved || '');
             }
 
-            console.warn(`Unknown variable: ${varName}`);
+            logger.warn(`Unknown variable: ${varName}`);
             return acc.replace(fullMatch, `[Unknown variable: ${varName}]`);
         }, Promise.resolve(content));
     }

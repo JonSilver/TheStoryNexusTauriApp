@@ -1,6 +1,8 @@
 import { create } from 'zustand';
-import { attemptPromise, attempt } from '@jfdi/attempt';
+import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
+import { extractPlainTextFromLexical } from '@/utils/lexicalUtils';
+import { logger } from '@/utils/logger';
 
 interface ChapterContentState {
     // Content processing operations
@@ -14,12 +16,12 @@ export const useChapterContentStore = create<ChapterContentState>(() => ({
         const [error, chapter] = await attemptPromise(() => db.chapters.get(id));
 
         if (error) {
-            console.error('Error getting chapter plain text:', error);
+            logger.error('Error getting chapter plain text:', error);
             return '';
         }
 
         if (!chapter || !chapter.content) {
-            console.log('Chapter not found or has no content');
+            logger.info('Chapter not found or has no content');
             return '';
         }
 
@@ -31,14 +33,14 @@ export const useChapterContentStore = create<ChapterContentState>(() => ({
         const [error, chapters] = await attemptPromise(() => db.chapters.toArray());
 
         if (error) {
-            console.error('Error getting chapter plain text by order:', error);
+            logger.error('Error getting chapter plain text by order:', error);
             return '';
         }
 
         const chapter = chapters.find(ch => ch.order === chapterOrder);
 
         if (!chapter || !chapter.content) {
-            console.log('Chapter not found or has no content for order:', chapterOrder);
+            logger.info('Chapter not found or has no content for order:', chapterOrder);
             return '';
         }
 
@@ -47,42 +49,6 @@ export const useChapterContentStore = create<ChapterContentState>(() => ({
     },
 
     extractPlainTextFromLexicalState: (editorStateJSON: string) => {
-        const [parseError, editorState] = attempt(() => JSON.parse(editorStateJSON));
-
-        if (parseError) {
-            console.error('Error extracting plain text from Lexical state:', parseError);
-            return '';
-        }
-
-        const extractText = (node: any): string => {
-            if (!node) return '';
-
-            if (node.type === 'text') {
-                return node.text || '';
-            }
-
-            if (node.type === 'linebreak') {
-                return '\n';
-            }
-
-            if (node.type === 'scene-beat') {
-                return '';
-            }
-
-            const childrenText = (node.children && Array.isArray(node.children))
-                ? node.children.map(extractText).join('')
-                : '';
-
-            const lineBreak = (node.type === 'paragraph' || node.type === 'heading') ? '\n' : '';
-
-            return childrenText + lineBreak;
-        };
-
-        const rootNode = editorState.root;
-        const rawText = extractText(rootNode);
-
-        return rawText
-            .replace(/\n{3,}/g, '\n\n')
-            .trim();
+        return extractPlainTextFromLexical(editorStateJSON);
     }
 }));

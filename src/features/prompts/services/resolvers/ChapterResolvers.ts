@@ -2,6 +2,7 @@ import { PromptContext } from '@/types/story';
 import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
 import { IVariableResolver } from './types';
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export class ChapterSummariesResolver implements IVariableResolver {
     async resolve(context: PromptContext): Promise<string> {
@@ -72,12 +73,12 @@ export class PreviousWordsResolver implements IVariableResolver {
         );
 
         if (error) {
-            console.error('Error fetching previous chapter:', error);
+            logger.error('Error fetching previous chapter:', error);
             return currentResult;
         }
 
         if (!previousChapter) {
-            console.log('No previous chapter found');
+            logger.info('No previous chapter found');
             return currentResult;
         }
 
@@ -86,7 +87,7 @@ export class PreviousWordsResolver implements IVariableResolver {
             (currentPovType === previousChapter.povType && currentPovCharacter === previousChapter.povCharacter);
 
         if (!povMatches) {
-            console.log('Previous chapter POV does not match current chapter POV, skipping');
+            logger.info('Previous chapter POV does not match current chapter POV, skipping');
             return currentResult;
         }
 
@@ -95,7 +96,7 @@ export class PreviousWordsResolver implements IVariableResolver {
         );
 
         if (contentError || !previousContent) {
-            console.error('Error fetching previous chapter content:', contentError);
+            logger.error('Error fetching previous chapter content:', contentError);
             return currentResult;
         }
 
@@ -112,7 +113,7 @@ export class PreviousWordsResolver implements IVariableResolver {
         }
 
         const prevContent = selectedPrevWords.join(' ').replace(new RegExp(newlineToken, 'g'), '\n');
-        console.log(`Added ${selectedPrevWords.length} words from previous chapter to context`);
+        logger.info(`Added ${selectedPrevWords.length} words from previous chapter to context`);
         return prevContent + '\n\n[...]\n\n' + currentResult;
     }
 }
@@ -126,7 +127,7 @@ export class ChapterContentResolver implements IVariableResolver {
             return plainTextContent;
         }
 
-        console.warn('No plain text content found for chapter:', context.currentChapter.id);
+        logger.warn('No plain text content found for chapter:', context.currentChapter.id);
         return '';
     }
 }
