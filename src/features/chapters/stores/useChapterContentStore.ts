@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import is from '@sindresorhus/is';
 import { attemptPromise, attempt } from '@jfdi/attempt';
 import { db } from '@/services/database';
 
@@ -69,7 +70,7 @@ export const useChapterContentStore = create<ChapterContentState>(() => ({
                 return '';
             }
 
-            const childrenText = (node.children && Array.isArray(node.children))
+            const childrenText = (node.children && is.array(node.children))
                 ? node.children.map(extractText).join('')
                 : '';
 

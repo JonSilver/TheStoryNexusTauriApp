@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
+import is from '@sindresorhus/is';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
@@ -34,11 +35,11 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
 
     validatePromptData: (messages) => {
         return messages.every(msg =>
-            typeof msg === 'object' &&
+            is.plainObject(msg) &&
             ('role' in msg) &&
             ('content' in msg) &&
             ['system', 'user', 'assistant'].includes(msg.role) &&
-            typeof msg.content === 'string'
+            is.string(msg.content)
         );
     },
 
@@ -239,7 +240,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
     importPrompts: async (jsonData) => {
         const data = JSON.parse(jsonData);
 
-        if (!data.type || data.type !== 'prompts' || !Array.isArray(data.prompts)) {
+        if (!data.type || data.type !== 'prompts' || !is.array(data.prompts)) {
             throw new Error('Invalid prompts data format');
         }
 
@@ -247,7 +248,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
 
         for (const p of imported) {
             // Minimal validation of messages
-            if (!p.messages || !Array.isArray(p.messages) || !get().validatePromptData(p.messages)) {
+            if (!p.messages || !is.array(p.messages) || !get().validatePromptData(p.messages)) {
                 // Skip invalid prompt
                 logger.warn('Skipping invalid prompt during import (messages invalid)', { name: p.name });
                 continue;

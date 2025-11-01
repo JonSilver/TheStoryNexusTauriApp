@@ -54,6 +54,7 @@ import { useStoryStore } from "@/features/stories/stores/useStoryStore";
 import { PromptPreviewDialog } from "@/components/ui/prompt-preview-dialog";
 import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
 import { $isSceneBeatNode } from "../../nodes/SceneBeatNode";
+import is from '@sindresorhus/is';
 import { attemptPromise } from '@jfdi/attempt';
 
 function TextFormatFloatingToolbar({
@@ -379,7 +380,7 @@ function TextFormatFloatingToolbar({
     if (error) {
       console.error("Error previewing prompt:", error);
       setPreviewError(
-        error instanceof Error ? error.message : "Failed to preview prompt"
+        is.error(error) ? error.message : "Failed to preview prompt"
       );
     } else if (result.error) {
       setPreviewError(result.error);

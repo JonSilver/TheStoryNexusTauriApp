@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { LexicalEditor, NodeKey } from "lexical";
 import { $getNodeByKey } from "lexical";
+import is from '@sindresorhus/is';
 import { sceneBeatService } from "@/features/scenebeats/services/sceneBeatService";
 import type { POVType } from "../components/POVSettingsPopover";
 import { attemptPromise } from '@jfdi/attempt';
@@ -13,12 +14,11 @@ interface SceneBeatNodeType {
 
 const isSceneBeatNode = (node: unknown): node is SceneBeatNodeType => {
   return (
-    typeof node === "object" &&
-    node !== null &&
+    is.plainObject(node) &&
     "getSceneBeatId" in node &&
     "setSceneBeatId" in node &&
-    typeof (node as SceneBeatNodeType).getSceneBeatId === "function" &&
-    typeof (node as SceneBeatNodeType).setSceneBeatId === "function"
+    is.function_((node as SceneBeatNodeType).getSceneBeatId) &&
+    is.function_((node as SceneBeatNodeType).setSceneBeatId)
   );
 };
 
@@ -98,13 +98,13 @@ export const useSceneBeatData = ({
 
           // Load toggle states from metadata
           if (data.metadata) {
-            if (typeof data.metadata.useMatchedChapter === "boolean") {
+            if (is.boolean(data.metadata.useMatchedChapter)) {
               setUseMatchedChapter(data.metadata.useMatchedChapter);
             }
-            if (typeof data.metadata.useMatchedSceneBeat === "boolean") {
+            if (is.boolean(data.metadata.useMatchedSceneBeat)) {
               setUseMatchedSceneBeat(data.metadata.useMatchedSceneBeat);
             }
-            if (typeof data.metadata.useCustomContext === "boolean") {
+            if (is.boolean(data.metadata.useCustomContext)) {
               setUseCustomContext(data.metadata.useCustomContext);
             }
           }

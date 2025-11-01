@@ -1,4 +1,5 @@
 import { PromptContext } from '@/types/story';
+import is from '@sindresorhus/is';
 import { useLorebookStore } from '@/features/lorebook/stores/useLorebookStore';
 import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
 import { db } from '@/services/database';
@@ -72,7 +73,7 @@ export class BrainstormContextResolver implements IVariableResolver {
 
     private async getSelectedSummaries(context: PromptContext, chapterStore: ReturnType<typeof useChapterStore.getState>): Promise<string> {
         const selectedSummaries = context.additionalContext?.selectedSummaries;
-        if (!selectedSummaries || !Array.isArray(selectedSummaries) || selectedSummaries.length === 0) {
+        if (!selectedSummaries || !is.array(selectedSummaries) || selectedSummaries.length === 0) {
             return '';
         }
 
@@ -88,7 +89,7 @@ export class BrainstormContextResolver implements IVariableResolver {
 
     private async getSelectedChapterContent(context: PromptContext, chapterStore: ReturnType<typeof useChapterStore.getState>): Promise<string> {
         const selectedContent = context.additionalContext?.selectedChapterContent;
-        if (!selectedContent || !Array.isArray(selectedContent) || selectedContent.length === 0) {
+        if (!selectedContent || !is.array(selectedContent) || selectedContent.length === 0) {
             console.log('DEBUG: No selectedChapterContent found or empty array');
             return '';
         }
@@ -147,7 +148,7 @@ export class BrainstormContextResolver implements IVariableResolver {
 
     private getSelectedLorebookEntries(context: PromptContext, lorebookStore: ReturnType<typeof useLorebookStore.getState>): string {
         const selectedItems = context.additionalContext?.selectedItems;
-        if (!selectedItems || !Array.isArray(selectedItems) || selectedItems.length === 0) {
+        if (!selectedItems || !is.array(selectedItems) || selectedItems.length === 0) {
             return '';
         }
 

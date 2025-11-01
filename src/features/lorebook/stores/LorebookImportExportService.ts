@@ -1,5 +1,6 @@
 import { db } from '@/services/database';
 import type { LorebookEntry } from '@/types/story';
+import is from '@sindresorhus/is';
 import { attemptPromise, attempt } from '@jfdi/attempt';
 
 export class LorebookImportExportService {
@@ -40,7 +41,7 @@ export class LorebookImportExportService {
             throw new Error('Invalid lorebook export file');
         }
 
-        if (!Array.isArray(data.entries)) {
+        if (!is.array(data.entries)) {
             throw new Error('Invalid lorebook entries data');
         }
 

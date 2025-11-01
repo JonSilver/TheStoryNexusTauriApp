@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { AllowedModel, PromptMessage } from "@/types/story";
+import is from '@sindresorhus/is';
 import { useAIStore } from "@/features/ai/stores/useAIStore";
 import { toast } from "react-toastify";
 import { createPromptParser } from "@/features/prompts/services/promptParser";
@@ -93,7 +94,7 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
       promptParser.parse(config)
     );
     if (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = is.error(error) ? error.message : String(error);
       setPreviewError(errorMessage);
       toast.error(`Error previewing prompt: ${errorMessage}`);
       setPreviewLoading(false);
