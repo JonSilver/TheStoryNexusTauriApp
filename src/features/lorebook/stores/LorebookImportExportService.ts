@@ -3,6 +3,7 @@ import type { LorebookEntry } from '@/types/story';
 import { attemptPromise } from '@jfdi/attempt';
 import { lorebookExportSchema, parseJSON } from '@/schemas/entities';
 import { downloadJSON } from '@/utils/jsonExportUtils';
+import { logger } from '@/utils/logger';
 
 export class LorebookImportExportService {
     static exportEntries(entries: LorebookEntry[], storyId: string): void {
@@ -43,7 +44,7 @@ export class LorebookImportExportService {
             );
 
             if (addError) {
-                console.error('Error adding lorebook entry:', addError);
+                logger.error('Error adding lorebook entry:', addError);
                 throw addError;
             }
 

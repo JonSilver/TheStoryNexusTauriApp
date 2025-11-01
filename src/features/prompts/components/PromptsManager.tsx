@@ -10,6 +10,7 @@ import { toastCRUD } from '@/utils/toastUtils';
 import { dbSeeder } from '@/services/dbSeed';
 import { usePromptStore } from '../store/promptStore';
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export function PromptsManager() {
     const [selectedPrompt, setSelectedPrompt] = useState<Prompt | undefined>(undefined);
@@ -53,7 +54,7 @@ export function PromptsManager() {
         });
         if (error) {
             toastCRUD.generic.error('Failed to reseed system prompts', error);
-            console.error('Error reseeding system prompts:', error);
+            logger.error('Error reseeding system prompts:', error);
         } else {
             toastCRUD.generic.success('System prompts reseeded successfully');
         }
@@ -82,7 +83,7 @@ export function PromptsManager() {
                             onClick={async () => {
                                 const [error] = await attemptPromise(async () => exportPrompts());
                                 if (error) {
-                                    console.error('Export failed', error);
+                                    logger.error('Export failed', error);
                                     toastCRUD.exportError('prompts', error);
                                 } else {
                                     toastCRUD.exportSuccess('Prompts');
@@ -108,7 +109,7 @@ export function PromptsManager() {
                                     await fetchPrompts();
                                 });
                                 if (error) {
-                                    console.error('Import failed', error);
+                                    logger.error('Import failed', error);
                                     toastCRUD.importError('prompts', error);
                                 } else {
                                     toastCRUD.importSuccess('Prompts');

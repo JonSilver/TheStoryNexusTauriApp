@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { extractPlainTextFromLexical } from '@/utils/lexicalUtils';
+import { logger } from '@/utils/logger';
 
 interface ChapterContentState {
     // Content processing operations
@@ -15,12 +16,12 @@ export const useChapterContentStore = create<ChapterContentState>(() => ({
         const [error, chapter] = await attemptPromise(() => db.chapters.get(id));
 
         if (error) {
-            console.error('Error getting chapter plain text:', error);
+            logger.error('Error getting chapter plain text:', error);
             return '';
         }
 
         if (!chapter || !chapter.content) {
-            console.log('Chapter not found or has no content');
+            logger.info('Chapter not found or has no content');
             return '';
         }
 
@@ -32,14 +33,14 @@ export const useChapterContentStore = create<ChapterContentState>(() => ({
         const [error, chapters] = await attemptPromise(() => db.chapters.toArray());
 
         if (error) {
-            console.error('Error getting chapter plain text by order:', error);
+            logger.error('Error getting chapter plain text by order:', error);
             return '';
         }
 
         const chapter = chapters.find(ch => ch.order === chapterOrder);
 
         if (!chapter || !chapter.content) {
-            console.log('Chapter not found or has no content for order:', chapterOrder);
+            logger.info('Chapter not found or has no content for order:', chapterOrder);
             return '';
         }
 

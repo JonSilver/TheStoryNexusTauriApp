@@ -56,6 +56,7 @@ import { useSceneBeatGeneration } from "./scene-beat/hooks/useSceneBeatGeneratio
 // Extracted services
 import { createPromptConfig } from "./scene-beat/services/sceneBeatPromptService";
 import { insertTextAfterNode } from "./scene-beat/services/lexicalEditorUtils";
+import { logger } from '@/utils/logger';
 
 export type SerializedSceneBeatNode = Spread<
   {
@@ -159,7 +160,7 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
   useEffect(() => {
     fetchPrompts().catch((error) => {
       toast.error("Failed to load prompts");
-      console.error("Error loading prompts:", error);
+      logger.error("Error loading prompts:", error);
     });
   }, [fetchPrompts]);
 
@@ -192,7 +193,7 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
         sceneBeatService.deleteSceneBeat(sceneBeatId)
       );
       if (error) {
-        console.error("Error deleting SceneBeat from database:", error);
+        logger.error("Error deleting SceneBeat from database:", error);
         toast.error("Failed to delete scene beat from database");
       }
     }

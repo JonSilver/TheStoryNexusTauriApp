@@ -7,6 +7,7 @@ import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { toastCRUD } from '@/utils/toastUtils';
 import { noteSchema } from '@/schemas/entities';
 import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
+import { logger } from '@/utils/logger';
 
 interface NotesState {
     notes: Note[];
@@ -79,7 +80,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
 
         if (fetchError) {
             // Note was created but refresh failed - not critical
-            console.error(formatError(fetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), fetchError);
+            logger.error(formatError(fetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), fetchError);
         } else {
             set({ notes });
         }
@@ -125,7 +126,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
         );
 
         if (refetchError) {
-            console.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), refetchError);
+            logger.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), refetchError);
         } else {
             set({ notes });
         }
@@ -157,7 +158,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
         );
 
         if (refetchError) {
-            console.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), refetchError);
+            logger.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), refetchError);
         } else {
             set({ notes, selectedNote: null });
         }

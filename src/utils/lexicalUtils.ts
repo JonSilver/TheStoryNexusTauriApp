@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { parseJSON } from '@/schemas/entities';
+import { logger } from '@/utils/logger';
 
 /**
  * Lexical editor state structure
@@ -70,7 +71,7 @@ export const extractPlainTextFromLexical = (
 
   const result = parseJSON(lexicalEditorStateSchema, jsonContent);
   if (!result.success) {
-    console.error('Invalid Lexical editor state:', result.error.message);
+    logger.error('Invalid Lexical editor state:', result.error.message);
     return '';
   }
 

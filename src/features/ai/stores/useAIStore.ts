@@ -14,6 +14,7 @@ import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { createPromptParser } from '@/features/prompts/services/promptParser';
 import { generateWithProvider } from '@/features/ai/services/aiGenerationHelper';
+import { logger } from '@/utils/logger';
 
 interface AIState {
     settings: AISettings | null;
@@ -224,7 +225,7 @@ export const useAIStore = create<AIState>((set, get) => ({
     },
 
     abortGeneration: () => {
-        console.log('[useAIStore] Aborting AI generation');
+        logger.info('[useAIStore] Aborting AI generation');
         aiService.abortStream();
     }
 }));

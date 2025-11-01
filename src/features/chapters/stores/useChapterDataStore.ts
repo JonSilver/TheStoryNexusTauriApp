@@ -8,6 +8,7 @@ import { chapterSchema } from '@/schemas/entities';
 import { countWords } from '@/utils/textUtils';
 import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 import type { Chapter } from '@/types/story';
+import { logger } from '@/utils/logger';
 
 interface ChapterDataState {
     chapters: Chapter[];
@@ -277,7 +278,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
         );
 
         if (getCurrentError || !currentChapter) {
-            console.error('Error getting previous chapter:', getCurrentError);
+            logger.error('Error getting previous chapter:', getCurrentError);
             return null;
         }
 
@@ -290,7 +291,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
         );
 
         if (getPrevError) {
-            console.error('Error getting previous chapter:', getPrevError);
+            logger.error('Error getting previous chapter:', getPrevError);
             return null;
         }
 

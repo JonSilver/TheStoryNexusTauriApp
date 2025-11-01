@@ -38,6 +38,7 @@ import {
     UserInputResolver,
     BrainstormContextResolver,
 } from './resolvers';
+import { logger } from '@/utils/logger';
 
 export class PromptParser {
     private readonly registry: VariableResolverRegistry;
@@ -246,7 +247,7 @@ export class PromptParser {
                 return acc.replace(fullMatch, resolved || '');
             }
 
-            console.warn(`Unknown variable: ${varName}`);
+            logger.warn(`Unknown variable: ${varName}`);
             return acc.replace(fullMatch, `[Unknown variable: ${varName}]`);
         }, Promise.resolve(content));
     }

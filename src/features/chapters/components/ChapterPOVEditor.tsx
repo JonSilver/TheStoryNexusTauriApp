@@ -22,6 +22,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { logger } from '@/utils/logger';
 
 interface ChapterPOVEditorProps {
     onClose?: () => void;
@@ -71,7 +72,7 @@ export function ChapterPOVEditor({ onClose }: ChapterPOVEditorProps) {
         );
 
         if (error) {
-            console.error('Failed to update chapter POV:', error);
+            logger.error('Failed to update chapter POV:', error);
             toast.error('Failed to update chapter POV');
             return;
         }

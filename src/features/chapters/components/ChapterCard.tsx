@@ -58,6 +58,7 @@ import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
 import { DownloadMenu } from "@/components/ui/DownloadMenu";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { logger } from '@/utils/logger';
 
 interface ChapterCardProps {
   chapter: Chapter;
@@ -151,7 +152,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     );
 
     if (error) {
-      console.error("Failed to delete chapter:", error);
+      logger.error("Failed to delete chapter:", error);
       toast.error("Failed to delete chapter");
       return;
     }
@@ -175,7 +176,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     );
 
     if (error) {
-      console.error("Failed to update chapter:", error);
+      logger.error("Failed to update chapter:", error);
       toast.error("Failed to update chapter");
       return;
     }
@@ -197,7 +198,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
       );
 
       if (error) {
-        console.error("Failed to save summary:", error);
+        logger.error("Failed to save summary:", error);
         toast.error("Failed to save summary");
         return;
       }
@@ -245,7 +246,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     });
 
     if (error) {
-      console.error("Failed to generate summary:", error);
+      logger.error("Failed to generate summary:", error);
       toast.error("Failed to generate summary");
     }
 

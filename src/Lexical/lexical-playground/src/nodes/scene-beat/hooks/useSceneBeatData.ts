@@ -5,6 +5,7 @@ import is from '@sindresorhus/is';
 import { sceneBeatService } from "@/features/scenebeats/services/sceneBeatService";
 import type { POVType } from "../components/POVSettingsPopover";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 // Type guard for SceneBeatNode (duck typing to avoid circular dependency)
 interface SceneBeatNodeType {
@@ -90,7 +91,7 @@ export const useSceneBeatData = ({
           sceneBeatService.getSceneBeat(nodeSceneBeatId)
         );
         if (loadError) {
-          console.error("Error loading SceneBeat:", loadError);
+          logger.error("Error loading SceneBeat:", loadError);
         } else if (data) {
           setInitialCommand(data.command || "");
           setInitialPovType(data.povType || defaultPovType);
@@ -124,7 +125,7 @@ export const useSceneBeatData = ({
           })
         );
         if (createError) {
-          console.error("Error creating SceneBeat:", createError);
+          logger.error("Error creating SceneBeat:", createError);
         } else {
           // Update the node with the new ID
           editor.update(() => {

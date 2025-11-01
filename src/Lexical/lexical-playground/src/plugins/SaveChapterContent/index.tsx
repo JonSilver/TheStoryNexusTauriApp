@@ -3,6 +3,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
 import { useStoryContext } from '@/features/stories/context/StoryContext';
 import { debounce } from 'lodash';
+import { logger } from '@/utils/logger';
 
 export function SaveChapterContentPlugin(): null {
     const [editor] = useLexicalComposerContext();
@@ -12,13 +13,13 @@ export function SaveChapterContentPlugin(): null {
     // Create stable debounced save function using ref
     const saveContentRef = useRef(
         debounce((chapterId: string, content: string) => {
-            console.log('SaveChapterContent - Saving content for chapter:', chapterId);
+            logger.info('SaveChapterContent - Saving content for chapter:', chapterId);
             updateChapter(chapterId, { content })
                 .then(() => {
-                    console.log('SaveChapterContent - Content saved successfully');
+                    logger.info('SaveChapterContent - Content saved successfully');
                 })
                 .catch((error) => {
-                    console.error('SaveChapterContent - Failed to save content:', error);
+                    logger.error('SaveChapterContent - Failed to save content:', error);
                 });
         }, 1000)
     );

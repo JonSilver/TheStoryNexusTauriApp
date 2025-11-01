@@ -5,6 +5,7 @@ import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
 import { db } from '@/services/database';
 import { IVariableResolver, ILorebookFormatter } from './types';
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export class ChatHistoryResolver implements IVariableResolver {
     async resolve(context: PromptContext): Promise<string> {
@@ -35,7 +36,7 @@ export class BrainstormContextResolver implements IVariableResolver {
         const lorebookStore = useLorebookStore.getState();
         const chapterStore = useChapterStore.getState();
 
-        console.log('DEBUG: brainstormContext additionalContext:', context.additionalContext);
+        logger.info('DEBUG: brainstormContext additionalContext:', context.additionalContext);
 
         if (lorebookStore.entries.length === 0) {
             await lorebookStore.loadEntries(context.storyId);
@@ -90,39 +91,39 @@ export class BrainstormContextResolver implements IVariableResolver {
     private async getSelectedChapterContent(context: PromptContext, chapterStore: ReturnType<typeof useChapterStore.getState>): Promise<string> {
         const selectedContent = context.additionalContext?.selectedChapterContent;
         if (!selectedContent || !is.array(selectedContent) || selectedContent.length === 0) {
-            console.log('DEBUG: No selectedChapterContent found or empty array');
+            logger.info('DEBUG: No selectedChapterContent found or empty array');
             return '';
         }
 
-        console.log('DEBUG: Processing selectedChapterContent:', selectedContent);
+        logger.info('DEBUG: Processing selectedChapterContent:', selectedContent);
 
         const [error, contents] = await attemptPromise(() =>
             Promise.all(
                 (selectedContent as string[]).map(async id => {
-                    console.log(`DEBUG: Fetching content for chapter ID: ${id}`);
+                    logger.info(`DEBUG: Fetching content for chapter ID: ${id}`);
 
                     const [chapterError, chapter] = await attemptPromise(() => db.chapters.get(id));
 
                     if (chapterError) {
-                        console.error(`DEBUG: Error fetching chapter ${id}:`, chapterError);
+                        logger.error(`DEBUG: Error fetching chapter ${id}:`, chapterError);
                         return '';
                     }
 
-                    console.log(`DEBUG: Chapter fetch result:`, chapter ? `Found chapter ${chapter.order}` : 'Not found');
+                    logger.info(`DEBUG: Chapter fetch result:`, chapter ? `Found chapter ${chapter.order}` : 'Not found');
 
                     if (!chapter) return '';
 
-                    console.log(`DEBUG: Getting plain text for chapter ${chapter.order}`);
+                    logger.info(`DEBUG: Getting plain text for chapter ${chapter.order}`);
                     const [contentError, content] = await attemptPromise(() =>
                         chapterStore.getChapterPlainText(id)
                     );
 
                     if (contentError) {
-                        console.error(`DEBUG: Error getting content for chapter ${id}:`, contentError);
+                        logger.error(`DEBUG: Error getting content for chapter ${id}:`, contentError);
                         return '';
                     }
 
-                    console.log(`DEBUG: Content length for chapter ${chapter.order}: ${content ? content.length : 0} chars`);
+                    logger.info(`DEBUG: Content length for chapter ${chapter.order}: ${content ? content.length : 0} chars`);
 
                     return content ? `Chapter ${chapter.order} Content:\n${content}` : '';
                 })
@@ -130,17 +131,17 @@ export class BrainstormContextResolver implements IVariableResolver {
         );
 
         if (error) {
-            console.error('DEBUG: Error in chapter content processing:', error);
+            logger.error('DEBUG: Error in chapter content processing:', error);
             return '';
         }
 
         const contentText = contents.filter(Boolean).join('\n\n');
-        console.log(`DEBUG: Final chapter content text:`, contentText.substring(0, 100) + '...');
+        logger.info(`DEBUG: Final chapter content text:`, contentText.substring(0, 100) + '...');
 
         if (contentText) {
-            console.log('DEBUG: Added chapter content to result');
+            logger.info('DEBUG: Added chapter content to result');
         } else {
-            console.log('DEBUG: No chapter content was added (empty content)');
+            logger.info('DEBUG: No chapter content was added (empty content)');
         }
 
         return contentText;
