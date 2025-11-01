@@ -5,6 +5,7 @@ import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { chapterSchema } from '@/schemas/entities';
 import type { ChapterOutline, ChapterNotes } from '@/types/story';
+import { logger } from '@/utils/logger';
 
 interface ChapterMetadataState {
     // Summary operations
@@ -30,14 +31,14 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
         const result = chapterSchema.partial().safeParse(updateData);
         if (!result.success) {
             const message = `Invalid chapter update data: ${result.error.message}`;
-            console.error(message);
+            logger.error(message);
             throw new Error(message);
         }
 
         const [error] = await attemptPromise(() => db.chapters.update(id, updateData));
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.UPDATE_FAILED('chapter summary'));
-            console.error(message, error);
+            logger.error(message, error);
             throw error;
         }
     },
@@ -47,14 +48,14 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
         const result = chapterSchema.partial().safeParse(updateData);
         if (!result.success) {
             const message = `Invalid chapter update data: ${result.error.message}`;
-            console.error(message);
+            logger.error(message);
             throw new Error(message);
         }
 
         const [error] = await attemptPromise(() => db.chapters.update(id, updateData));
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.UPDATE_FAILED('summary'));
-            console.error(message, error);
+            logger.error(message, error);
             throw error;
         }
     },
@@ -69,7 +70,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
         );
 
         if (error) {
-            console.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('previous chapter summaries')), error);
+            logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('previous chapter summaries')), error);
             return '';
         }
 
@@ -93,7 +94,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
         );
 
         if (error) {
-            console.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter summaries')), error);
+            logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter summaries')), error);
             return '';
         }
 
@@ -114,7 +115,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
         const [error, chapter] = await attemptPromise(() => db.chapters.get(id));
 
         if (error) {
-            console.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter summary')), error);
+            logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter summary')), error);
             return '';
         }
 
@@ -134,7 +135,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
         );
 
         if (error) {
-            console.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter summaries')), error);
+            logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter summaries')), error);
             return '';
         }
 
@@ -156,14 +157,14 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
         const result = chapterSchema.partial().safeParse(updateData);
         if (!result.success) {
             const message = `Invalid chapter update data: ${result.error.message}`;
-            console.error(message);
+            logger.error(message);
             throw new Error(message);
         }
 
         const [error] = await attemptPromise(() => db.chapters.update(id, updateData));
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.UPDATE_FAILED('chapter outline'));
-            console.error(message, error);
+            logger.error(message, error);
             throw error;
         }
     },
@@ -174,7 +175,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
         const [error, chapter] = await attemptPromise(() => db.chapters.get(id));
 
         if (error) {
-            console.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter outline')), error);
+            logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter outline')), error);
             return null;
         }
 
@@ -186,14 +187,14 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
         const result = chapterSchema.partial().safeParse(updateData);
         if (!result.success) {
             const message = `Invalid chapter update data: ${result.error.message}`;
-            console.error(message);
+            logger.error(message);
             throw new Error(message);
         }
 
         const [error] = await attemptPromise(() => db.chapters.update(id, updateData));
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.UPDATE_FAILED('chapter notes'));
-            console.error(message, error);
+            logger.error(message, error);
             throw error;
         }
     },
@@ -202,7 +203,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
         const [error, chapter] = await attemptPromise(() => db.chapters.get(id));
 
         if (error) {
-            console.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter notes')), error);
+            logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter notes')), error);
             return null;
         }
 
