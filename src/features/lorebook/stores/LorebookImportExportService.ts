@@ -2,6 +2,7 @@ import { db } from '@/services/database';
 import type { LorebookEntry } from '@/types/story';
 import { attemptPromise } from '@jfdi/attempt';
 import { lorebookExportSchema, parseJSON } from '@/schemas/entities';
+import { downloadJSON } from '@/utils/jsonExportUtils';
 
 export class LorebookImportExportService {
     static exportEntries(entries: LorebookEntry[], storyId: string): void {
@@ -13,16 +14,8 @@ export class LorebookImportExportService {
             entries: entriesToExport
         };
 
-        const json = JSON.stringify(exportData, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `lorebook-${storyId}-${Date.now()}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const filename = `lorebook-${storyId}-${Date.now()}.json`;
+        downloadJSON(exportData, filename);
     }
 
     static async importEntries(

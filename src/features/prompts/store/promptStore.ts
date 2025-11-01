@@ -6,6 +6,7 @@ import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { logger } from '@/utils/logger';
 import { promptsExportSchema, promptSchema, parseJSON } from '@/schemas/entities';
+import { downloadJSONDataURI, generateExportFilename } from '@/utils/jsonExportUtils';
 import type { Prompt, PromptMessage } from '@/types/story';
 
 interface PromptStore {
@@ -231,19 +232,14 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
         // Only export non-system prompts
         const prompts = allPrompts.filter(p => !p.isSystem);
 
-        const dataStr = JSON.stringify({
+        const exportData = {
             version: '1.0',
             type: 'prompts',
             prompts
-        }, null, 2);
+        };
 
-        const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-        const exportName = `prompts-export-${new Date().toISOString().slice(0, 10)}.json`;
-
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportName);
-        linkElement.click();
+        const filename = generateExportFilename('prompts-export');
+        downloadJSONDataURI(exportData, filename);
     },
 
     // Import prompts from JSON string. Creates new IDs and createdAt. Ensures unique names.
