@@ -10,7 +10,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Omit meaningless time & effort estimates from all plans.
 - Apart from useful examples or data/type structures, plans shouldn't include code.
 
-
 ## Project Overview
 
 The Story Nexus is a local-first desktop application for AI-assisted creative writing, built with Tauri v2, React, TypeScript, and IndexedDB. The app provides a comprehensive environment for writers to create stories with AI-powered tools while maintaining full local data control.
@@ -55,6 +54,8 @@ if (error) return handleError(error);
 
 #### Style
 
+- Code volume is not a success metric. Concision and reuse are. Lines of code need maintaining. Ease the burden of ownership by using battle-hardened third-party dependency libraries wherever possible.
+- Use comments extremely sparingly, to explain a complex process or why something is purposely done in a seemingly problematic way. Prefer self-documenting names and small descriptively named functions for complex expressions or function chains.
 - Prefer functional programming patterns.
 - Use `const`, not `let`. `let` and mutation is a code smell.
 - Use arrow functions.
@@ -63,6 +64,7 @@ if (error) return handleError(error);
 - Avoid all React antipatterns, particularly around abuse of `useEffect` to handle derived or computed state. Fix these wherever found.
 - Prefer custom React hooks over complex, multi-hook, in-component logic.
 - Modules should be small and focused on a single responsibility.
+- Prefer the iterative data-driven type-inference pattern over switch statements and if/else chains. Make a data structure, derive types from it, index into or iterate over the structure.
 
 #### Architectural Exceptions to Functional Programming
 
