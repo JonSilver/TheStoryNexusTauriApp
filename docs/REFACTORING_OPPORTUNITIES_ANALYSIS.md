@@ -576,7 +576,132 @@ export const normalizeAdvanced = (str: string): string => {
 
 ---
 
-### 2.4 Import/Export JSON Pattern Duplication (MEDIUM PRIORITY)
+### 2.4 Word Count Calculation Duplication (MEDIUM PRIORITY)
+
+**Location**: 3 different implementations across codebase
+
+**Issue**: Word counting logic duplicated with slightly different approaches:
+
+```typescript
+// Implementation 1: useChapterDataStore.ts:109, 145
+wordCount: chapterData.content.split(/\s+/).length
+
+// Implementation 2: WordCountPlugin/index.tsx:33
+const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+
+// Implementation 3: LayoutPlugin.tsx:237
+return template.trim().split(/\s+/).length;
+```
+
+**Problems**:
+- Inconsistent handling of empty strings
+- Implementation 1 counts empty string as 1 word
+- Implementation 2 correctly filters falsy values
+- All miss handling of multiple spaces, newlines, special Unicode spaces
+
+**Recommendation**: Single utility function with proper edge case handling.
+
+```typescript
+// src/utils/textUtils.ts
+export const countWords = (text: string): number => {
+    if (!text || !text.trim()) return 0;
+    return text.trim().split(/\s+/).filter(Boolean).length;
+};
+
+// Better: Use existing library
+import { words } from 'lodash';
+export const countWords = (text: string): number => words(text).length;
+// lodash.words handles Unicode, punctuation, etc.
+```
+
+**Impact**: Delete 3 inconsistent implementations, use single source of truth. Lodash already in dependencies.
+
+---
+
+### 2.5 Form State Management Inconsistency (LOW-MEDIUM PRIORITY)
+
+**Location**: Mixed patterns across form components
+
+**Issue**: `react-hook-form` is in dependencies but only 3 files use it. Others use manual `useState`:
+
+**Using react-hook-form (3 files)**:
+- `src/features/chapters/pages/Chapters.tsx`
+- `src/features/chapters/components/ChapterCard.tsx`
+- `src/features/chapters/components/ChapterPOVEditor.tsx`
+
+**Using manual useState (5+ files)**:
+- `src/features/stories/components/CreateStoryDialog.tsx` - 4 useState calls
+- `src/features/stories/components/EditStoryDialog.tsx` - 4 useState calls
+- `src/features/lorebook/components/CreateEntryDialog.tsx` - Large form state object
+- Plus prompt forms, brainstorm forms, etc.
+
+**Example of manual state management**:
+```typescript
+// CreateStoryDialog.tsx - manual useState
+const [title, setTitle] = useState("");
+const [author, setAuthor] = useState("");
+const [language, setLanguage] = useState("English");
+const [synopsis, setSynopsis] = useState("");
+
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Manual validation, no error handling UI
+};
+```
+
+**Recommendation**:
+- **Option A**: Standardise on react-hook-form for all forms (already in dependencies)
+- **Option B**: Remove react-hook-form, use manual state consistently (simpler forms don't need library)
+
+Given CLAUDE.md philosophy ("delete code, trust libraries"), **Option A** is better:
+- Built-in validation
+- Error state management
+- Form reset handling
+- Less manual state management code
+
+**Impact**: More consistent, less boilerplate, better validation. But requires migration of existing useState forms.
+
+---
+
+### 2.6 Toast Notification Pattern (LOW PRIORITY)
+
+**Location**: 50+ manual `toast.success` / `toast.error` calls across 15+ files
+
+**Issue**: Repetitive toast notification patterns with inconsistent messaging:
+
+```typescript
+// Pattern repeated 50+ times:
+toast.error('Failed to delete prompt');
+toast.success('Prompt deleted successfully');
+
+toast.error('Failed to import prompts');
+toast.success('Prompts imported successfully');
+```
+
+**Recommendation**: Extract to utility for consistent messaging and reduce duplication.
+
+```typescript
+// src/utils/toastUtils.ts
+export const toastCRUD = {
+    createSuccess: (entity: string) => toast.success(`${entity} created successfully`),
+    createError: (entity: string) => toast.error(`Failed to create ${entity}`),
+    updateSuccess: (entity: string) => toast.success(`${entity} updated successfully`),
+    updateError: (entity: string) => toast.error(`Failed to update ${entity}`),
+    deleteSuccess: (entity: string) => toast.success(`${entity} deleted successfully`),
+    deleteError: (entity: string) => toast.error(`Failed to delete ${entity}`),
+    // etc.
+};
+
+// Usage
+toastCRUD.deleteSuccess('Prompt');
+toastCRUD.importError('Prompts');
+```
+
+**Impact**: Consistent messaging, less duplication, easier to change toast library or add features (e.g., i18n).
+
+---
+
+### 2.7 Import/Export JSON Pattern Duplication (MEDIUM PRIORITY)
 
 **Location**:
 - `src/features/lorebook/stores/LorebookImportExportService.ts` (72 lines)
@@ -684,7 +809,7 @@ export const importFromJSON = <T>({
 
 ---
 
-### 2.5 Fetch-After-Update Pattern (LOW PRIORITY)
+### 2.8 Fetch-After-Update Pattern (LOW PRIORITY)
 
 **Location**: Every CRUD store operation
 
@@ -1233,12 +1358,15 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 | **HIGH** | Library | Zod validation | High - Type safety |
 | **HIGH** | Dependencies | ID generator removal | Medium - Less noise |
 | **HIGH** | Dependencies | Migrate to @sindresorhus/is | High - Robust type checking |
+| **MEDIUM** | Duplication | Word count calculations | Medium - Consistency, use lodash |
 | **MEDIUM** | Duplication | Import/export utils | Medium - Consistency |
 | **MEDIUM** | Duplication | String normalization | Low - Maintainability |
 | **MEDIUM** | Library | date-fns integration | Medium - Better UX |
 | **MEDIUM** | Library | Native JS vs lodash migration | Medium - Bundle size |
 | **MEDIUM** | Library | Replace logger with loglevel | Medium - Production readiness |
 | **MEDIUM** | Dependencies | Lorebook filter methods | Medium - DRY |
+| **LOW-MEDIUM** | Pattern | Form state management | Medium - Consistency, already have react-hook-form |
+| **LOW** | Duplication | Toast notification patterns | Low - Consistency |
 | **LOW** | Library | file-saver | Low - Reliability |
 | **LOW** | Library | p-retry | Low - Reliability |
 | **LOW** | Library | eventsource-parser | Low - Robustness |
@@ -1266,18 +1394,21 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 - Migrate validation logic
 - Add runtime validation to import/export
 
-### Phase 3: Utilities
+### Phase 3: Utilities & Consolidation
 - Unify Lexical text extraction
 - Create import/export utilities
 - Add date-fns and migrate date operations
+- Consolidate word count to lodash.words
+- Extract toast notification utility
 
 ### Phase 4: Major Refactor
 - Design and implement CRUD store factory
 - Migrate stores one-by-one
 - Comprehensive testing
 
-### Phase 5: Polish
+### Phase 5: Polish & Consistency
 - Migrate lodash usage to native JS where appropriate
+- Standardise form state management (react-hook-form everywhere or remove it)
 - Add p-retry for network operations
 - Feature-level error boundaries
 - Documentation updates
@@ -1327,7 +1458,10 @@ The Story Nexus codebase has good architecture and patterns, but carries **unnec
 - **58 manual type guards**: Replace with @sindresorhus/is
 - **24 lines**: Custom logger (use loglevel)
 - **~1,200 lines**: 8 duplicated CRUD stores (consolidate via factory)
+- **3 word count implementations**: Use lodash.words (already in dependencies)
+- **50+ toast calls**: Extract to utility for consistency
 - **Duplicate implementations**: Lexical text extraction, import/export patterns
+- **Manual form state**: Migrate to react-hook-form (already in dependencies) or remove it
 
 ### What to Add (Minimal, Proven Libraries)
 - **loglevel**: Industry standard (13M+ weekly downloads)
