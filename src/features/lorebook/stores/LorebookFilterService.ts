@@ -24,38 +24,6 @@ export class LorebookFilterService {
         return this.getFilteredEntries(entries).filter(entry => entry.category === category);
     }
 
-    static getAllCharacters(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'character');
-    }
-
-    static getAllLocations(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'location');
-    }
-
-    static getAllItems(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'item');
-    }
-
-    static getAllEvents(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'event');
-    }
-
-    static getAllNotes(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'note');
-    }
-
-    static getAllSynopsis(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'synopsis');
-    }
-
-    static getAllStartingScenarios(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'starting scenario');
-    }
-
-    static getAllTimelines(entries: LorebookEntry[]): LorebookEntry[] {
-        return this.getEntriesByCategory(entries, 'timeline');
-    }
-
     static getAllEntries(entries: LorebookEntry[]): LorebookEntry[] {
         return this.getFilteredEntries(entries);
     }

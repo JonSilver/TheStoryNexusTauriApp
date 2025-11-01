@@ -29,16 +29,6 @@ interface LorebookState {
     getEntriesByCategory: (category: LorebookEntry['category']) => LorebookEntry[];
     getFilteredEntries: (includeDisabled?: boolean) => LorebookEntry[];
     getFilteredEntriesByIds: (ids: string[], includeDisabled?: boolean) => LorebookEntry[];
-
-    // Helper Methods
-    getAllCharacters: () => LorebookEntry[];
-    getAllLocations: () => LorebookEntry[];
-    getAllItems: () => LorebookEntry[];
-    getAllEvents: () => LorebookEntry[];
-    getAllNotes: () => LorebookEntry[];
-    getAllSynopsis: () => LorebookEntry[];
-    getAllStartingScenarios: () => LorebookEntry[];
-    getAllTimelines: () => LorebookEntry[];
     getAllEntries: () => LorebookEntry[];
     getEntriesByImportance: (importance: 'major' | 'minor' | 'background') => LorebookEntry[];
     getEntriesByStatus: (status: 'active' | 'inactive' | 'historical') => LorebookEntry[];
@@ -137,46 +127,6 @@ export const useLorebookStore = create<LorebookState>((set, get) => ({
     getEntriesByCategory: (category) => {
         const entries = useLorebookDataStore.getState().entries;
         return LorebookFilterService.getEntriesByCategory(entries, category);
-    },
-
-    getAllCharacters: () => {
-        const entries = useLorebookDataStore.getState().entries;
-        return LorebookFilterService.getAllCharacters(entries);
-    },
-
-    getAllLocations: () => {
-        const entries = useLorebookDataStore.getState().entries;
-        return LorebookFilterService.getAllLocations(entries);
-    },
-
-    getAllItems: () => {
-        const entries = useLorebookDataStore.getState().entries;
-        return LorebookFilterService.getAllItems(entries);
-    },
-
-    getAllEvents: () => {
-        const entries = useLorebookDataStore.getState().entries;
-        return LorebookFilterService.getAllEvents(entries);
-    },
-
-    getAllNotes: () => {
-        const entries = useLorebookDataStore.getState().entries;
-        return LorebookFilterService.getAllNotes(entries);
-    },
-
-    getAllSynopsis: () => {
-        const entries = useLorebookDataStore.getState().entries;
-        return LorebookFilterService.getAllSynopsis(entries);
-    },
-
-    getAllStartingScenarios: () => {
-        const entries = useLorebookDataStore.getState().entries;
-        return LorebookFilterService.getAllStartingScenarios(entries);
-    },
-
-    getAllTimelines: () => {
-        const entries = useLorebookDataStore.getState().entries;
-        return LorebookFilterService.getAllTimelines(entries);
     },
 
     getAllEntries: () => {
