@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { AIModel, AIProvider, PromptMessage } from '@/types/story';
 import { IAIProvider } from './IAIProvider';
 import { attemptPromise } from '@jfdi/attempt';
+import { wrapOpenAIStream } from '../streamUtils';
 
 export class OpenAIProvider implements IAIProvider {
     private client: OpenAI | null = null;
@@ -63,26 +64,7 @@ export class OpenAIProvider implements IAIProvider {
             stream: true
         }, { signal });
 
-        return new Response(
-            new ReadableStream({
-                async start(controller) {
-                    const [error] = await attemptPromise(async () => {
-                        for await (const chunk of stream) {
-                            const content = chunk.choices[0]?.delta?.content;
-                            if (content) {
-                                controller.enqueue(new TextEncoder().encode(content));
-                            }
-                        }
-                    });
-
-                    if (error) {
-                        controller.error(error);
-                    } else {
-                        controller.close();
-                    }
-                }
-            })
-        );
+        return wrapOpenAIStream(stream);
     }
 
     isInitialized(): boolean {

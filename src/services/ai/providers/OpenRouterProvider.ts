@@ -3,6 +3,7 @@ import { AIModel, AIProvider, PromptMessage } from '@/types/story';
 import { IAIProvider } from './IAIProvider';
 import { attemptPromise } from '@jfdi/attempt';
 import { API_URLS } from '@/constants/urls';
+import { wrapOpenAIStream } from '../streamUtils';
 
 interface OpenRouterModelResponse {
     id: string;
@@ -97,26 +98,7 @@ export class OpenRouterProvider implements IAIProvider {
             stream: true
         }, { signal });
 
-        return new Response(
-            new ReadableStream({
-                async start(controller) {
-                    const [error] = await attemptPromise(async () => {
-                        for await (const chunk of stream) {
-                            const content = chunk.choices[0]?.delta?.content;
-                            if (content) {
-                                controller.enqueue(new TextEncoder().encode(content));
-                            }
-                        }
-                    });
-
-                    if (error) {
-                        controller.error(error);
-                    } else {
-                        controller.close();
-                    }
-                }
-            })
-        );
+        return wrapOpenAIStream(stream);
     }
 
     isInitialized(): boolean {
