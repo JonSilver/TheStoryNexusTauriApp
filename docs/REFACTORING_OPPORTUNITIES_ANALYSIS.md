@@ -237,6 +237,48 @@ npm install --save-dev @types/loglevel
 
 ---
 
+### 1.5 Remove @sindresorhus/is Dependency (LOW PRIORITY)
+
+**Location**: `package.json:61` (unused dependency)
+
+**Issue**: Library installed but never used. Knip analysis shows 0 imports.
+
+**Current type checking patterns**:
+- 58 `typeof`/`instanceof`/`Array.isArray` checks across 25 files
+- Most are simple type narrowing (e.g., `typeof reader.result === 'string'`)
+- Validation checks should use Zod (see section 3.1)
+
+**Why @sindresorhus/is isn't needed**:
+
+```typescript
+// Current pattern (fine as-is)
+if (typeof msg === 'object' && typeof msg.content === 'string') {
+    // ...
+}
+
+// Would become with @sindresorhus/is (unnecessary abstraction)
+import is from '@sindresorhus/is';
+if (is.object(msg) && is.string(msg.content)) {
+    // ...
+}
+
+// Better approach: Use Zod for validation
+const result = MessageSchema.safeParse(msg);
+if (result.success) {
+    // Type-safe from here
+}
+```
+
+**Recommendation**: Remove from dependencies. Native `typeof` is idiomatic and sufficient for simple type guards. Use Zod for complex validation.
+
+```bash
+npm uninstall @sindresorhus/is
+```
+
+**Impact**: Reduces bundle size by ~5KB, one less dependency to maintain.
+
+---
+
 ## 2. Repetitive Patterns Requiring Abstraction
 
 ### 2.1 CRUD Store Pattern Duplication (HIGH PRIORITY)
@@ -1134,6 +1176,7 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 | **HIGH** | Abstraction | CRUD store factory | Very High - ~1,200 lines |
 | **HIGH** | Library | Zod validation | High - Type safety |
 | **HIGH** | Dependencies | ID generator removal | Medium - Less noise |
+| **HIGH** | Dependencies | Remove @sindresorhus/is | Low - Bundle size |
 | **MEDIUM** | Duplication | Import/export utils | Medium - Consistency |
 | **MEDIUM** | Duplication | String normalization | Low - Maintainability |
 | **MEDIUM** | Library | date-fns integration | Medium - Better UX |
@@ -1146,19 +1189,20 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 | **LOW** | Pattern | Fetch-after-update | Low - Performance |
 
 **Quick Wins** (high impact):
-1. Stream wrapping extraction
-2. ID generator removal
+1. Remove ID generator wrappers → use `crypto.randomUUID()` directly
+2. Remove @sindresorhus/is → unused dependency
 3. Replace logger with loglevel
-4. String normalization utility
+4. Extract stream wrapping code to shared utility
 
 ---
 
 ## 6. Migration Strategy
 
 ### Phase 1: Quick Wins
-- Remove ID generator wrappers
-- Extract stream wrapping code
+- Remove ID generator wrappers → use `crypto.randomUUID()` directly
+- Remove @sindresorhus/is dependency
 - Replace logger utility with loglevel
+- Extract stream wrapping code to shared utility
 - Create string normalization utility
 
 ### Phase 2: Validation & Types
