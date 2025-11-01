@@ -5,6 +5,7 @@ import { IAIProvider } from './providers/IAIProvider';
 import { attemptPromise } from '@jfdi/attempt';
 import { formatSSEChunk, formatSSEDone } from '@/constants/aiConstants';
 import { API_URLS } from '@/constants/urls';
+import { aiSettingsSchema } from '@/schemas/entities';
 
 export class AIService {
     private static instance: AIService;
@@ -51,6 +52,11 @@ export class AIService {
             availableModels: localModels,
         };
 
+        const result = aiSettingsSchema.safeParse(settings);
+        if (!result.success) {
+            throw new Error(`Invalid AI settings data: ${result.error.message}`);
+        }
+
         await db.aiSettings.add(settings);
         return settings;
     }
@@ -64,6 +70,11 @@ export class AIService {
             ...(provider === 'openai' && { openaiKey: key }),
             ...(provider === 'openrouter' && { openrouterKey: key })
         };
+
+        const result = aiSettingsSchema.partial().safeParse(update);
+        if (!result.success) {
+            throw new Error(`Invalid AI settings update data: ${result.error.message}`);
+        }
 
         await db.aiSettings.update(this.settings.id, update);
         Object.assign(this.settings, update);
@@ -94,10 +105,17 @@ export class AIService {
         const existingModels = this.settings.availableModels.filter(m => m.provider !== provider);
         const updatedModels = [...existingModels, ...models];
 
-        await db.aiSettings.update(this.settings.id, {
+        const updateData = {
             availableModels: updatedModels,
             lastModelsFetch: new Date()
-        });
+        };
+
+        const result = aiSettingsSchema.partial().safeParse(updateData);
+        if (!result.success) {
+            throw new Error(`Invalid AI settings update data: ${result.error.message}`);
+        }
+
+        await db.aiSettings.update(this.settings.id, updateData);
 
         this.settings.availableModels = updatedModels;
         this.settings.lastModelsFetch = new Date();
@@ -361,23 +379,39 @@ export class AIService {
             throw new Error('AI settings not initialized');
         }
 
+        let updateData: Partial<AISettings>;
         if (provider === 'local') {
-            await db.aiSettings.update(this.settings.id, { defaultLocalModel: modelId });
-            this.settings.defaultLocalModel = modelId;
+            updateData = { defaultLocalModel: modelId };
         } else if (provider === 'openai') {
-            await db.aiSettings.update(this.settings.id, { defaultOpenAIModel: modelId });
-            this.settings.defaultOpenAIModel = modelId;
+            updateData = { defaultOpenAIModel: modelId };
         } else if (provider === 'openrouter') {
-            await db.aiSettings.update(this.settings.id, { defaultOpenRouterModel: modelId });
-            this.settings.defaultOpenRouterModel = modelId;
+            updateData = { defaultOpenRouterModel: modelId };
+        } else {
+            return;
         }
+
+        const result = aiSettingsSchema.partial().safeParse(updateData);
+        if (!result.success) {
+            throw new Error(`Invalid AI settings update data: ${result.error.message}`);
+        }
+
+        await db.aiSettings.update(this.settings.id, updateData);
+        Object.assign(this.settings, updateData);
     }
 
     async updateLocalApiUrl(url: string): Promise<void> {
         if (!this.settings) {
             throw new Error('Settings not initialized');
         }
-        await db.aiSettings.update(this.settings.id, { localApiUrl: url });
+
+        const updateData = { localApiUrl: url };
+
+        const result = aiSettingsSchema.partial().safeParse(updateData);
+        if (!result.success) {
+            throw new Error(`Invalid AI settings update data: ${result.error.message}`);
+        }
+
+        await db.aiSettings.update(this.settings.id, updateData);
         this.settings.localApiUrl = url;
 
         // Update provider and re-fetch models

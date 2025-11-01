@@ -163,3 +163,22 @@ export const lorebookExportSchema = z.object({
   type: z.literal('lorebook'),
   entries: z.array(lorebookEntrySchema),
 });
+
+// AI Model schema
+const aiModelSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  provider: aiProviderSchema,
+});
+
+// AI Settings schema
+export const aiSettingsSchema = baseEntitySchema.extend({
+  openaiKey: z.string().optional(),
+  openrouterKey: z.string().optional(),
+  availableModels: z.array(aiModelSchema),
+  lastModelsFetch: z.coerce.date().optional(),
+  localApiUrl: z.string().optional(),
+  defaultLocalModel: z.string().optional(),
+  defaultOpenAIModel: z.string().optional(),
+  defaultOpenRouterModel: z.string().optional(),
+});
