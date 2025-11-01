@@ -57,6 +57,9 @@ lorebookEntries: 'id, level, scopeId, name, category, *tags, isDemo'
 - Simpler validation logic
 
 ### Migration (Version 14)
+Current database is at version 13 (see database.ts:40). Version 14 adds series support.
+
+Changes:
 - Tag all existing entries with `level: 'story'`
 - Rename `storyId` to `scopeId`
 - Add new indices
