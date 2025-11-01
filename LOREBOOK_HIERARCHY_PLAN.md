@@ -35,7 +35,7 @@ New field:
 - `seriesId?: string`
 
 ### Modified `lorebookEntries` table
-Change from story-only to scope-based:
+Change from story-only to level-based with unified scope reference:
 
 **Old index:**
 ```typescript
@@ -44,17 +44,21 @@ lorebookEntries: 'id, storyId, name, category, *tags, isDemo'
 
 **New index:**
 ```typescript
-lorebookEntries: 'id, scope, seriesId, storyId, name, category, *tags, isDemo'
+lorebookEntries: 'id, level, scopeId, name, category, *tags, isDemo'
 ```
 
 **New fields:**
-- `scope: 'global' | 'series' | 'story'` (required)
-- `seriesId?: string` (required when scope='series')
-- `storyId?: string` (required when scope='story', now optional)
+- `level: 'global' | 'series' | 'story'` (required)
+- `scopeId?: string` (optional - contains seriesId when level='series', storyId when level='story', null when level='global')
+
+**Benefits:**
+- Single field for scope reference (cleaner schema)
+- Enables promotion/demotion: just change `level` and update `scopeId`
+- Simpler validation logic
 
 ### Migration (Version 14)
-- Tag all existing entries with `scope: 'story'`
-- Existing `storyId` values preserved
+- Tag all existing entries with `level: 'story'`
+- Rename `storyId` to `scopeId`
 - Add new indices
 
 ---
@@ -76,9 +80,8 @@ export interface Series extends BaseEntity {
 **LorebookEntry:**
 ```typescript
 export interface LorebookEntry extends BaseEntity {
-    scope: 'global' | 'series' | 'story';
-    seriesId?: string;  // Required when scope='series'
-    storyId?: string;   // Required when scope='story'
+    level: 'global' | 'series' | 'story';
+    scopeId?: string;  // seriesId when level='series', storyId when level='story', undefined when level='global'
     name: string;
     description: string;
     category: 'character' | 'location' | 'item' | 'event' | 'note' | 'synopsis' | 'starting scenario' | 'timeline';
@@ -133,7 +136,7 @@ export class StoryDatabase extends Dexie {
 - `async deleteSeriesWithRelated(seriesId: string): Promise<void>`
   - Deletes series
   - Nullifies `story.seriesId` for all stories in series (orphans them)
-  - Deletes all lorebook entries with `scope='series'` and matching `seriesId`
+  - Deletes all lorebook entries with `level='series'` and matching `scopeId`
   - Preserves global and story-scoped entries
 
 ### Modified Story Methods
@@ -151,14 +154,14 @@ export class StoryDatabase extends Dexie {
   - Returns global entries + series entries (if story has seriesId) + story entries
   - Single denormalized query for prompt context
 
-**Scope-based queries:**
-- `async getLorebookEntriesByScope(scope: 'global' | 'series' | 'story', id?: string): Promise<LorebookEntry[]>`
-  - `scope='global'` - all global entries
-  - `scope='series', id=seriesId` - all entries for series
-  - `scope='story', id=storyId` - all entries for story
+**Level-based queries:**
+- `async getLorebookEntriesByLevel(level: 'global' | 'series' | 'story', scopeId?: string): Promise<LorebookEntry[]>`
+  - `level='global'` - all global entries (scopeId ignored)
+  - `level='series', scopeId=seriesId` - all entries for series
+  - `level='story', scopeId=storyId` - all entries for story
 
 **Modified:**
-- Existing `getLorebookEntriesByStory()`, `getLorebookEntriesByTag()`, `getLorebookEntriesByCategory()` updated to handle optional storyId and scope filtering
+- Existing `getLorebookEntriesByStory()`, `getLorebookEntriesByTag()`, `getLorebookEntriesByCategory()` updated to handle level filtering
 
 ---
 
@@ -198,7 +201,7 @@ interface SeriesState {
 loadEntries: (storyId: string) => Promise<void>;
 
 // New
-loadEntries: (scope: 'global' | 'series' | 'story', id?: string) => Promise<void>;
+loadEntries: (level: 'global' | 'series' | 'story', scopeId?: string) => Promise<void>;
 loadHierarchicalEntries: (storyId: string) => Promise<void>;  // NEW: loads global + series + story
 ```
 
@@ -207,13 +210,19 @@ loadHierarchicalEntries: (storyId: string) => Promise<void>;  // NEW: loads glob
 // Old
 createEntry: (entry: Omit<LorebookEntry, 'id' | 'createdAt'>) => Promise<void>;
 
-// New - must include scope, seriesId, or storyId
+// New - must include level and scopeId
 createEntry: (entry: Omit<LorebookEntry, 'id' | 'createdAt'>) => Promise<void>;
 ```
 
 **Filtering:**
-- Add `getEntriesByScope: (scope: 'global' | 'series' | 'story') => LorebookEntry[]`
+- Add `getEntriesByLevel: (level: 'global' | 'series' | 'story') => LorebookEntry[]`
 - Existing filters remain unchanged (already work with in-memory entries)
+
+**Promotion/Demotion:**
+- Add `promoteToSeries: (entryId: string, targetSeriesId: string) => Promise<void>`
+- Add `promoteToGlobal: (entryId: string) => Promise<void>`
+- Add `demoteToSeries: (entryId: string, targetSeriesId: string) => Promise<void>`
+- Add `demoteToStory: (entryId: string, targetStoryId: string) => Promise<void>`
 
 ---
 
@@ -223,21 +232,21 @@ createEntry: (entry: Omit<LorebookEntry, 'id' | 'createdAt'>) => Promise<void>;
 
 **Add:**
 ```typescript
-filterByScope(entries: LorebookEntry[], scope: 'global' | 'series' | 'story'): LorebookEntry[]
-getInheritedEntries(entries: LorebookEntry[], scope: 'global' | 'series'): LorebookEntry[]
+filterByLevel(entries: LorebookEntry[], level: 'global' | 'series' | 'story'): LorebookEntry[]
+getInheritedEntries(entries: LorebookEntry[], level: 'global' | 'series'): LorebookEntry[]
 ```
 
 ### Modified: `LorebookImportExportService`
 
 **Import:**
-- Validate `scope` field present
-- Validate `seriesId` present when scope='series'
-- Validate `storyId` present when scope='story'
-- Reject entries with invalid scope/id combinations
+- Validate `level` field present
+- Validate `scopeId` present when level='series' or level='story'
+- Validate `scopeId` absent when level='global'
+- Reject entries with invalid level/scopeId combinations
 
 **Export:**
-- Include `scope` field in JSON
-- Include `seriesId` when scope='series'
+- Include `level` field in JSON
+- Include `scopeId` when applicable
 
 ### Modified: `PromptParser` / `ContextBuilder`
 
@@ -287,25 +296,26 @@ All now implicitly include inherited entries.
 - `GlobalLorebookPage` - Manage global entries (wrapper around existing lorebook UI)
 
 **Shared:**
-- `ScopeSelector` - Radio buttons: Global / Series / Story
-- `ScopeBadge` - Visual indicator of entry scope (colour-coded pill)
+- `LevelSelector` - Radio buttons: Global / Series / Story
+- `LevelBadge` - Visual indicator of entry level (colour-coded pill)
 - `InheritedEntriesSection` - Read-only list of global/series entries
 
 ### Modified Components
 
 **`LorebookPage`:**
-- Add scope context (global/series/story)
+- Add level context (global/series/story)
 - Show inherited entries in separate read-only section
-- OR: single list with scope badges, disable edit for non-matching scope
+- OR: single list with level badges, disable edit for non-matching level
 
 **`LorebookEntryForm`:**
-- Add `scope` prop
-- Conditionally show series/story selector based on scope
-- Validation: require seriesId when scope='series', storyId when scope='story'
+- Add `level` prop
+- Conditionally show series/story selector based on level
+- Validation: require scopeId when level='series' or level='story'
 
 **`LorebookEntryCard`:**
-- Add `ScopeBadge` display
+- Add `LevelBadge` display
 - Add `readOnly` prop (disable edit button for inherited entries)
+- Add promotion/demotion action buttons
 
 **`StoryForm`:**
 - Add series dropdown (optional)
@@ -320,26 +330,26 @@ All now implicitly include inherited entries.
 - All category-specific forms/cards
 - Tag autocomplete logic
 - Matching/filtering logic
-- Import/export UI (just passes scope data)
+- Import/export UI (just passes level/scopeId data)
 
 **Reusable with props:**
-- `LorebookList` - accept `scope` filter, `readOnly` flag
-- `LorebookEntryCard` - accept `readOnly`, show scope badge
-- `LorebookEntryForm` - accept `scope`, conditional selectors
+- `LorebookList` - accept `level` filter, `readOnly` flag
+- `LorebookEntryCard` - accept `readOnly`, show level badge, promotion/demotion buttons
+- `LorebookEntryForm` - accept `level`, conditional selectors
 
 **New thin wrappers:**
 ```typescript
 // Global
-<LorebookList scope="global" editable={true} />
+<LorebookList level="global" editable={true} />
 
 // Series
-<LorebookList scope="series" seriesId={seriesId} editable={true} />
+<LorebookList level="series" scopeId={seriesId} editable={true} />
 
 // Story (with inheritance)
 <>
-  <InheritedEntriesSection entries={globalEntries} scope="global" />
-  <InheritedEntriesSection entries={seriesEntries} scope="series" />
-  <LorebookList scope="story" storyId={storyId} editable={true} />
+  <InheritedEntriesSection entries={globalEntries} level="global" />
+  <InheritedEntriesSection entries={seriesEntries} level="series" />
+  <LorebookList level="story" scopeId={storyId} editable={true} />
 </>
 ```
 
@@ -391,7 +401,7 @@ All now implicitly include inherited entries.
 
 - When matching `@tags` in chapter or scene beat, search across **all** inherited entries
 - Global entries matched first, then series, then story (order doesn't matter functionally)
-- Disabled entries excluded regardless of scope
+- Disabled entries excluded regardless of level
 
 ---
 
@@ -401,14 +411,14 @@ All now implicitly include inherited entries.
 
 **LorebookEntry validation:**
 ```typescript
-if (scope === 'global') {
-    assert(!seriesId && !storyId);
+if (level === 'global') {
+    assert(!scopeId);
 }
-if (scope === 'series') {
-    assert(seriesId && !storyId);
+if (level === 'series') {
+    assert(scopeId);  // Must reference a series
 }
-if (scope === 'story') {
-    assert(storyId && !seriesId);
+if (level === 'story') {
+    assert(scopeId);  // Must reference a story
 }
 ```
 
@@ -419,14 +429,15 @@ if (scope === 'story') {
 this.version(14).stores({
     series: 'id, name, createdAt, isDemo',
     stories: 'id, title, createdAt, language, seriesId, isDemo',
-    lorebookEntries: 'id, scope, seriesId, storyId, name, category, *tags, isDemo',
+    lorebookEntries: 'id, level, scopeId, name, category, *tags, isDemo',
     // ... other tables unchanged
 }).upgrade(async (tx) => {
-    // Tag all existing entries as story-scoped
+    // Migrate existing entries: set level='story', rename storyId to scopeId
     const entries = await tx.table('lorebookEntries').toArray();
     for (const entry of entries) {
         await tx.table('lorebookEntries').update(entry.id, {
-            scope: 'story'
+            level: 'story',
+            scopeId: entry.storyId
         });
     }
 });
@@ -435,13 +446,60 @@ this.version(14).stores({
 ### Cascade Deletion
 
 **Story deletion:**
-- Delete only `scope='story'` entries with matching `storyId`
+- Delete only `level='story'` entries with matching `scopeId`
 - Preserve global and series entries
 
 **Series deletion:**
-- Delete only `scope='series'` entries with matching `seriesId`
+- Delete only `level='series'` entries with matching `scopeId`
 - Set `seriesId=null` for all stories in series
 - Preserve global and story entries
+
+### Promotion/Demotion Operations
+
+**Promote story entry to series:**
+```typescript
+async promoteToSeries(entryId: string, targetSeriesId: string): Promise<void> {
+    await db.lorebookEntries.update(entryId, {
+        level: 'series',
+        scopeId: targetSeriesId
+    });
+}
+```
+
+**Promote series entry to global:**
+```typescript
+async promoteToGlobal(entryId: string): Promise<void> {
+    await db.lorebookEntries.update(entryId, {
+        level: 'global',
+        scopeId: undefined
+    });
+}
+```
+
+**Demote global entry to series:**
+```typescript
+async demoteToSeries(entryId: string, targetSeriesId: string): Promise<void> {
+    await db.lorebookEntries.update(entryId, {
+        level: 'series',
+        scopeId: targetSeriesId
+    });
+}
+```
+
+**Demote series entry to story:**
+```typescript
+async demoteToStory(entryId: string, targetStoryId: string): Promise<void> {
+    await db.lorebookEntries.update(entryId, {
+        level: 'story',
+        scopeId: targetStoryId
+    });
+}
+```
+
+**Benefits:**
+- Single operation changes level and scope
+- No complex field juggling
+- Easy to add UI buttons: "Promote to Series", "Make Global", etc.
 
 ### Import/Export
 
@@ -490,16 +548,16 @@ Features:
 │
 ├── lorebook/
 │   ├── pages/
-│   │   ├── LorebookPage.tsx (MODIFIED: scope-aware)
+│   │   ├── LorebookPage.tsx (MODIFIED: level-aware)
 │   │   └── GlobalLorebookPage.tsx (NEW)
 │   ├── components/
-│   │   ├── LorebookEntryCard.tsx (MODIFIED: scope badge, readOnly)
-│   │   ├── LorebookEntryForm.tsx (MODIFIED: scope selector)
-│   │   ├── ScopeSelector.tsx (NEW)
-│   │   ├── ScopeBadge.tsx (NEW)
+│   │   ├── LorebookEntryCard.tsx (MODIFIED: level badge, readOnly, promote/demote)
+│   │   ├── LorebookEntryForm.tsx (MODIFIED: level selector)
+│   │   ├── LevelSelector.tsx (NEW)
+│   │   ├── LevelBadge.tsx (NEW)
 │   │   └── InheritedEntriesSection.tsx (NEW)
 │   └── stores/
-│       └── useLorebookStore.ts (MODIFIED: scope methods)
+│       └── useLorebookStore.ts (MODIFIED: level methods, promote/demote)
 │
 └── stories/
     ├── components/
