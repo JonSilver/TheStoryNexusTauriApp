@@ -1,6 +1,7 @@
 import { AIModel, AIProvider, AISettings, PromptMessage } from '@/types/story';
 import { db } from '../database';
 import { AIProviderFactory } from './AIProviderFactory';
+import { IAIProvider } from './providers/IAIProvider';
 import { attemptPromise } from '@jfdi/attempt';
 import { formatSSEChunk, formatSSEDone } from '@/constants/aiConstants';
 import { API_URLS } from '@/constants/urls';
@@ -205,30 +206,13 @@ export class AIService {
             this.providerFactory.initializeProvider('openai', this.settings.openaiKey);
         }
 
-        this.abortController = new AbortController();
-
-        const [error, response] = await attemptPromise(() =>
-            provider.generate(
-                messages,
-                modelId,
-                temperature,
-                maxTokens,
-                this.abortController!.signal
-            )
+        return await this.generateWithSSEFormatting(
+            provider,
+            messages,
+            modelId,
+            temperature,
+            maxTokens
         );
-
-        if (error) {
-            if ((error as Error).name === 'AbortError') {
-                return new Response(null, { status: 204 });
-            }
-            throw error;
-        }
-
-        if (!response) {
-            throw new Error('No response from provider');
-        }
-
-        return this.formatStreamAsSSE(response);
     }
 
     async generateWithOpenRouter(
@@ -250,6 +234,22 @@ export class AIService {
             this.providerFactory.initializeProvider('openrouter', this.settings.openrouterKey);
         }
 
+        return await this.generateWithSSEFormatting(
+            provider,
+            messages,
+            modelId,
+            temperature,
+            maxTokens
+        );
+    }
+
+    private async generateWithSSEFormatting(
+        provider: IAIProvider,
+        messages: PromptMessage[],
+        modelId: string,
+        temperature: number,
+        maxTokens: number
+    ): Promise<Response> {
         this.abortController = new AbortController();
 
         const [error, response] = await attemptPromise(() =>
