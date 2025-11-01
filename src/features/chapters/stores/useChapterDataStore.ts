@@ -5,6 +5,7 @@ import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { storageService, STORAGE_KEYS } from '@/utils/storageService';
 import { chapterSchema } from '@/schemas/entities';
+import { countWords } from '@/utils/textUtils';
 import type { Chapter } from '@/types/story';
 
 interface ChapterDataState {
@@ -105,7 +106,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
             id: chapterId,
             order: nextOrder,
             createdAt: new Date(),
-            wordCount: chapterData.content.split(/\s+/).length
+            wordCount: countWords(chapterData.content)
         };
 
         const result = chapterSchema.safeParse(newChapterData);
@@ -156,7 +157,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
         set({ loading: true, error: null });
 
         if (chapterData.content) {
-            chapterData.wordCount = chapterData.content.split(/\s+/).length;
+            chapterData.wordCount = countWords(chapterData.content);
             const [getError, chapter] = await attemptPromise(() => db.chapters.get(id));
             if (!getError && chapter) {
                 const { lastEditedChapterIds } = get();

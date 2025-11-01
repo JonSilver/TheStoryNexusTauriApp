@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import is from '@sindresorhus/is';
-import { attemptPromise, attempt } from '@jfdi/attempt';
+import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
+import { extractPlainTextFromLexical } from '@/utils/lexicalUtils';
 
 interface ChapterContentState {
     // Content processing operations
@@ -48,42 +48,6 @@ export const useChapterContentStore = create<ChapterContentState>(() => ({
     },
 
     extractPlainTextFromLexicalState: (editorStateJSON: string) => {
-        const [parseError, editorState] = attempt(() => JSON.parse(editorStateJSON));
-
-        if (parseError) {
-            console.error('Error extracting plain text from Lexical state:', parseError);
-            return '';
-        }
-
-        const extractText = (node: any): string => {
-            if (!node) return '';
-
-            if (node.type === 'text') {
-                return node.text || '';
-            }
-
-            if (node.type === 'linebreak') {
-                return '\n';
-            }
-
-            if (node.type === 'scene-beat') {
-                return '';
-            }
-
-            const childrenText = (node.children && is.array(node.children))
-                ? node.children.map(extractText).join('')
-                : '';
-
-            const lineBreak = (node.type === 'paragraph' || node.type === 'heading') ? '\n' : '';
-
-            return childrenText + lineBreak;
-        };
-
-        const rootNode = editorState.root;
-        const rawText = extractText(rootNode);
-
-        return rawText
-            .replace(/\n{3,}/g, '\n\n')
-            .trim();
+        return extractPlainTextFromLexical(editorStateJSON);
     }
 }));
