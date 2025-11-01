@@ -4,6 +4,7 @@ import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { storySchema } from '@/schemas/entities';
+import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 import type { Story } from '@/types/story';
 
 interface StoryState {
@@ -72,23 +73,19 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
 
     // Create a new story
     createStory: async (storyData) => {
-        const storyDataWithId = {
-            ...storyData,
-            id: crypto.randomUUID(),
-            createdAt: new Date()
-        };
-
-        const result = storySchema.safeParse(storyDataWithId);
-        if (!result.success) {
-            const errorMessage = `Invalid story data: ${result.error.message}`;
+        let validatedStory: Story;
+        try {
+            validatedStory = createValidatedEntity(storyData, storySchema);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
             set({ error: errorMessage, loading: false });
-            throw new Error(errorMessage);
+            throw error;
         }
 
         set({ loading: true, error: null });
 
         const [createError, storyId] = await attemptPromise(() =>
-            db.createNewStory(storyDataWithId)
+            db.createNewStory(validatedStory)
         );
 
         if (createError) {
@@ -121,11 +118,12 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
 
     // Update a story
     updateStory: async (id: string, storyData: Partial<Story>) => {
-        const result = storySchema.partial().safeParse(storyData);
-        if (!result.success) {
-            const errorMessage = `Invalid story update data: ${result.error.message}`;
+        try {
+            validatePartialUpdate(storyData, storySchema);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
             set({ error: errorMessage, loading: false });
-            throw new Error(errorMessage);
+            throw error;
         }
 
         set({ loading: true, error: null });

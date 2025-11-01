@@ -6,6 +6,7 @@ import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { storageService, STORAGE_KEYS } from '@/utils/storageService';
 import { chapterSchema } from '@/schemas/entities';
 import { countWords } from '@/utils/textUtils';
+import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 import type { Chapter } from '@/types/story';
 
 interface ChapterDataState {
@@ -101,20 +102,20 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
 
         const chapterId = crypto.randomUUID();
 
-        const newChapterData = {
-            ...chapterData,
-            id: chapterId,
-            order: nextOrder,
-            createdAt: new Date(),
-            wordCount: countWords(chapterData.content)
-        };
-
-        const result = chapterSchema.safeParse(newChapterData);
-        if (!result.success) {
-            const errorMessage = `Invalid chapter data: ${result.error.message}`;
+        let newChapterData: Chapter;
+        try {
+            newChapterData = createValidatedEntity(
+                { ...chapterData, order: nextOrder, wordCount: countWords(chapterData.content) },
+                chapterSchema
+            );
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
             set({ error: errorMessage, loading: false });
-            throw new Error(errorMessage);
+            throw error;
         }
+
+        // Override the auto-generated ID to use our pre-generated one for tracking
+        newChapterData = { ...newChapterData, id: chapterId };
 
         const [addError] = await attemptPromise(() => db.chapters.add(newChapterData));
 
@@ -147,11 +148,12 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
     },
 
     updateChapter: async (id: string, chapterData: Partial<Chapter>) => {
-        const result = chapterSchema.partial().safeParse(chapterData);
-        if (!result.success) {
-            const errorMessage = `Invalid chapter update data: ${result.error.message}`;
+        try {
+            validatePartialUpdate(chapterData, chapterSchema);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
             set({ error: errorMessage, loading: false });
-            throw new Error(errorMessage);
+            throw error;
         }
 
         set({ loading: true, error: null });

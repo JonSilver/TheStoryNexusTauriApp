@@ -6,6 +6,7 @@ import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { toast } from 'react-toastify';
 import { noteSchema } from '@/schemas/entities';
+import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 
 interface NotesState {
     notes: Note[];
@@ -48,21 +49,18 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
 
     createNote: async (storyId: string, title: string, content: string, type: Note['type']) => {
         const now = new Date();
-        const newNote: Note = {
-            id: crypto.randomUUID(),
-            storyId,
-            title,
-            content,
-            type,
-            createdAt: now,
-            updatedAt: now
-        };
 
-        const result = noteSchema.safeParse(newNote);
-        if (!result.success) {
-            const errorMessage = `Invalid note data: ${result.error.message}`;
+        let newNote: Note;
+        try {
+            newNote = createValidatedEntity(
+                { storyId, title, content, type },
+                noteSchema,
+                { updatedAt: now }
+            );
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
             toast.error(errorMessage);
-            throw new Error(errorMessage);
+            throw error;
         }
 
         const [addError] = await attemptPromise(() => db.notes.add(newNote));
@@ -93,11 +91,12 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
     },
 
     updateNote: async (noteId: string, data: Partial<Note>) => {
-        const result = noteSchema.partial().safeParse(data);
-        if (!result.success) {
-            const errorMessage = `Invalid note update data: ${result.error.message}`;
+        try {
+            validatePartialUpdate(data, noteSchema);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
             toast.error(errorMessage);
-            throw new Error(errorMessage);
+            throw error;
         }
 
         const [fetchError, note] = await attemptPromise(() => db.notes.get(noteId));
