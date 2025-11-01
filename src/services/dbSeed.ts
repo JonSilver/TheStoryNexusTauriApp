@@ -2,6 +2,7 @@ import { attemptPromise } from "@jfdi/attempt";
 import { db } from "./database";
 import { Prompt } from "../types/story";
 import systemPrompts from "../data/systemPrompts";
+import { logger } from "@/utils/logger";
 
 export class DatabaseSeeder {
   private static instance: DatabaseSeeder;
@@ -25,12 +26,12 @@ export class DatabaseSeeder {
 
     // Only run once per app lifecycle unless forceReseed is true
     if (DatabaseSeeder.isInitialized && !forceReseed) {
-      console.log("Database already initialized in this session.");
+      logger.info("Database already initialized in this session.");
       return;
     }
 
     const [error] = await attemptPromise(async () => {
-      console.log("Initializing database with seed data...");
+      logger.info("Initializing database with seed data...");
 
       // Check if we need to seed
       const needsSeeding = await this.checkIfSeedingNeeded();
@@ -39,16 +40,16 @@ export class DatabaseSeeder {
         // Seed system prompts with fixed IDs
         await this.seedSystemPrompts(forceReseed);
 
-        console.log("Database seeding complete.");
+        logger.info("Database seeding complete.");
       } else {
-        console.log("Database already contains seed data. Skipping seeding.");
+        logger.info("Database already contains seed data. Skipping seeding.");
       }
 
       DatabaseSeeder.isInitialized = true;
     });
 
     if (error) {
-      console.error("Error initializing database:", error);
+      logger.error("Error initializing database:", error);
       throw error;
     }
   }
@@ -57,9 +58,9 @@ export class DatabaseSeeder {
    * Force a reseed of system prompts
    */
   public async forceReseedSystemPrompts(): Promise<void> {
-    console.log("Force reseeding system prompts...");
+    logger.info("Force reseeding system prompts...");
     await this.seedSystemPrompts(true);
-    console.log("System prompts reseeded successfully.");
+    logger.info("System prompts reseeded successfully.");
   }
 
   /**
@@ -73,7 +74,7 @@ export class DatabaseSeeder {
     for (const promptId of systemPromptIds) {
       const exists = await db.prompts.get(promptId);
       if (!exists) {
-        console.log(
+        logger.info(
           `System prompt with ID ${promptId} not found. Seeding needed.`
         );
         return true;
@@ -88,18 +89,18 @@ export class DatabaseSeeder {
    * @param forceReseed If true, will replace existing prompts with the same ID
    */
   private async seedSystemPrompts(forceReseed = false): Promise<void> {
-    console.log("Seeding system prompts...");
+    logger.info("Seeding system prompts...");
 
     if (forceReseed) {
       // Clear all existing system prompts when force reseeding
-      console.log("Force reseeding - clearing all existing system prompts...");
+      logger.info("Force reseeding - clearing all existing system prompts...");
       const systemPromptCount = await db.prompts
         .where("isSystem")
         .equals(1)
         .count();
       if (systemPromptCount > 0) {
         await db.prompts.where("isSystem").equals(1).delete();
-        console.log(`Deleted ${systemPromptCount} existing system prompts.`);
+        logger.info(`Deleted ${systemPromptCount} existing system prompts.`);
       }
     }
 
@@ -108,20 +109,20 @@ export class DatabaseSeeder {
       const exists = await db.prompts.get(promptData.id!);
 
       if (exists && !forceReseed) {
-        console.log(
+        logger.info(
           `System prompt ${promptData.name} already exists. Skipping.`
         );
         continue;
       }
 
       if (exists && forceReseed) {
-        console.log(`Replacing system prompt: ${promptData.name}`);
+        logger.info(`Replacing system prompt: ${promptData.name}`);
         await db.prompts.update(promptData.id!, {
           ...promptData,
           createdAt: exists.createdAt, // Keep the original creation date
         });
       } else {
-        console.log(`Adding system prompt: ${promptData.name}`);
+        logger.info(`Adding system prompt: ${promptData.name}`);
         await db.prompts.add({
           ...promptData,
           createdAt: new Date(),
