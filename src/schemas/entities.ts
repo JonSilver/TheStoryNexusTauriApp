@@ -1,5 +1,40 @@
 import { z } from 'zod';
 
+// Helper for safe JSON parsing with Zod validation
+export const parseJSON = <T extends z.ZodTypeAny>(
+  schema: T,
+  jsonString: string
+): z.SafeParseReturnType<z.input<T>, z.output<T>> => {
+  try {
+    const parsed = JSON.parse(jsonString);
+    return schema.safeParse(parsed);
+  } catch (error) {
+    return {
+      success: false,
+      error: new z.ZodError([
+        {
+          code: 'custom',
+          path: [],
+          message: error instanceof Error ? error.message : 'Invalid JSON',
+        },
+      ]),
+    };
+  }
+};
+
+// Helper for localStorage with Zod validation
+export const parseLocalStorage = <T extends z.ZodTypeAny>(
+  schema: T,
+  key: string,
+  defaultValue: z.output<T>
+): z.output<T> => {
+  const stored = localStorage.getItem(key);
+  if (!stored) return defaultValue;
+
+  const result = parseJSON(schema, stored);
+  return result.success ? result.data : defaultValue;
+};
+
 // Base schema for common fields
 const baseEntitySchema = z.object({
   id: z.string().uuid(),
@@ -162,6 +197,18 @@ export const lorebookExportSchema = z.object({
   version: z.string(),
   type: z.literal('lorebook'),
   entries: z.array(lorebookEntrySchema),
+});
+
+// Story export schema
+export const storyExportSchema = z.object({
+  version: z.string(),
+  type: z.literal('story'),
+  exportDate: z.string(),
+  story: storySchema,
+  chapters: z.array(chapterSchema),
+  lorebookEntries: z.array(lorebookEntrySchema),
+  sceneBeats: z.array(sceneBeatSchema),
+  aiChats: z.array(aiChatSchema),
 });
 
 // AI Model schema

@@ -1,5 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { attemptPromise } from "@jfdi/attempt";
+import { z } from "zod";
+import { parseLocalStorage } from "@/schemas/entities";
 import { Button } from "../../../components/ui/button";
 import {
   Pencil,
@@ -73,8 +75,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const expandedStateKey = `chapter-${chapter.id}-expanded`;
   const [isExpanded, setIsExpanded] = useState(() => {
-    const stored = localStorage.getItem(expandedStateKey);
-    return stored ? JSON.parse(stored) : false;
+    return parseLocalStorage(z.boolean(), expandedStateKey, false);
   });
   const [summary, setSummary] = useState(chapter.summary || "");
   const deleteChapter = useChapterStore((state) => state.deleteChapter);

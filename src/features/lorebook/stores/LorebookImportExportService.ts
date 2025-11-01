@@ -1,7 +1,7 @@
 import { db } from '@/services/database';
 import type { LorebookEntry } from '@/types/story';
-import { attemptPromise, attempt } from '@jfdi/attempt';
-import { lorebookExportSchema } from '@/schemas/entities';
+import { attemptPromise } from '@jfdi/attempt';
+import { lorebookExportSchema, parseJSON } from '@/schemas/entities';
 
 export class LorebookImportExportService {
     static exportEntries(entries: LorebookEntry[], storyId: string): void {
@@ -30,16 +30,9 @@ export class LorebookImportExportService {
         targetStoryId: string,
         onEntriesAdded: (entries: LorebookEntry[]) => void
     ): Promise<void> {
-        const [parseError, parsed] = attempt(() => JSON.parse(jsonData));
-
-        if (parseError) {
-            console.error('Error parsing lorebook entries:', parseError);
-            throw parseError;
-        }
-
-        const result = lorebookExportSchema.safeParse(parsed);
+        const result = parseJSON(lorebookExportSchema, jsonData);
         if (!result.success) {
-            throw new Error(`Invalid lorebook data format: ${result.error.message}`);
+            throw new Error(`Invalid lorebook data: ${result.error.message}`);
         }
 
         const newEntries: LorebookEntry[] = [];

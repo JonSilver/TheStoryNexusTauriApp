@@ -11,6 +11,8 @@ import {
     StickyNote,
     PenLine
 } from "lucide-react";
+import { z } from "zod";
+import { parseLocalStorage } from "@/schemas/entities";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useStoryStore } from "@/features/stories/stores/useStoryStore";
@@ -24,9 +26,7 @@ export default function StoryDashboard() {
     const { getStory } = useStoryStore();
     const location = useLocation();
     const [isExpanded, setIsExpanded] = useState(() => {
-        // Initialize from localStorage if available
-        const savedState = localStorage.getItem('nav-expanded');
-        return savedState ? JSON.parse(savedState) : false;
+        return parseLocalStorage(z.boolean(), 'nav-expanded', false);
     });
 
     const { getLastEditedChapterId, chapters } = useChapterStore();

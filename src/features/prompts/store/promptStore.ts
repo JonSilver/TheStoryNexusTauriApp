@@ -5,7 +5,7 @@ import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { logger } from '@/utils/logger';
-import { promptsExportSchema, promptSchema } from '@/schemas/entities';
+import { promptsExportSchema, promptSchema, parseJSON } from '@/schemas/entities';
 import type { Prompt, PromptMessage } from '@/types/story';
 
 interface PromptStore {
@@ -248,11 +248,9 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
 
     // Import prompts from JSON string. Creates new IDs and createdAt. Ensures unique names.
     importPrompts: async (jsonData) => {
-        const parsed = JSON.parse(jsonData);
-
-        const result = promptsExportSchema.safeParse(parsed);
+        const result = parseJSON(promptsExportSchema, jsonData);
         if (!result.success) {
-            throw new Error(`Invalid prompts data format: ${result.error.message}`);
+            throw new Error(`Invalid prompts data: ${result.error.message}`);
         }
 
         const imported: Prompt[] = result.data.prompts;
