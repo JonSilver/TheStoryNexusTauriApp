@@ -20,6 +20,7 @@ import {
 import {useEffect, useRef, useState} from 'react';
 
 import useReport from '../../hooks/useReport';
+import { normalizeString } from '@/utils/stringUtils';
 
 export const SPEECH_TO_TEXT_COMMAND: LexicalCommand<boolean> = createCommand(
   'SPEECH_TO_TEXT_COMMAND',
@@ -74,7 +75,7 @@ function SpeechToTextPlugin(): null {
             const selection = $getSelection();
 
             if ($isRangeSelection(selection)) {
-              const command = VOICE_COMMANDS[transcript.toLowerCase().trim()];
+              const command = VOICE_COMMANDS[normalizeString(transcript)];
 
               if (command) {
                 command({
