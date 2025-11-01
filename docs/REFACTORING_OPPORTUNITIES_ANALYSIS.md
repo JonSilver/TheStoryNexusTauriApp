@@ -237,45 +237,93 @@ npm install --save-dev @types/loglevel
 
 ---
 
-### 1.5 Remove @sindresorhus/is Dependency (LOW PRIORITY)
+### 1.5 Migrate Manual Type Guards to @sindresorhus/is (HIGH PRIORITY)
 
-**Location**: `package.json:61` (unused dependency)
+**Location**: 58 manual type checks across 25 files
 
-**Issue**: Library installed but never used. Knip analysis shows 0 imports.
+**Issue**: @sindresorhus/is library is installed but not used. Manual `typeof` checks scattered throughout codebase should use the library instead.
 
-**Current type checking patterns**:
-- 58 `typeof`/`instanceof`/`Array.isArray` checks across 25 files
-- Most are simple type narrowing (e.g., `typeof reader.result === 'string'`)
-- Validation checks should use Zod (see section 3.1)
+**Current violations**:
+- `src/features/prompts/store/promptStore.ts:38-42` - 4 manual type checks
+- `src/Lexical/lexical-playground/src/nodes/scene-beat/hooks/useSceneBeatData.ts:16,101,104,107` - 6 manual checks
+- `src/features/prompts/services/resolvers/BrainstormResolvers.ts` - 3 manual checks
+- Plus 45+ more across 22 other files
 
-**Why @sindresorhus/is isn't needed**:
+**Examples of what needs migrating**:
 
 ```typescript
-// Current pattern (fine as-is)
-if (typeof msg === 'object' && typeof msg.content === 'string') {
-    // ...
+// WRONG - Manual type guards
+validatePromptData: (messages) => {
+    return messages.every(msg =>
+        typeof msg === 'object' &&
+        ('role' in msg) &&
+        ('content' in msg) &&
+        ['system', 'user', 'assistant'].includes(msg.role) &&
+        typeof msg.content === 'string'
+    );
 }
 
-// Would become with @sindresorhus/is (unnecessary abstraction)
+// CORRECT - Using @sindresorhus/is
 import is from '@sindresorhus/is';
-if (is.object(msg) && is.string(msg.content)) {
+
+validatePromptData: (messages) => {
+    return messages.every(msg =>
+        is.plainObject(msg) &&
+        is.string(msg.role) &&
+        is.string(msg.content) &&
+        ['system', 'user', 'assistant'].includes(msg.role)
+    );
+}
+```
+
+**More examples**:
+
+```typescript
+// Scene beat data validation - BEFORE
+if (typeof node === "object" && node !== null) {
+    if (typeof data.metadata.useMatchedChapter === "boolean") {
+        // ...
+    }
+}
+
+// Scene beat data validation - AFTER
+import is from '@sindresorhus/is';
+
+if (is.plainObject(node)) {
+    if (is.boolean(data.metadata.useMatchedChapter)) {
+        // ...
+    }
+}
+
+// Image plugin - BEFORE
+if (typeof reader.result === 'string') {
     // ...
 }
 
-// Better approach: Use Zod for validation
-const result = MessageSchema.safeParse(msg);
-if (result.success) {
-    // Type-safe from here
+// Image plugin - AFTER
+if (is.string(reader.result)) {
+    // ...
 }
 ```
 
-**Recommendation**: Remove from dependencies. Native `typeof` is idiomatic and sufficient for simple type guards. Use Zod for complex validation.
+**@sindresorhus/is advantages**:
+- Comprehensive type checking (70+ type guards)
+- Handles edge cases (e.g., `is.plainObject` excludes arrays, null, class instances)
+- More readable and expressive
+- TypeScript type predicates built-in
+- Consistent API across codebase
 
-```bash
-npm uninstall @sindresorhus/is
-```
+**Common patterns to migrate**:
+- `typeof x === 'string'` → `is.string(x)`
+- `typeof x === 'number'` → `is.number(x)`
+- `typeof x === 'boolean'` → `is.boolean(x)`
+- `typeof x === 'object' && x !== null` → `is.plainObject(x)`
+- `Array.isArray(x)` → `is.array(x)`
+- `x instanceof Error` → `is.error(x)`
 
-**Impact**: Reduces bundle size by ~5KB, one less dependency to maintain.
+**Recommendation**: Systematically migrate all 58 manual type guards to use @sindresorhus/is.
+
+**Impact**: More robust type checking, consistent API, catches edge cases native typeof misses.
 
 ---
 
@@ -1176,7 +1224,7 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 | **HIGH** | Abstraction | CRUD store factory | Very High - ~1,200 lines |
 | **HIGH** | Library | Zod validation | High - Type safety |
 | **HIGH** | Dependencies | ID generator removal | Medium - Less noise |
-| **HIGH** | Dependencies | Remove @sindresorhus/is | Low - Bundle size |
+| **HIGH** | Dependencies | Migrate to @sindresorhus/is | High - Robust type checking |
 | **MEDIUM** | Duplication | Import/export utils | Medium - Consistency |
 | **MEDIUM** | Duplication | String normalization | Low - Maintainability |
 | **MEDIUM** | Library | date-fns integration | Medium - Better UX |
@@ -1190,7 +1238,7 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 
 **Quick Wins** (high impact):
 1. Remove ID generator wrappers → use `crypto.randomUUID()` directly
-2. Remove @sindresorhus/is → unused dependency
+2. Migrate manual type guards to @sindresorhus/is (58 occurrences)
 3. Replace logger with loglevel
 4. Extract stream wrapping code to shared utility
 
@@ -1200,7 +1248,7 @@ Using `react-error-boundary` (already in dependencies, `package.json:55`).
 
 ### Phase 1: Quick Wins
 - Remove ID generator wrappers → use `crypto.randomUUID()` directly
-- Remove @sindresorhus/is dependency
+- Migrate all manual type guards to @sindresorhus/is (58 occurrences across 25 files)
 - Replace logger utility with loglevel
 - Extract stream wrapping code to shared utility
 - Create string normalization utility
