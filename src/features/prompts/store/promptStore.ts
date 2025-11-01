@@ -3,7 +3,6 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { generatePromptId } from '@/utils/idGenerator';
 import { logger } from '@/utils/logger';
 import type { Prompt, PromptMessage } from '@/types/story';
 
@@ -76,7 +75,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
 
         const prompt: Prompt = {
             ...promptData,
-            id: generatePromptId(),
+            id: crypto.randomUUID(),
             createdAt: new Date(),
             temperature: promptData.temperature || 1.0,
             maxTokens: promptData.maxTokens || 4096,
@@ -183,7 +182,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
 
         const clonedPrompt: Prompt = {
             ...originalPrompt,
-            id: generatePromptId(),
+            id: crypto.randomUUID(),
             name: `${originalPrompt.name} (Copy)`,
             createdAt: new Date(),
             isSystem: false // Always set to false for cloned prompts
@@ -259,7 +258,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
 
             const newPrompt: Prompt = {
                 ...p,
-                id: generatePromptId(),
+                id: crypto.randomUUID(),
                 name: newName,
                 createdAt: new Date(),
                 // Ensure imported prompts are not treated as system prompts

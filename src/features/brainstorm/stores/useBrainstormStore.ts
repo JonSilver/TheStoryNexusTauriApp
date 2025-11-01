@@ -3,7 +3,6 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { generateChatId } from '@/utils/idGenerator';
 import type { AIChat, ChatMessage } from '@/types/story';
 
 interface BrainstormState {
@@ -60,7 +59,7 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
 
     addChat: async (storyId: string, title: string, messages: ChatMessage[]) => {
         const newChat: AIChat = {
-            id: generateChatId(),
+            id: crypto.randomUUID(),
             storyId,
             title,
             messages,
@@ -90,7 +89,7 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
 
     createNewChat: async (storyId: string) => {
         const newChat: AIChat = {
-            id: generateChatId(),
+            id: crypto.randomUUID(),
             storyId,
             title: `New Chat ${new Date().toLocaleString()}`,
             messages: [],

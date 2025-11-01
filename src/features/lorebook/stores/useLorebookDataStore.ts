@@ -3,7 +3,6 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { generateLorebookEntryId } from '@/utils/idGenerator';
 import type { LorebookEntry } from '@/types/story';
 
 interface LorebookDataState {
@@ -51,7 +50,7 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
     createEntry: async (entryData) => {
         const newEntry: LorebookEntry = {
             ...entryData,
-            id: generateLorebookEntryId(),
+            id: crypto.randomUUID(),
             createdAt: new Date(),
             isDisabled: false,
         };

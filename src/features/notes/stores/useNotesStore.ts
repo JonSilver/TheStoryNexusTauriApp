@@ -4,7 +4,6 @@ import { Note } from '@/types/story';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { generateNoteId } from '@/utils/idGenerator';
 import { toast } from 'react-toastify';
 
 interface NotesState {
@@ -49,7 +48,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
     createNote: async (storyId: string, title: string, content: string, type: Note['type']) => {
         const now = new Date();
         const newNote: Note = {
-            id: generateNoteId(),
+            id: crypto.randomUUID(),
             storyId,
             title,
             content,

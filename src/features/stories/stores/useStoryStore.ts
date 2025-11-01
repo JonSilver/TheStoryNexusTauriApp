@@ -3,7 +3,6 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { generateStoryId } from '@/utils/idGenerator';
 import type { Story } from '@/types/story';
 
 interface StoryState {
@@ -74,7 +73,7 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
     createStory: async (storyData) => {
         const storyDataWithId = {
             ...storyData,
-            id: generateStoryId()
+            id: crypto.randomUUID()
         };
         set({ loading: true, error: null });
 

@@ -3,7 +3,6 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { generateChapterId } from '@/utils/idGenerator';
 import { storageService, STORAGE_KEYS } from '@/utils/storageService';
 import type { Chapter } from '@/types/story';
 
@@ -98,7 +97,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
             ? 1
             : Math.max(...storyChapters.map(chapter => chapter.order)) + 1;
 
-        const chapterId = generateChapterId();
+        const chapterId = crypto.randomUUID();
 
         const [addError] = await attemptPromise(() =>
             db.chapters.add({
