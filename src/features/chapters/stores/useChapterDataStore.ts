@@ -4,6 +4,7 @@ import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { storageService, STORAGE_KEYS } from '@/utils/storageService';
+import { chapterSchema } from '@/schemas/entities';
 import type { Chapter } from '@/types/story';
 
 interface ChapterDataState {
@@ -99,15 +100,22 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
 
         const chapterId = crypto.randomUUID();
 
-        const [addError] = await attemptPromise(() =>
-            db.chapters.add({
-                ...chapterData,
-                id: chapterId,
-                order: nextOrder,
-                createdAt: new Date(),
-                wordCount: chapterData.content.split(/\s+/).length
-            })
-        );
+        const newChapterData = {
+            ...chapterData,
+            id: chapterId,
+            order: nextOrder,
+            createdAt: new Date(),
+            wordCount: chapterData.content.split(/\s+/).length
+        };
+
+        const result = chapterSchema.safeParse(newChapterData);
+        if (!result.success) {
+            const errorMessage = `Invalid chapter data: ${result.error.message}`;
+            set({ error: errorMessage, loading: false });
+            throw new Error(errorMessage);
+        }
+
+        const [addError] = await attemptPromise(() => db.chapters.add(newChapterData));
 
         if (addError) {
             set({
@@ -138,6 +146,13 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
     },
 
     updateChapter: async (id: string, chapterData: Partial<Chapter>) => {
+        const result = chapterSchema.partial().safeParse(chapterData);
+        if (!result.success) {
+            const errorMessage = `Invalid chapter update data: ${result.error.message}`;
+            set({ error: errorMessage, loading: false });
+            throw new Error(errorMessage);
+        }
+
         set({ loading: true, error: null });
 
         if (chapterData.content) {

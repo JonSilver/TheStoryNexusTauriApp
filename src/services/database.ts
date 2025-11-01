@@ -1,5 +1,6 @@
 import Dexie, { Table } from 'dexie';
 import systemPrompts from '@/data/systemPrompts';
+import { sceneBeatSchema } from '@/schemas/entities';
 import {
     Story,
     Chapter,
@@ -154,15 +155,27 @@ export class StoryDatabase extends Dexie {
 
     async createSceneBeat(data: Omit<SceneBeat, 'id' | 'createdAt'>): Promise<string> {
         const id = crypto.randomUUID();
-        await this.sceneBeats.add({
+        const newSceneBeat = {
             id,
             createdAt: new Date(),
             ...data
-        } as SceneBeat);
+        } as SceneBeat;
+
+        const result = sceneBeatSchema.safeParse(newSceneBeat);
+        if (!result.success) {
+            throw new Error(`Invalid scene beat data: ${result.error.message}`);
+        }
+
+        await this.sceneBeats.add(newSceneBeat);
         return id;
     }
 
     async updateSceneBeat(id: string, data: Partial<SceneBeat>): Promise<void> {
+        const result = sceneBeatSchema.partial().safeParse(data);
+        if (!result.success) {
+            throw new Error(`Invalid scene beat update data: ${result.error.message}`);
+        }
+
         await this.sceneBeats.update(id, data);
     }
 

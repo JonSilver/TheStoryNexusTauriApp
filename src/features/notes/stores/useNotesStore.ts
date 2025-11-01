@@ -5,6 +5,7 @@ import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { toast } from 'react-toastify';
+import { noteSchema } from '@/schemas/entities';
 
 interface NotesState {
     notes: Note[];
@@ -57,6 +58,13 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
             updatedAt: now
         };
 
+        const result = noteSchema.safeParse(newNote);
+        if (!result.success) {
+            const errorMessage = `Invalid note data: ${result.error.message}`;
+            toast.error(errorMessage);
+            throw new Error(errorMessage);
+        }
+
         const [addError] = await attemptPromise(() => db.notes.add(newNote));
 
         if (addError) {
@@ -85,6 +93,13 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
     },
 
     updateNote: async (noteId: string, data: Partial<Note>) => {
+        const result = noteSchema.partial().safeParse(data);
+        if (!result.success) {
+            const errorMessage = `Invalid note update data: ${result.error.message}`;
+            toast.error(errorMessage);
+            throw new Error(errorMessage);
+        }
+
         const [fetchError, note] = await attemptPromise(() => db.notes.get(noteId));
 
         if (fetchError || !note) {

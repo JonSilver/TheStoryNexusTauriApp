@@ -5,7 +5,7 @@ import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { logger } from '@/utils/logger';
-import { promptsExportSchema } from '@/schemas/entities';
+import { promptsExportSchema, promptSchema } from '@/schemas/entities';
 import type { Prompt, PromptMessage } from '@/types/story';
 
 interface PromptStore {
@@ -85,6 +85,11 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             min_p: promptData.min_p !== undefined ? promptData.min_p : 0.0
         };
 
+        const validationResult = promptSchema.safeParse(prompt);
+        if (!validationResult.success) {
+            throw new Error(`Invalid prompt data: ${validationResult.error.message}`);
+        }
+
         const [addError] = await attemptPromise(() => db.prompts.add(prompt));
 
         if (addError) {
@@ -101,8 +106,9 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
     },
 
     updatePrompt: async (id, promptData) => {
-        if (promptData.messages && !get().validatePromptData(promptData.messages)) {
-            throw new Error('Invalid prompt data structure');
+        const validationResult = promptSchema.partial().safeParse(promptData);
+        if (!validationResult.success) {
+            throw new Error(`Invalid prompt update data: ${validationResult.error.message}`);
         }
 
         // If name is being updated, check for duplicates
@@ -187,6 +193,11 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             createdAt: new Date(),
             isSystem: false // Always set to false for cloned prompts
         };
+
+        const validationResult = promptSchema.safeParse(clonedPrompt);
+        if (!validationResult.success) {
+            throw new Error(`Invalid cloned prompt data: ${validationResult.error.message}`);
+        }
 
         const [addError] = await attemptPromise(() => db.prompts.add(clonedPrompt));
 

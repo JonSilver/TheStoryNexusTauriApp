@@ -3,6 +3,7 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
+import { lorebookEntrySchema } from '@/schemas/entities';
 import type { LorebookEntry } from '@/types/story';
 
 interface LorebookDataState {
@@ -55,6 +56,13 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
             isDisabled: false,
         };
 
+        const result = lorebookEntrySchema.safeParse(newEntry);
+        if (!result.success) {
+            const message = `Invalid lorebook entry data: ${result.error.message}`;
+            set({ error: message });
+            throw new Error(message);
+        }
+
         const [error] = await attemptPromise(() => db.lorebookEntries.add(newEntry));
 
         if (error) {
@@ -67,6 +75,13 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
     },
 
     updateEntry: async (id, data) => {
+        const result = lorebookEntrySchema.partial().safeParse(data);
+        if (!result.success) {
+            const message = `Invalid lorebook entry update data: ${result.error.message}`;
+            set({ error: message });
+            throw new Error(message);
+        }
+
         const [error] = await attemptPromise(() => db.lorebookEntries.update(id, data));
 
         if (error) {

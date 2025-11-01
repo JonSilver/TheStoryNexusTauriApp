@@ -3,6 +3,7 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
+import { aiChatSchema } from '@/schemas/entities';
 import type { AIChat, ChatMessage } from '@/types/story';
 
 interface BrainstormState {
@@ -67,6 +68,13 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
             updatedAt: new Date()
         };
 
+        const result = aiChatSchema.safeParse(newChat);
+        if (!result.success) {
+            const message = `Invalid chat data: ${result.error.message}`;
+            set({ error: message });
+            throw new Error(message);
+        }
+
         const [error] = await attemptPromise(() => db.aiChats.add(newChat));
 
         if (error) {
@@ -96,6 +104,13 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
             createdAt: new Date(),
             updatedAt: new Date()
         };
+
+        const result = aiChatSchema.safeParse(newChat);
+        if (!result.success) {
+            const message = `Invalid chat data: ${result.error.message}`;
+            set({ error: message });
+            throw new Error(message);
+        }
 
         const [error] = await attemptPromise(() => db.aiChats.add(newChat));
 
@@ -129,6 +144,13 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
     },
 
     updateChat: async (chatId: string, data: Partial<AIChat>) => {
+        const result = aiChatSchema.partial().safeParse(data);
+        if (!result.success) {
+            const message = `Invalid chat update data: ${result.error.message}`;
+            set({ error: message });
+            throw new Error(message);
+        }
+
         // Update the timestamp to move the chat to the top of the list
         const updatedData = {
             ...data,

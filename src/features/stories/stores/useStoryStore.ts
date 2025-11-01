@@ -3,6 +3,7 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
+import { storySchema } from '@/schemas/entities';
 import type { Story } from '@/types/story';
 
 interface StoryState {
@@ -73,8 +74,17 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
     createStory: async (storyData) => {
         const storyDataWithId = {
             ...storyData,
-            id: crypto.randomUUID()
+            id: crypto.randomUUID(),
+            createdAt: new Date()
         };
+
+        const result = storySchema.safeParse(storyDataWithId);
+        if (!result.success) {
+            const errorMessage = `Invalid story data: ${result.error.message}`;
+            set({ error: errorMessage, loading: false });
+            throw new Error(errorMessage);
+        }
+
         set({ loading: true, error: null });
 
         const [createError, storyId] = await attemptPromise(() =>
@@ -111,6 +121,13 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
 
     // Update a story
     updateStory: async (id: string, storyData: Partial<Story>) => {
+        const result = storySchema.partial().safeParse(storyData);
+        if (!result.success) {
+            const errorMessage = `Invalid story update data: ${result.error.message}`;
+            set({ error: errorMessage, loading: false });
+            throw new Error(errorMessage);
+        }
+
         set({ loading: true, error: null });
 
         const [updateError] = await attemptPromise(() => db.stories.update(id, storyData));
