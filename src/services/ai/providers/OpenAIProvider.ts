@@ -3,6 +3,7 @@ import { AIModel, AIProvider, PromptMessage } from '@/types/story';
 import { IAIProvider } from './IAIProvider';
 import { attemptPromise } from '@jfdi/attempt';
 import { wrapOpenAIStream } from '../streamUtils';
+import { logger } from '@/utils/logger';
 
 export class OpenAIProvider implements IAIProvider {
     private client: OpenAI | null = null;
@@ -18,16 +19,16 @@ export class OpenAIProvider implements IAIProvider {
 
     async fetchModels(): Promise<AIModel[]> {
         if (!this.client) {
-            console.warn('[OpenAIProvider] Client not initialized');
+            logger.warn('[OpenAIProvider] Client not initialized');
             return [];
         }
 
-        console.log('[OpenAIProvider] Fetching models');
+        logger.info('[OpenAIProvider] Fetching models');
 
         const [error, response] = await attemptPromise(() => this.client!.models.list());
 
         if (error) {
-            console.error('[OpenAIProvider] Error fetching models:', error);
+            logger.error('[OpenAIProvider] Error fetching models:', error);
             return [];
         }
 
@@ -41,7 +42,7 @@ export class OpenAIProvider implements IAIProvider {
             enabled: true
         }));
 
-        console.log(`[OpenAIProvider] Fetched ${models.length} models`);
+        logger.info(`[OpenAIProvider] Fetched ${models.length} models`);
         return models;
     }
 

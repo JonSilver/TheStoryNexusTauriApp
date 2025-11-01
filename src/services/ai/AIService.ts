@@ -6,6 +6,7 @@ import { attemptPromise } from '@jfdi/attempt';
 import { formatSSEChunk, formatSSEDone } from '@/constants/aiConstants';
 import { API_URLS } from '@/constants/urls';
 import { aiSettingsSchema } from '@/schemas/entities';
+import { logger } from '@/utils/logger';
 
 export class AIService {
     private static instance: AIService;
@@ -64,7 +65,7 @@ export class AIService {
     async updateKey(provider: AIProvider, key: string) {
         if (!this.settings) throw new Error('AIService not initialized');
 
-        console.log(`[AIService] Updating key for provider: ${provider}`);
+        logger.info(`[AIService] Updating key for provider: ${provider}`);
 
         const update: Partial<AISettings> = {
             ...(provider === 'openai' && { openaiKey: key }),
@@ -89,17 +90,17 @@ export class AIService {
     private async fetchAvailableModels(provider: AIProvider) {
         if (!this.settings) throw new Error('AIService not initialized');
 
-        console.log(`[AIService] Fetching available models for provider: ${provider}`);
+        logger.info(`[AIService] Fetching available models for provider: ${provider}`);
 
         const aiProvider = this.providerFactory.getProvider(provider);
         const [error, models] = await attemptPromise(() => aiProvider.fetchModels());
 
         if (error) {
-            console.error('Error fetching models:', error);
+            logger.error('Error fetching models:', error);
             throw error;
         }
 
-        console.log(`[AIService] Fetched ${models.length} models for ${provider}`);
+        logger.info(`[AIService] Fetched ${models.length} models for ${provider}`);
 
         // Update only models from this provider, keep others
         const existingModels = this.settings.availableModels.filter(m => m.provider !== provider);
@@ -339,7 +340,7 @@ export class AIService {
 
         if (error) {
             if ((error as Error).name === 'AbortError') {
-                console.log('Stream reading aborted.');
+                logger.info('Stream reading aborted.');
                 onComplete();
             } else {
                 onError(error as Error);
@@ -425,7 +426,7 @@ export class AIService {
 
     abortStream(): void {
         if (this.abortController) {
-            console.log('[AIService] Aborting stream');
+            logger.info('[AIService] Aborting stream');
             this.abortController.abort();
             this.abortController = null;
         }
