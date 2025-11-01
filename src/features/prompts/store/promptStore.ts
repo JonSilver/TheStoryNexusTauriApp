@@ -7,6 +7,7 @@ import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { logger } from '@/utils/logger';
 import { promptsExportSchema, promptSchema, parseJSON } from '@/schemas/entities';
 import { downloadJSONDataURI, generateExportFilename } from '@/utils/jsonExportUtils';
+import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 import type { Prompt, PromptMessage } from '@/types/story';
 
 interface PromptStore {
@@ -74,21 +75,22 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw new Error('A prompt with this name already exists');
         }
 
-        const prompt: Prompt = {
-            ...promptData,
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            temperature: promptData.temperature || 1.0,
-            maxTokens: promptData.maxTokens || 4096,
-            top_p: promptData.top_p !== undefined ? promptData.top_p : 1.0,
-            top_k: promptData.top_k !== undefined ? promptData.top_k : 50,
-            repetition_penalty: promptData.repetition_penalty !== undefined ? promptData.repetition_penalty : 1.0,
-            min_p: promptData.min_p !== undefined ? promptData.min_p : 0.0
-        };
-
-        const validationResult = promptSchema.safeParse(prompt);
-        if (!validationResult.success) {
-            throw new Error(`Invalid prompt data: ${validationResult.error.message}`);
+        let prompt: Prompt;
+        try {
+            prompt = createValidatedEntity(
+                promptData,
+                promptSchema,
+                {
+                    temperature: promptData.temperature || 1.0,
+                    maxTokens: promptData.maxTokens || 4096,
+                    top_p: promptData.top_p !== undefined ? promptData.top_p : 1.0,
+                    top_k: promptData.top_k !== undefined ? promptData.top_k : 50,
+                    repetition_penalty: promptData.repetition_penalty !== undefined ? promptData.repetition_penalty : 1.0,
+                    min_p: promptData.min_p !== undefined ? promptData.min_p : 0.0
+                }
+            );
+        } catch (error) {
+            throw error instanceof Error ? error : new Error('Validation failed');
         }
 
         const [addError] = await attemptPromise(() => db.prompts.add(prompt));
@@ -107,9 +109,10 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
     },
 
     updatePrompt: async (id, promptData) => {
-        const validationResult = promptSchema.partial().safeParse(promptData);
-        if (!validationResult.success) {
-            throw new Error(`Invalid prompt update data: ${validationResult.error.message}`);
+        try {
+            validatePartialUpdate(promptData, promptSchema);
+        } catch (error) {
+            throw error instanceof Error ? error : new Error('Validation failed');
         }
 
         // If name is being updated, check for duplicates
@@ -187,17 +190,18 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw fetchError || new Error('Prompt not found');
         }
 
-        const clonedPrompt: Prompt = {
-            ...originalPrompt,
-            id: crypto.randomUUID(),
-            name: `${originalPrompt.name} (Copy)`,
-            createdAt: new Date(),
-            isSystem: false // Always set to false for cloned prompts
-        };
-
-        const validationResult = promptSchema.safeParse(clonedPrompt);
-        if (!validationResult.success) {
-            throw new Error(`Invalid cloned prompt data: ${validationResult.error.message}`);
+        let clonedPrompt: Prompt;
+        try {
+            clonedPrompt = createValidatedEntity(
+                { ...originalPrompt },
+                promptSchema,
+                {
+                    name: `${originalPrompt.name} (Copy)`,
+                    isSystem: false // Always set to false for cloned prompts
+                }
+            );
+        } catch (error) {
+            throw error instanceof Error ? error : new Error('Validation failed');
         }
 
         const [addError] = await attemptPromise(() => db.prompts.add(clonedPrompt));

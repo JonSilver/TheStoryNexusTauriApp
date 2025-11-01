@@ -4,6 +4,7 @@ import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { lorebookEntrySchema } from '@/schemas/entities';
+import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 import type { LorebookEntry } from '@/types/story';
 
 interface LorebookDataState {
@@ -49,18 +50,17 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
     },
 
     createEntry: async (entryData) => {
-        const newEntry: LorebookEntry = {
-            ...entryData,
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            isDisabled: false,
-        };
-
-        const result = lorebookEntrySchema.safeParse(newEntry);
-        if (!result.success) {
-            const message = `Invalid lorebook entry data: ${result.error.message}`;
+        let newEntry: LorebookEntry;
+        try {
+            newEntry = createValidatedEntity(
+                entryData,
+                lorebookEntrySchema,
+                { isDisabled: false }
+            );
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Validation failed';
             set({ error: message });
-            throw new Error(message);
+            throw error;
         }
 
         const [error] = await attemptPromise(() => db.lorebookEntries.add(newEntry));
@@ -75,11 +75,12 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
     },
 
     updateEntry: async (id, data) => {
-        const result = lorebookEntrySchema.partial().safeParse(data);
-        if (!result.success) {
-            const message = `Invalid lorebook entry update data: ${result.error.message}`;
+        try {
+            validatePartialUpdate(data, lorebookEntrySchema);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Validation failed';
             set({ error: message });
-            throw new Error(message);
+            throw error;
         }
 
         const [error] = await attemptPromise(() => db.lorebookEntries.update(id, data));

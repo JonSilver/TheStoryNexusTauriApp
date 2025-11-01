@@ -7,6 +7,7 @@
  */
 
 import type { JSX } from "react";
+import is from '@sindresorhus/is';
 
 import "./index.css";
 
@@ -54,7 +55,6 @@ import { useStoryStore } from "@/features/stories/stores/useStoryStore";
 import { PromptPreviewDialog } from "@/components/ui/prompt-preview-dialog";
 import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
 import { $isSceneBeatNode } from "../../nodes/SceneBeatNode";
-import is from '@sindresorhus/is';
 import { attemptPromise } from '@jfdi/attempt';
 
 function TextFormatFloatingToolbar({
@@ -263,7 +263,7 @@ function TextFormatFloatingToolbar({
           }
 
           // Traverse children
-          if (!$isTextNode(node) && typeof node.getChildren === "function") {
+          if (!$isTextNode(node) && is.function(node.getChildren)) {
             const children = node.getChildren();
             for (const child of children) {
               if (traverseNodes(child)) {

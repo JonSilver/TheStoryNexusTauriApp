@@ -17,6 +17,7 @@ import type {
   SerializedElementNode,
   Spread,
 } from 'lexical';
+import is from '@sindresorhus/is';
 
 import {addClassNamesToElement} from '@lexical/utils';
 import {ElementNode} from 'lexical';
@@ -61,7 +62,7 @@ export class LayoutContainerNode extends ElementNode {
   createDOM(config: EditorConfig): HTMLElement {
     const dom = document.createElement('div');
     dom.style.gridTemplateColumns = this.__templateColumns;
-    if (typeof config.theme.layoutContainer === 'string') {
+    if (is.string(config.theme.layoutContainer)) {
       addClassNamesToElement(dom, config.theme.layoutContainer);
     }
     return dom;
