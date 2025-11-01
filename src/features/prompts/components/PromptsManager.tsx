@@ -6,7 +6,7 @@ import { Plus, RefreshCw } from 'lucide-react';
 import { Upload, Download } from 'lucide-react';
 import type { Prompt } from '@/types/story';
 import { cn } from '@/lib/utils';
-import { toast } from 'react-toastify';
+import { toastCRUD } from '@/utils/toastUtils';
 import { dbSeeder } from '@/services/dbSeed';
 import { usePromptStore } from '../store/promptStore';
 import { attemptPromise } from '@jfdi/attempt';
@@ -52,10 +52,10 @@ export function PromptsManager() {
             await fetchPrompts();
         });
         if (error) {
-            toast.error('Failed to reseed system prompts');
+            toastCRUD.generic.error('Failed to reseed system prompts', error);
             console.error('Error reseeding system prompts:', error);
         } else {
-            toast.success('System prompts reseeded successfully');
+            toastCRUD.generic.success('System prompts reseeded successfully');
         }
         setIsReseeding(false);
     };
@@ -83,9 +83,9 @@ export function PromptsManager() {
                                 const [error] = await attemptPromise(async () => exportPrompts());
                                 if (error) {
                                     console.error('Export failed', error);
-                                    toast.error('Failed to export prompts');
+                                    toastCRUD.exportError('prompts', error);
                                 } else {
-                                    toast.success('Prompts exported');
+                                    toastCRUD.exportSuccess('Prompts');
                                 }
                             }}
                             title="Export prompts"
@@ -109,9 +109,9 @@ export function PromptsManager() {
                                 });
                                 if (error) {
                                     console.error('Import failed', error);
-                                    toast.error('Failed to import prompts');
+                                    toastCRUD.importError('prompts', error);
                                 } else {
-                                    toast.success('Prompts imported successfully');
+                                    toastCRUD.importSuccess('Prompts');
                                 }
                                 setIsImporting(false);
                                 // clear the input so the same file can be reselected if needed

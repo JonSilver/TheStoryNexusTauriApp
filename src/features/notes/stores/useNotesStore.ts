@@ -4,7 +4,7 @@ import { Note } from '@/types/story';
 import { db } from '@/services/database';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { toast } from 'react-toastify';
+import { toastCRUD } from '@/utils/toastUtils';
 import { noteSchema } from '@/schemas/entities';
 import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 
@@ -40,7 +40,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
         if (error) {
             const errorMessage = formatError(error, ERROR_MESSAGES.FETCH_FAILED('notes'));
             set({ error: errorMessage, isLoading: false });
-            toast.error(errorMessage);
+            toastCRUD.loadError('notes', error);
             return;
         }
 
@@ -58,16 +58,14 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
                 { updatedAt: now }
             );
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
-            toast.error(errorMessage);
+            toastCRUD.createError('note', error);
             throw error;
         }
 
         const [addError] = await attemptPromise(() => db.notes.add(newNote));
 
         if (addError) {
-            const errorMessage = formatError(addError, ERROR_MESSAGES.CREATE_FAILED('note'));
-            toast.error(errorMessage);
+            toastCRUD.createError('note', addError);
             throw addError;
         }
 
@@ -86,7 +84,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
             set({ notes });
         }
 
-        toast.success('Note created successfully');
+        toastCRUD.createSuccess('Note');
         return newNote.id;
     },
 
@@ -94,16 +92,14 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
         try {
             validatePartialUpdate(data, noteSchema);
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
-            toast.error(errorMessage);
+            toastCRUD.updateError('note', error);
             throw error;
         }
 
         const [fetchError, note] = await attemptPromise(() => db.notes.get(noteId));
 
         if (fetchError || !note) {
-            const errorMessage = formatError(fetchError || new Error('Note not found'), ERROR_MESSAGES.NOT_FOUND('note'));
-            toast.error(errorMessage);
+            toastCRUD.loadError('note', fetchError || new Error('Note not found'));
             throw fetchError || new Error('Note not found');
         }
 
@@ -116,8 +112,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
         const [updateError] = await attemptPromise(() => db.notes.update(noteId, updatedNote));
 
         if (updateError) {
-            const errorMessage = formatError(updateError, ERROR_MESSAGES.UPDATE_FAILED('note'));
-            toast.error(errorMessage);
+            toastCRUD.updateError('note', updateError);
             throw updateError;
         }
 
@@ -135,23 +130,21 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
             set({ notes });
         }
 
-        toast.success('Note updated successfully');
+        toastCRUD.updateSuccess('Note');
     },
 
     deleteNote: async (noteId: string) => {
         const [fetchError, note] = await attemptPromise(() => db.notes.get(noteId));
 
         if (fetchError || !note) {
-            const errorMessage = formatError(fetchError || new Error('Note not found'), ERROR_MESSAGES.NOT_FOUND('note'));
-            toast.error(errorMessage);
+            toastCRUD.deleteError('note', fetchError || new Error('Note not found'));
             throw fetchError || new Error('Note not found');
         }
 
         const [deleteError] = await attemptPromise(() => db.notes.delete(noteId));
 
         if (deleteError) {
-            const errorMessage = formatError(deleteError, ERROR_MESSAGES.DELETE_FAILED('note'));
-            toast.error(errorMessage);
+            toastCRUD.deleteError('note', deleteError);
             throw deleteError;
         }
 
@@ -169,7 +162,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
             set({ notes, selectedNote: null });
         }
 
-        toast.success('Note deleted successfully');
+        toastCRUD.deleteSuccess('Note');
     },
 
     selectNote: (note: Note | null) => {
