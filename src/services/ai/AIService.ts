@@ -1,5 +1,5 @@
 import { AIModel, AIProvider, AISettings, PromptMessage } from '@/types/story';
-import { db } from '../database';
+import { aiApi } from '../api/client';
 import { AIProviderFactory } from './AIProviderFactory';
 import { IAIProvider } from './providers/IAIProvider';
 import { attemptPromise } from '@jfdi/attempt';
@@ -27,8 +27,15 @@ export class AIService {
     }
 
     async initialize() {
-        const settings = await db.aiSettings.toArray();
-        this.settings = settings[0] || await this.createInitialSettings();
+        // Fetch settings from backend API
+        const [error, settings] = await attemptPromise(() => aiApi.getSettings());
+
+        if (error) {
+            logger.error('[AIService] Failed to fetch settings from API', error);
+            throw error;
+        }
+
+        this.settings = settings;
 
         // Initialize providers with stored keys
         if (this.settings.openaiKey) {
@@ -40,26 +47,6 @@ export class AIService {
         if (this.settings.localApiUrl) {
             this.providerFactory.updateLocalApiUrl(this.settings.localApiUrl);
         }
-    }
-
-    private async createInitialSettings(): Promise<AISettings> {
-        const localProvider = this.providerFactory.getProvider('local');
-        const localModels = await localProvider.fetchModels();
-
-        const settings: AISettings = {
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            localApiUrl: this.DEFAULT_LOCAL_API_URL,
-            availableModels: localModels,
-        };
-
-        const result = aiSettingsSchema.safeParse(settings);
-        if (!result.success) {
-            throw new Error(`Invalid AI settings data: ${result.error.message}`);
-        }
-
-        await db.aiSettings.add(settings);
-        return settings;
     }
 
     async updateKey(provider: AIProvider, key: string) {
@@ -77,7 +64,13 @@ export class AIService {
             throw new Error(`Invalid AI settings update data: ${result.error.message}`);
         }
 
-        await db.aiSettings.update(this.settings.id, update);
+        // Update via API
+        const [error] = await attemptPromise(() => aiApi.updateSettings(this.settings!.id, update));
+        if (error) {
+            logger.error('[AIService] Failed to update settings via API', error);
+            throw error;
+        }
+
         Object.assign(this.settings, update);
 
         // Initialize provider with new key
@@ -116,7 +109,12 @@ export class AIService {
             throw new Error(`Invalid AI settings update data: ${result.error.message}`);
         }
 
-        await db.aiSettings.update(this.settings.id, updateData);
+        // Update via API
+        const [apiError] = await attemptPromise(() => aiApi.updateSettings(this.settings!.id, updateData));
+        if (apiError) {
+            logger.error('[AIService] Failed to update models via API', apiError);
+            throw apiError;
+        }
 
         this.settings.availableModels = updatedModels;
         this.settings.lastModelsFetch = new Date();
@@ -125,10 +123,10 @@ export class AIService {
     async getAvailableModels(provider?: AIProvider, forceRefresh: boolean = true): Promise<AIModel[]> {
         if (!this.settings) throw new Error('AIService not initialized');
 
-        // Ensure settings are up to date
-        const dbSettings = await db.aiSettings.get(this.settings.id);
-        if (dbSettings) {
-            this.settings = dbSettings;
+        // Refresh settings from API to ensure we have latest data
+        const [error, freshSettings] = await attemptPromise(() => aiApi.getSettings());
+        if (!error && freshSettings) {
+            this.settings = freshSettings;
         }
 
         // Check if we should fetch fresh models
@@ -396,7 +394,13 @@ export class AIService {
             throw new Error(`Invalid AI settings update data: ${result.error.message}`);
         }
 
-        await db.aiSettings.update(this.settings.id, updateData);
+        // Update via API
+        const [error] = await attemptPromise(() => aiApi.updateSettings(this.settings!.id, updateData));
+        if (error) {
+            logger.error('[AIService] Failed to update default model via API', error);
+            throw error;
+        }
+
         Object.assign(this.settings, updateData);
     }
 
@@ -412,7 +416,13 @@ export class AIService {
             throw new Error(`Invalid AI settings update data: ${result.error.message}`);
         }
 
-        await db.aiSettings.update(this.settings.id, updateData);
+        // Update via API
+        const [error] = await attemptPromise(() => aiApi.updateSettings(this.settings!.id, updateData));
+        if (error) {
+            logger.error('[AIService] Failed to update local API URL via API', error);
+            throw error;
+        }
+
         this.settings.localApiUrl = url;
 
         // Update provider and re-fetch models
