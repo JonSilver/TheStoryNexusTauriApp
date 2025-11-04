@@ -136,29 +136,12 @@ server: {
 **Backend:** Express on port 3001 (dev), 3000 (prod)
 **Frontend:** Vite dev server on port 5173 (proxies API to 3001)
 
-### 6. Data Migration Utilities
+### 6. Data Migration
 
-Both features in new web app only:
+**Export:** Read IndexedDB (still in browser) → download JSON
+**Import:** Upload JSON → replace all SQLite contents
 
-**Export IndexedDB → JSON:**
-- Admin/migration page with export button
-- Reads entire IndexedDB (Dexie) client-side
-- Downloads JSON file via browser
-- Format: `{ version: "1.0", exportedAt: ISO8601, tables: { stories: [...], chapters: [...], ... } }`
-- All tables: stories, chapters, aiChats, prompts, aiSettings, lorebookEntries, sceneBeats, notes
-
-**Import JSON → SQLite:**
-- Same admin page with file upload
-- Upload JSON from previous export
-- **Replaces all database contents** (destructive, with confirmation)
-- Backend endpoint: `POST /api/admin/import` (multipart/form-data)
-- Transaction-wrapped: all-or-nothing
-- Validates schema before applying
-
-**Implementation:**
-- Client: `src/services/migration.ts` (export IndexedDB, upload file)
-- Server: `server/routes/admin.ts` + `server/services/importDatabase.ts`
-- Single JSON schema for both operations
+Simple migration page in new app with two buttons.
 
 ## Key Technical Notes
 
