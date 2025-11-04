@@ -5,6 +5,7 @@ import { ThemeProvider } from "./lib/theme-provider";
 import { ToastContainer } from "react-toastify";
 import { StoryProvider } from "@/features/stories/context/StoryContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { QueryProvider } from "@/providers/QueryProvider";
 import App from "./app";
 // Styles
 import "./index.css";
@@ -36,10 +37,11 @@ const PageLoadingFallback = () => (
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark" storageKey="app-theme">
-        <BrowserRouter>
-          <StoryProvider>
-            <Suspense fallback={<PageLoadingFallback />}>
+      <QueryProvider>
+        <ThemeProvider defaultTheme="dark" storageKey="app-theme">
+          <BrowserRouter>
+            <StoryProvider>
+              <Suspense fallback={<PageLoadingFallback />}>
               <Routes>
                 {/* Landing page */}
                 <Route path="/" element={<App />} />
@@ -68,10 +70,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 </Route>
               </Routes>
             </Suspense>
-          </StoryProvider>
-          <ToastContainer />
-        </BrowserRouter>
-      </ThemeProvider>
+            </StoryProvider>
+            <ToastContainer />
+          </BrowserRouter>
+        </ThemeProvider>
+      </QueryProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );
