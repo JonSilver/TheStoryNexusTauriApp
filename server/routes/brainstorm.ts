@@ -87,7 +87,12 @@ router.put('/:id', async (req, res) => {
             .set(updateData)
             .where(eq(schema.aiChats.id, req.params.id));
 
-        res.json({ success: true });
+        const updated = await db.select().from(schema.aiChats).where(eq(schema.aiChats.id, req.params.id));
+        const parsed = {
+            ...updated[0],
+            messages: parseJson(updated[0].messages),
+        };
+        res.json(parsed);
     } catch (error) {
         console.error('Error updating AI chat:', error);
         res.status(500).json({ error: 'Failed to update AI chat' });

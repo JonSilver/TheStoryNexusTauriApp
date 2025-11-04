@@ -51,13 +51,29 @@ export const useUpdateNoteMutation = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<Note> }) =>
             notesApi.update(id, data),
-        onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: notesKeys.all });
-            queryClient.invalidateQueries({ queryKey: notesKeys.detail(variables.id) });
-            toast.success('Note updated successfully');
+        onMutate: async ({ id, data }) => {
+            // Cancel outgoing refetches
+            await queryClient.cancelQueries({ queryKey: notesKeys.detail(id) });
+
+            // Snapshot previous value
+            const previousNote = queryClient.getQueryData(notesKeys.detail(id));
+
+            // Optimistically update
+            if (previousNote) {
+                queryClient.setQueryData(notesKeys.detail(id), { ...previousNote, ...data });
+            }
+
+            return { previousNote };
         },
-        onError: (error: Error) => {
-            toast.error(`Failed to update note: ${error.message}`);
+        onError: (_error, variables, context) => {
+            // Rollback on error
+            if (context?.previousNote) {
+                queryClient.setQueryData(notesKeys.detail(variables.id), context.previousNote);
+            }
+            toast.error('Failed to update note');
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: notesKeys.all });
         },
     });
 };

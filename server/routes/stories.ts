@@ -64,7 +64,8 @@ router.put('/:id', async (req, res) => {
             .set(updateData)
             .where(eq(schema.stories.id, req.params.id));
 
-        res.json({ success: true });
+        const updated = await db.select().from(schema.stories).where(eq(schema.stories.id, req.params.id));
+        res.json(updated[0]);
     } catch (error) {
         console.error('Error updating story:', error);
         res.status(500).json({ error: 'Failed to update story' });

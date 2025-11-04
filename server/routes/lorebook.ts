@@ -142,7 +142,13 @@ router.put('/:id', async (req, res) => {
             .set(updateData)
             .where(eq(schema.lorebookEntries.id, req.params.id));
 
-        res.json({ success: true });
+        const updated = await db.select().from(schema.lorebookEntries).where(eq(schema.lorebookEntries.id, req.params.id));
+        const parsed = {
+            ...updated[0],
+            tags: parseJson(updated[0].tags),
+            metadata: parseJson(updated[0].metadata),
+        };
+        res.json(parsed);
     } catch (error) {
         console.error('Error updating lorebook entry:', error);
         res.status(500).json({ error: 'Failed to update lorebook entry' });

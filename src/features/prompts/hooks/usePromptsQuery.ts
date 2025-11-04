@@ -5,15 +5,17 @@ import { toast } from 'react-toastify';
 
 // Query keys
 export const promptsKeys = {
-    all: (params?: { storyId?: string; promptType?: string; includeSystem?: boolean }) =>
-        ['prompts', params] as const,
-    detail: (id: string) => ['prompts', id] as const,
+    all: ['prompts'] as const,
+    lists: () => [...promptsKeys.all, 'list'] as const,
+    list: (params?: { storyId?: string; promptType?: string; includeSystem?: boolean }) =>
+        [...promptsKeys.lists(), params] as const,
+    detail: (id: string) => [...promptsKeys.all, id] as const,
 };
 
 // Fetch all prompts
 export const usePromptsQuery = (params?: { storyId?: string; promptType?: string; includeSystem?: boolean }) => {
     return useQuery({
-        queryKey: promptsKeys.all(params),
+        queryKey: promptsKeys.list(params),
         queryFn: () => promptsApi.getAll(params),
     });
 };
@@ -34,7 +36,7 @@ export const useCreatePromptMutation = () => {
     return useMutation({
         mutationFn: promptsApi.create,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['prompts'] });
+            queryClient.invalidateQueries({ queryKey: promptsKeys.lists() });
             toast.success('Prompt created successfully');
         },
         onError: (error: Error) => {
@@ -50,13 +52,29 @@ export const useUpdatePromptMutation = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<Prompt> }) =>
             promptsApi.update(id, data),
-        onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['prompts'] });
-            queryClient.invalidateQueries({ queryKey: promptsKeys.detail(variables.id) });
-            toast.success('Prompt updated successfully');
+        onMutate: async ({ id, data }) => {
+            // Cancel outgoing refetches
+            await queryClient.cancelQueries({ queryKey: promptsKeys.detail(id) });
+
+            // Snapshot previous value
+            const previousPrompt = queryClient.getQueryData(promptsKeys.detail(id));
+
+            // Optimistically update
+            if (previousPrompt) {
+                queryClient.setQueryData(promptsKeys.detail(id), { ...previousPrompt, ...data });
+            }
+
+            return { previousPrompt };
         },
-        onError: (error: Error) => {
-            toast.error(`Failed to update prompt: ${error.message}`);
+        onError: (_error, variables, context) => {
+            // Rollback on error
+            if (context?.previousPrompt) {
+                queryClient.setQueryData(promptsKeys.detail(variables.id), context.previousPrompt);
+            }
+            toast.error('Failed to update prompt');
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: promptsKeys.lists() });
         },
     });
 };
@@ -68,11 +86,42 @@ export const useDeletePromptMutation = () => {
     return useMutation({
         mutationFn: promptsApi.delete,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['prompts'] });
+            queryClient.invalidateQueries({ queryKey: promptsKeys.lists() });
             toast.success('Prompt deleted successfully');
         },
         onError: (error: Error) => {
             toast.error(`Failed to delete prompt: ${error.message}`);
+        },
+    });
+};
+
+// Clone prompt mutation
+export const useClonePromptMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: string) => {
+            // Fetch the original prompt
+            const originalPrompt = await promptsApi.getById(id);
+
+            // Create cloned prompt data
+            const { id: _id, createdAt: _createdAt, ...dataToClone } = originalPrompt;
+
+            const clonedPromptData = {
+                ...dataToClone,
+                name: `${originalPrompt.name} (Copy)`,
+                isSystem: false, // Always false for cloned prompts
+            };
+
+            // Create the new prompt
+            return promptsApi.create(clonedPromptData);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: promptsKeys.lists() });
+            toast.success('Prompt cloned successfully');
+        },
+        onError: (error: Error) => {
+            toast.error(`Failed to clone prompt: ${error.message}`);
         },
     });
 };

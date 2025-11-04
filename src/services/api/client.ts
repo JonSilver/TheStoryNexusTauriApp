@@ -37,7 +37,7 @@ export const storiesApi = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
-    update: (id: string, data: Partial<Story>) => fetchJSON<{ success: boolean }>(`/stories/${id}`, {
+    update: (id: string, data: Partial<Story>) => fetchJSON<Story>(`/stories/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
     }),
@@ -54,7 +54,7 @@ export const chaptersApi = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
-    update: (id: string, data: Partial<Chapter>) => fetchJSON<{ success: boolean }>(`/chapters/${id}`, {
+    update: (id: string, data: Partial<Chapter>) => fetchJSON<Chapter>(`/chapters/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
     }),
@@ -75,7 +75,7 @@ export const lorebookApi = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
-    update: (id: string, data: Partial<LorebookEntry>) => fetchJSON<{ success: boolean }>(`/lorebook/${id}`, {
+    update: (id: string, data: Partial<LorebookEntry>) => fetchJSON<LorebookEntry>(`/lorebook/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
     }),
@@ -98,7 +98,7 @@ export const promptsApi = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
-    update: (id: string, data: Partial<Prompt>) => fetchJSON<{ success: boolean }>(`/prompts/${id}`, {
+    update: (id: string, data: Partial<Prompt>) => fetchJSON<Prompt>(`/prompts/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
     }),
@@ -124,7 +124,7 @@ export const brainstormApi = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
-    update: (id: string, data: Partial<AIChat>) => fetchJSON<{ success: boolean }>(`/brainstorm/${id}`, {
+    update: (id: string, data: Partial<AIChat>) => fetchJSON<AIChat>(`/brainstorm/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
     }),
@@ -141,7 +141,7 @@ export const scenebeatsApi = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
-    update: (id: string, data: Partial<SceneBeat>) => fetchJSON<{ success: boolean }>(`/scenebeats/${id}`, {
+    update: (id: string, data: Partial<SceneBeat>) => fetchJSON<SceneBeat>(`/scenebeats/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
     }),
@@ -158,7 +158,7 @@ export const notesApi = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
-    update: (id: string, data: Partial<Note>) => fetchJSON<{ success: boolean }>(`/notes/${id}`, {
+    update: (id: string, data: Partial<Note>) => fetchJSON<Note>(`/notes/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
     }),

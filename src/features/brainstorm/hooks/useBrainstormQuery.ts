@@ -11,7 +11,7 @@ export const brainstormKeys = {
 };
 
 // Fetch brainstorm chats by story
-export const useBrainstormByStoryQuery = (storyId: string) => {
+export const useBrainstormChatsByStoryQuery = (storyId: string) => {
     return useQuery({
         queryKey: brainstormKeys.byStory(storyId),
         queryFn: () => brainstormApi.getByStory(storyId),
@@ -20,7 +20,7 @@ export const useBrainstormByStoryQuery = (storyId: string) => {
 };
 
 // Fetch single brainstorm chat
-export const useBrainstormQuery = (id: string) => {
+export const useBrainstormChatQuery = (id: string) => {
     return useQuery({
         queryKey: brainstormKeys.detail(id),
         queryFn: () => brainstormApi.getById(id),
@@ -29,7 +29,7 @@ export const useBrainstormQuery = (id: string) => {
 };
 
 // Create brainstorm chat mutation
-export const useCreateBrainstormMutation = () => {
+export const useCreateBrainstormChatMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -45,24 +45,41 @@ export const useCreateBrainstormMutation = () => {
 };
 
 // Update brainstorm chat mutation
-export const useUpdateBrainstormMutation = () => {
+export const useUpdateBrainstormChatMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<AIChat> }) =>
             brainstormApi.update(id, data),
-        onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: brainstormKeys.all });
-            queryClient.invalidateQueries({ queryKey: brainstormKeys.detail(variables.id) });
+        onMutate: async ({ id, data }) => {
+            // Cancel outgoing refetches
+            await queryClient.cancelQueries({ queryKey: brainstormKeys.detail(id) });
+
+            // Snapshot previous value
+            const previousChat = queryClient.getQueryData(brainstormKeys.detail(id));
+
+            // Optimistically update
+            if (previousChat) {
+                queryClient.setQueryData(brainstormKeys.detail(id), { ...previousChat, ...data });
+            }
+
+            return { previousChat };
         },
-        onError: (error: Error) => {
-            toast.error(`Failed to update brainstorm chat: ${error.message}`);
+        onError: (_error, variables, context) => {
+            // Rollback on error
+            if (context?.previousChat) {
+                queryClient.setQueryData(brainstormKeys.detail(variables.id), context.previousChat);
+            }
+            toast.error('Failed to update brainstorm chat');
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: brainstormKeys.all });
         },
     });
 };
 
 // Delete brainstorm chat mutation
-export const useDeleteBrainstormMutation = () => {
+export const useDeleteBrainstormChatMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({

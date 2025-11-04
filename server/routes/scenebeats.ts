@@ -92,7 +92,12 @@ router.put('/:id', async (req, res) => {
             .set(updateData)
             .where(eq(schema.sceneBeats.id, req.params.id));
 
-        res.json({ success: true });
+        const updated = await db.select().from(schema.sceneBeats).where(eq(schema.sceneBeats.id, req.params.id));
+        const parsed = {
+            ...updated[0],
+            metadata: parseJson(updated[0].metadata),
+        };
+        res.json(parsed);
     } catch (error) {
         console.error('Error updating scene beat:', error);
         res.status(500).json({ error: 'Failed to update scene beat' });

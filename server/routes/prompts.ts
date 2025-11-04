@@ -125,7 +125,14 @@ router.put('/:id', async (req, res) => {
             .set(updateData)
             .where(eq(schema.prompts.id, req.params.id));
 
-        res.json({ success: true });
+        const updated = await db.select().from(schema.prompts).where(eq(schema.prompts.id, req.params.id));
+        const parsed = {
+            ...updated[0],
+            messages: parseJson(updated[0].messages),
+            allowedModels: parseJson(updated[0].allowedModels),
+        };
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error updating prompt:', error);
         res.status(500).json({ error: 'Failed to update prompt' });

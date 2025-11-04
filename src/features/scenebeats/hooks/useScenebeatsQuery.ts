@@ -36,6 +36,7 @@ export const useCreateScenebeatMutation = () => {
         mutationFn: scenebeatsApi.create,
         onSuccess: (newSceneBeat) => {
             queryClient.invalidateQueries({ queryKey: scenebeatsKeys.byChapter(newSceneBeat.chapterId) });
+            toast.success('Scene beat created successfully');
         },
         onError: (error: Error) => {
             toast.error(`Failed to create scene beat: ${error.message}`);
@@ -50,12 +51,29 @@ export const useUpdateScenebeatMutation = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<SceneBeat> }) =>
             scenebeatsApi.update(id, data),
-        onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: scenebeatsKeys.all });
-            queryClient.invalidateQueries({ queryKey: scenebeatsKeys.detail(variables.id) });
+        onMutate: async ({ id, data }) => {
+            // Cancel outgoing refetches
+            await queryClient.cancelQueries({ queryKey: scenebeatsKeys.detail(id) });
+
+            // Snapshot previous value
+            const previousScenebeat = queryClient.getQueryData(scenebeatsKeys.detail(id));
+
+            // Optimistically update
+            if (previousScenebeat) {
+                queryClient.setQueryData(scenebeatsKeys.detail(id), { ...previousScenebeat, ...data });
+            }
+
+            return { previousScenebeat };
         },
-        onError: (error: Error) => {
-            toast.error(`Failed to update scene beat: ${error.message}`);
+        onError: (_error, variables, context) => {
+            // Rollback on error
+            if (context?.previousScenebeat) {
+                queryClient.setQueryData(scenebeatsKeys.detail(variables.id), context.previousScenebeat);
+            }
+            toast.error('Failed to update scene beat');
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: scenebeatsKeys.all });
         },
     });
 };
@@ -68,6 +86,7 @@ export const useDeleteScenebeatMutation = () => {
         mutationFn: scenebeatsApi.delete,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: scenebeatsKeys.all });
+            toast.success('Scene beat deleted successfully');
         },
         onError: (error: Error) => {
             toast.error(`Failed to delete scene beat: ${error.message}`);

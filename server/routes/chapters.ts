@@ -101,7 +101,14 @@ router.put('/:id', async (req, res) => {
             .set(updateData)
             .where(eq(schema.chapters.id, req.params.id));
 
-        res.json({ success: true });
+        const updated = await db.select().from(schema.chapters).where(eq(schema.chapters.id, req.params.id));
+        const parsed = {
+            ...updated[0],
+            outline: parseJson(updated[0].outline),
+            notes: parseJson(updated[0].notes),
+        };
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error updating chapter:', error);
         res.status(500).json({ error: 'Failed to update chapter' });

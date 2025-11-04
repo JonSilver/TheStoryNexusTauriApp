@@ -68,7 +68,8 @@ router.put('/:id', async (req, res) => {
             .set(updateData)
             .where(eq(schema.notes.id, req.params.id));
 
-        res.json({ success: true });
+        const updated = await db.select().from(schema.notes).where(eq(schema.notes.id, req.params.id));
+        res.json(updated[0]);
     } catch (error) {
         console.error('Error updating note:', error);
         res.status(500).json({ error: 'Failed to update note' });
