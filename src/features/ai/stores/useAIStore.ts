@@ -9,7 +9,7 @@ import {
     AllowedModel
 } from '@/types/story';
 import { aiService } from '@/services/ai/AIService';
-import { db } from '@/services/database';
+import { aiApi, promptsApi } from '@/services/api/client';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { createPromptParser } from '@/features/prompts/services/promptParser';
@@ -81,7 +81,7 @@ export const useAIStore = create<AIState>((set, get) => ({
             return;
         }
 
-        const [fetchError, settings] = await attemptPromise(() => db.aiSettings.toArray());
+        const [fetchError, settings] = await attemptPromise(() => aiApi.getSettings());
 
         if (fetchError) {
             set({
@@ -92,7 +92,7 @@ export const useAIStore = create<AIState>((set, get) => ({
         }
 
         set({
-            settings: settings[0] || null,
+            settings: settings || null,
             isInitialized: true,
             isLoading: false
         });
@@ -118,7 +118,7 @@ export const useAIStore = create<AIState>((set, get) => ({
             throw updateError;
         }
 
-        const [fetchError, settings] = await attemptPromise(() => db.aiSettings.toArray());
+        const [fetchError, settings] = await attemptPromise(() => aiApi.getSettings());
 
         if (fetchError) {
             set({
@@ -128,7 +128,7 @@ export const useAIStore = create<AIState>((set, get) => ({
             throw fetchError;
         }
 
-        set({ settings: settings[0], isLoading: false });
+        set({ settings, isLoading: false });
     },
 
     updateLocalApiUrl: async (url: string) => {
@@ -144,7 +144,7 @@ export const useAIStore = create<AIState>((set, get) => ({
             throw updateError;
         }
 
-        const [fetchError, settings] = await attemptPromise(() => db.aiSettings.toArray());
+        const [fetchError, settings] = await attemptPromise(() => aiApi.getSettings());
 
         if (fetchError) {
             set({
@@ -154,7 +154,7 @@ export const useAIStore = create<AIState>((set, get) => ({
             throw fetchError;
         }
 
-        set({ settings: settings[0], isLoading: false });
+        set({ settings, isLoading: false });
     },
 
     generateWithLocalModel: async (messages: PromptMessage[], modelId: string, temperature?: number, maxTokens?: number, top_p?: number, top_k?: number, repetition_penalty?: number, min_p?: number) => {
@@ -181,7 +181,7 @@ export const useAIStore = create<AIState>((set, get) => ({
         }
 
         // Get the prompt to access generation parameters
-        const [fetchError, prompt] = await attemptPromise(() => db.prompts.get(config.promptId));
+        const [fetchError, prompt] = await attemptPromise(() => promptsApi.getById(config.promptId));
 
         if (fetchError) {
             throw fetchError;
@@ -208,7 +208,7 @@ export const useAIStore = create<AIState>((set, get) => ({
         }
 
         // Get the prompt to access generation parameters
-        const [fetchError, prompt] = await attemptPromise(() => db.prompts.get(promptId));
+        const [fetchError, prompt] = await attemptPromise(() => promptsApi.getById(promptId));
 
         if (fetchError || !prompt) {
             throw fetchError || new Error(ERROR_MESSAGES.NOT_FOUND(`prompt with ID ${promptId}`));

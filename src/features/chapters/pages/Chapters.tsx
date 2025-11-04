@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChapterCard } from "@/features/chapters/components/ChapterCard";
 import { useChaptersByStoryQuery, useCreateChapterMutation, useUpdateChapterMutation } from "@/features/chapters/hooks/useChaptersQuery";
-import { usePromptStore } from "@/features/prompts/store/promptStore";
+import { useLorebookByStoryQuery } from "@/features/lorebook/hooks/useLorebookQuery";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
@@ -28,7 +28,6 @@ import {
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
-import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
 import {
   DndContext,
   closestCenter,
@@ -57,10 +56,9 @@ export default function Chapters() {
   const { storyId } = useParams();
   const { setCurrentStoryId } = useStoryContext();
   const { data: chapters = [], isLoading: loading, error: queryError } = useChaptersByStoryQuery(storyId || "");
+  const { data: lorebookEntries = [] } = useLorebookByStoryQuery(storyId || "");
   const createChapterMutation = useCreateChapterMutation();
   const updateChapterMutation = useUpdateChapterMutation();
-  const { fetchPrompts } = usePromptStore();
-  const { entries } = useLorebookStore();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const form = useForm<CreateChapterForm>({
     defaultValues: {
@@ -71,7 +69,7 @@ export default function Chapters() {
   const error = queryError?.message || null;
 
   const povType = form.watch("povType");
-  const characterEntries = entries.filter(
+  const characterEntries = lorebookEntries.filter(
     (entry) => entry.category === "character"
   );
 
@@ -85,9 +83,8 @@ export default function Chapters() {
   useEffect(() => {
     if (storyId) {
       setCurrentStoryId(storyId);
-      fetchPrompts().catch(console.error);
     }
-  }, [storyId, setCurrentStoryId, fetchPrompts]);
+  }, [storyId, setCurrentStoryId]);
 
   // Reset POV character when switching to omniscient
   useEffect(() => {

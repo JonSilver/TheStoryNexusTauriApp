@@ -52,10 +52,10 @@ import {
 import { toast } from "react-toastify";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
 import { useAIStore } from "@/features/ai/stores/useAIStore";
-import { usePromptStore } from "@/features/prompts/store/promptStore";
+import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
+import { useLorebookByStoryQuery } from "@/features/lorebook/hooks/useLorebookQuery";
 import { PromptParserConfig } from "@/types/story";
 import { AIGenerateMenu } from "@/components/ui/ai-generate-menu";
-import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
 import { DownloadMenu } from "@/components/ui/DownloadMenu";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -96,10 +96,11 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
   const { setCurrentChapterId } = useStoryContext();
   const navigate = useNavigate();
   const { generateWithPrompt, processStreamedResponse } = useAIStore();
-  const { prompts, isLoading, error } = usePromptStore();
+  const { data: prompts = [], isLoading, error: queryError } = usePromptsQuery({ includeSystem: true });
+  const { data: lorebookEntries = [] } = useLorebookByStoryQuery(storyId);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { entries } = useLorebookStore();
-  const characterEntries = entries.filter((entry) => entry.category === "character");
+  const characterEntries = lorebookEntries.filter((entry) => entry.category === "character");
+  const error = queryError?.message ?? null;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const {

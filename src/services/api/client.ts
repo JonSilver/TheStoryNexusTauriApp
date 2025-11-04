@@ -110,7 +110,7 @@ export const promptsApi = {
 // AI Settings API
 export const aiApi = {
     getSettings: () => fetchJSON<AISettings>('/ai/settings'),
-    updateSettings: (id: string, data: Partial<AISettings>) => fetchJSON<{ success: boolean }>(`/ai/settings/${id}`, {
+    updateSettings: (id: string, data: Partial<AISettings>) => fetchJSON<AISettings>(`/ai/settings/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
     }),

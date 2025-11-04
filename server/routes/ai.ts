@@ -43,7 +43,8 @@ router.put('/settings/:id', async (req, res) => {
             .set(updateData)
             .where(eq(schema.aiSettings.id, req.params.id));
 
-        res.json({ success: true });
+        const updated = await db.select().from(schema.aiSettings).where(eq(schema.aiSettings.id, req.params.id));
+        res.json(updated[0]);
     } catch (error) {
         console.error('Error updating AI settings:', error);
         res.status(500).json({ error: 'Failed to update AI settings' });

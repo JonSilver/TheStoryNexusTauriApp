@@ -1,9 +1,9 @@
 import { useAIStore } from "@/features/ai/stores/useAIStore";
-import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
-import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
+import { useChaptersByStoryQuery } from "@/features/chapters/hooks/useChaptersQuery";
+import { useLorebookByStoryQuery } from "@/features/lorebook/hooks/useLorebookQuery";
+import { LorebookFilterService } from "@/features/lorebook/stores/LorebookFilterService";
 import { createPromptParser } from "@/features/prompts/services/promptParser";
-import { usePromptStore } from "@/features/prompts/store/promptStore";
-import { db } from "@/services/database";
+import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
 import {
     AIChat,
     AllowedModel,
@@ -37,14 +37,13 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
     });
     const editingTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-    // Stores
-    const { loadEntries, entries: lorebookEntries } = useLorebookStore();
-    const {
-        fetchPrompts,
-        prompts,
-        isLoading: promptsLoading,
-        error: promptsError,
-    } = usePromptStore();
+    // Queries
+    const { data: lorebookEntries = [] } = useLorebookByStoryQuery(storyId);
+    const { data: prompts = [], isLoading: promptsLoading, error: promptsQueryError } = usePromptsQuery({ includeSystem: true });
+    const { data: chapters = [] } = useChaptersByStoryQuery(storyId);
+    const promptsError = promptsQueryError?.message ?? null;
+
+    // AI Store (for client-side AI operations)
     const {
         initialize: initializeAI,
         getAvailableModels,
@@ -52,7 +51,6 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
         processStreamedResponse,
         abortGeneration,
     } = useAIStore();
-    const { fetchChapters } = useChapterStore();
 
     // Mutations
     const createMutation = useCreateBrainstormMutation();
@@ -61,16 +59,7 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
     // Initialize
     useEffect(() => {
         const loadData = async () => {
-            await loadEntries(storyId);
-            await fetchPrompts();
             await initializeAI();
-            await fetchChapters(storyId);
-
-            const chaptersData = await db.chapters
-                .where("storyId")
-                .equals(storyId)
-                .sortBy("order");
-            dispatch({ type: "SET_CHAPTERS", payload: chaptersData });
 
             const models = await getAvailableModels();
             if (models.length > 0) {
@@ -87,14 +76,14 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
 
         dispatch({ type: "CLEAR_CONTEXT_SELECTIONS" });
         loadData();
-    }, [
-        storyId,
-        loadEntries,
-        fetchPrompts,
-        initializeAI,
-        fetchChapters,
-        getAvailableModels,
-    ]);
+    }, [initializeAI, getAvailableModels]);
+
+    // Update chapters in state when data changes
+    useEffect(() => {
+        if (chapters.length > 0) {
+            dispatch({ type: "SET_CHAPTERS", payload: chapters });
+        }
+    }, [chapters]);
 
     useEffect(() => {
         dispatch({ type: "SET_INPUT", payload: draftMessage });
@@ -118,7 +107,7 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
 
     // Helper functions
     const getFilteredEntries = () => {
-        return useLorebookStore.getState().getFilteredEntries();
+        return LorebookFilterService.getFilteredEntries(lorebookEntries, false);
     };
 
     const createPromptConfig = (prompt: Prompt): PromptParserConfig => {
@@ -281,11 +270,8 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
                         id: chatId,
                         data: { messages: updatedMessages }
                     }, {
-                        onSuccess: async () => {
-                            const updatedChat = await db.aiChats.get(chatId);
-                            if (updatedChat) {
-                                onChatUpdate(updatedChat);
-                            }
+                        onSuccess: (updatedChat) => {
+                            onChatUpdate(updatedChat);
                         }
                     });
                 },
@@ -380,11 +366,8 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
                     id: selectedChat.id,
                     data: { messages: updatedMessages }
                 }, {
-                    onSuccess: async () => {
-                        const updatedChat = await db.aiChats.get(selectedChat.id);
-                        if (updatedChat) {
-                            onChatUpdate(updatedChat);
-                        }
+                    onSuccess: (updatedChat) => {
+                        onChatUpdate(updatedChat);
                         resolve();
                     },
                     onError: reject
@@ -395,13 +378,11 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
             logger.error("Failed to save edit", error);
             toast.error("Failed to save edit");
 
-            const fresh = await db.aiChats.get(selectedChat.id);
-            if (fresh) {
-                dispatch({
-                    type: "SET_MESSAGES",
-                    payload: fresh.messages || [],
-                });
-            }
+            // Revert to original messages on error
+            dispatch({
+                type: "SET_MESSAGES",
+                payload: selectedChat.messages || [],
+            });
             return;
         }
 
@@ -418,9 +399,7 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
     };
 
     const handleItemSelect = (itemId: string) => {
-        const filteredEntries = useLorebookStore
-            .getState()
-            .getFilteredEntries();
+        const filteredEntries = LorebookFilterService.getFilteredEntries(lorebookEntries, false);
         const item = filteredEntries.find((entry) => entry.id === itemId);
         if (item) {
             dispatch({ type: "ADD_ITEM", payload: item });
