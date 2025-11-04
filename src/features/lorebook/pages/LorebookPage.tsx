@@ -26,7 +26,7 @@ export default function LorebookPage() {
 
     useEffect(() => {
         if (entries.length > 0) {
-            buildTagMap();
+            buildTagMap(entries);
         }
     }, [entries, buildTagMap]);
 
@@ -65,7 +65,7 @@ export default function LorebookPage() {
                 await LorebookImportExportService.importEntries(content, storyId, () => {
                     queryClient.invalidateQueries({ queryKey: lorebookKeys.byStory(storyId) });
                 });
-                buildTagMap();
+                buildTagMap(entries);
             });
             if (error) {
                 logger.error("Import failed:", error);

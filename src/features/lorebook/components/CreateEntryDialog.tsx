@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLorebookStore } from "../stores/useLorebookStore";
+import { useLorebookContext } from "../context/LorebookContext";
 import { useCreateLorebookMutation, useUpdateLorebookMutation } from "../hooks/useLorebookQuery";
 import type { LorebookEntry } from "@/types/story";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +61,7 @@ export function CreateEntryDialog({
   storyId,
   entry,
 }: CreateEntryDialogProps) {
+  const { entries } = useLorebookContext();
   const { buildTagMap } = useLorebookStore();
   const createMutation = useCreateLorebookMutation();
   const updateMutation = useUpdateLorebookMutation();
@@ -122,14 +124,14 @@ export function CreateEntryDialog({
           id: entry.id,
           data: dataToSubmit,
         });
-        buildTagMap();
+        buildTagMap(entries);
       } else {
         await createMutation.mutateAsync({
           id: crypto.randomUUID(),
           ...dataToSubmit,
           storyId,
         } as Omit<LorebookEntry, "createdAt">);
-        buildTagMap();
+        buildTagMap(entries);
         resetForm();
       }
       onOpenChange(false);

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useLorebookStore } from "../stores/useLorebookStore";
+import { useLorebookContext } from "../context/LorebookContext";
 import { useDeleteLorebookMutation, useUpdateLorebookMutation } from "../hooks/useLorebookQuery";
 import { CreateEntryDialog } from "./CreateEntryDialog";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ interface LorebookEntryListProps {
 type SortOption = 'name' | 'category' | 'importance' | 'created';
 
 export function LorebookEntryList({ entries: allEntries }: LorebookEntryListProps) {
+    const { entries: contextEntries } = useLorebookContext();
     const { buildTagMap } = useLorebookStore();
     const deleteMutation = useDeleteLorebookMutation();
     const updateMutation = useUpdateLorebookMutation();
@@ -82,7 +84,7 @@ export function LorebookEntryList({ entries: allEntries }: LorebookEntryListProp
     const handleDelete = async (entry: LorebookEntry) => {
         const [error] = await attemptPromise(async () => {
             await deleteMutation.mutateAsync(entry.id);
-            buildTagMap();
+            buildTagMap(contextEntries);
         });
         if (error) {
             logger.error('Failed to delete entry:', error);
@@ -97,7 +99,7 @@ export function LorebookEntryList({ entries: allEntries }: LorebookEntryListProp
                 id: entry.id,
                 data: { isDisabled: !entry.isDisabled }
             });
-            buildTagMap();
+            buildTagMap(contextEntries);
         });
         if (error) {
             logger.error('Failed to update entry:', error);
