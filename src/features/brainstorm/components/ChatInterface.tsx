@@ -1,8 +1,9 @@
 import { useAIStore } from "@/features/ai/stores/useAIStore";
+import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
+import { usePromptParser } from "@/features/prompts/hooks/usePromptParser";
 import { useChaptersByStoryQuery } from "@/features/chapters/hooks/useChaptersQuery";
 import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
 import { LorebookFilterService } from "@/features/lorebook/stores/LorebookFilterService";
-import { createPromptParser } from "@/features/prompts/services/promptParser";
 import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
 import {
     AIChat,
@@ -47,10 +48,13 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
     const {
         initialize: initializeAI,
         getAvailableModels,
-        generateWithPrompt,
         processStreamedResponse,
         abortGeneration,
     } = useAIStore();
+
+    // Generation hooks
+    const { generateWithPrompt } = useGenerateWithPrompt();
+    const { parsePrompt } = usePromptParser();
 
     // Mutations
     const createMutation = useCreateBrainstormMutation();
@@ -145,10 +149,9 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
         dispatch({ type: "START_PREVIEW" });
 
         const config = createPromptConfig(state.selectedPrompt);
-        const promptParser = createPromptParser({ entries: lorebookEntries });
 
         const [error, parsedPrompt] = await attemptPromise(async () =>
-            promptParser.parse(config)
+            parsePrompt(config)
         );
         if (error) {
             const errorMessage = is.error(error) ? error.message : String(error);
@@ -221,8 +224,7 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
             const config = createPromptConfig(state.selectedPrompt);
             const response = await generateWithPrompt(
                 config,
-                state.selectedModel,
-                lorebookEntries
+                state.selectedModel
             );
 
             if (!response.ok && response.status !== 204) {

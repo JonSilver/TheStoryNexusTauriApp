@@ -40,9 +40,9 @@ import { getSelectedNode } from "../../utils/getSelectedNode";
 import { setFloatingElemPosition } from "../../utils/setFloatingElemPosition";
 import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
 import { useAIStore } from "@/features/ai/stores/useAIStore";
+import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
+import { usePromptParser } from "@/features/prompts/hooks/usePromptParser";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
-import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
-import { createPromptParser } from "@/features/prompts/services/promptParser";
 import { toast } from "react-toastify";
 import {
   Prompt,
@@ -74,9 +74,10 @@ function TextFormatFloatingToolbar({
 }): JSX.Element {
   const popupCharStylesEditorRef = useRef<HTMLDivElement | null>(null);
   const { currentStoryId, currentChapterId } = useStoryContext();
-  const { entries } = useLorebookContext();
   const { data: prompts = [], isLoading, error } = usePromptsQuery();
-  const { generateWithPrompt, processStreamedResponse } = useAIStore();
+  const { processStreamedResponse } = useAIStore();
+  const { generateWithPrompt } = useGenerateWithPrompt();
+  const { parsePrompt } = usePromptParser();
   const { data: currentStory } = useStoryQuery(currentStoryId || '');
   const { data: currentChapter } = useChapterQuery(currentChapterId || '');
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt>();
@@ -321,7 +322,7 @@ function TextFormatFloatingToolbar({
 
     const [error] = await attemptPromise(async () => {
       const config = createPromptConfig(selectedPrompt);
-      const response = await generateWithPrompt(config, selectedModel, entries);
+      const response = await generateWithPrompt(config, selectedModel);
 
       let fullText = "";
 
@@ -367,11 +368,10 @@ function TextFormatFloatingToolbar({
     setPreviewError(null);
     setPreviewMessages(undefined);
 
-    const promptParser = createPromptParser({ entries });
     const config = createPromptConfig(selectedPrompt);
 
     const [error, result] = await attemptPromise(async () =>
-      promptParser.parse(config)
+      parsePrompt(config)
     );
     if (error) {
       logger.error("Error previewing prompt:", error);

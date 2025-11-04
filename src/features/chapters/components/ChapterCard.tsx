@@ -52,6 +52,7 @@ import {
 import { toast } from "react-toastify";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
 import { useAIStore } from "@/features/ai/stores/useAIStore";
+import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
 import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
 import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
 import { PromptParserConfig } from "@/types/story";
@@ -95,7 +96,8 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
   const povType = form.watch("povType");
   const { setCurrentChapterId } = useStoryContext();
   const navigate = useNavigate();
-  const { generateWithPrompt, processStreamedResponse } = useAIStore();
+  const { processStreamedResponse } = useAIStore();
+  const { generateWithPrompt } = useGenerateWithPrompt();
   const { entries } = useLorebookContext();
   const { data: prompts = [], isLoading, error: queryError } = usePromptsQuery({ includeSystem: true });
   const [isGenerating, setIsGenerating] = useState(false);
@@ -199,7 +201,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
         },
       };
 
-      const response = await generateWithPrompt(config, model, entries);
+      const response = await generateWithPrompt(config, model);
       let text = "";
 
       await new Promise<void>((resolve, reject) => {

@@ -4,16 +4,13 @@ import {
     AIModel,
     AIProvider,
     AISettings,
-    PromptParserConfig,
     PromptMessage,
-    AllowedModel,
-    LorebookEntry
+    AllowedModel
 } from '@/types/story';
 import { aiService } from '@/services/ai/AIService';
 import { aiApi, promptsApi } from '@/services/api/client';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
-import { createPromptParser } from '@/features/prompts/services/promptParser';
 import { generateWithProvider } from '@/features/ai/services/aiGenerationHelper';
 import { logger } from '@/utils/logger';
 
@@ -49,8 +46,6 @@ interface AIState {
         onComplete: () => void,
         onError: (error: Error) => void
     ) => Promise<void>;
-
-    generateWithPrompt: (config: PromptParserConfig, selectedModel: AllowedModel) => Promise<Response>;
 
     // New method for generating with pre-parsed messages
     generateWithParsedMessages: (
@@ -167,35 +162,6 @@ export const useAIStore = create<AIState>((set, get) => ({
 
     processStreamedResponse: async (response, onToken, onComplete, onError) => {
         await aiService.processStreamedResponse(response, onToken, onComplete, onError);
-    },
-
-    generateWithPrompt: async (config: PromptParserConfig, selectedModel: AllowedModel, entries: LorebookEntry[]) => {
-        if (!get().isInitialized) {
-            await get().initialize();
-        }
-
-        const promptParser = createPromptParser({ entries });
-        const { messages, error } = await promptParser.parse(config);
-
-        if (error || !messages.length) {
-            throw new Error(error || 'Failed to parse prompt');
-        }
-
-        // Get the prompt to access generation parameters
-        const [fetchError, prompt] = await attemptPromise(() => promptsApi.getById(config.promptId));
-
-        if (fetchError) {
-            throw fetchError;
-        }
-
-        return generateWithProvider(selectedModel.provider, messages, selectedModel.id, {
-            temperature: prompt?.temperature ?? 0.7,
-            maxTokens: prompt?.maxTokens ?? 2048,
-            top_p: prompt?.top_p,
-            top_k: prompt?.top_k,
-            repetition_penalty: prompt?.repetition_penalty,
-            min_p: prompt?.min_p
-        });
     },
 
     // New method for generating with pre-parsed messages
