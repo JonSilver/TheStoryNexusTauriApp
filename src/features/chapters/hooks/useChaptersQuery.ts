@@ -72,8 +72,8 @@ export const useUpdateChapterMutation = () => {
             }
             toast.error('Failed to update chapter');
         },
-        onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: chaptersKeys.detail(variables.id) });
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: chaptersKeys.all });
         },
     });
 };

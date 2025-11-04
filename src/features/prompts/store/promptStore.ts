@@ -47,7 +47,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
     fetchPrompts: async () => {
         set({ isLoading: true });
 
-        const [error, prompts] = await attemptPromise(() => promptsApi.getAll());
+        const [error, prompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
         if (error) {
             set({ error: formatError(error, ERROR_MESSAGES.FETCH_FAILED('prompts')), isLoading: false });
@@ -63,7 +63,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
         }
 
         // Check for duplicate name
-        const [checkError, allPrompts] = await attemptPromise(() => promptsApi.getAll());
+        const [checkError, allPrompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
         if (checkError) {
             throw checkError;
@@ -90,7 +90,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw addError;
         }
 
-        const [fetchError, prompts] = await attemptPromise(() => promptsApi.getAll());
+        const [fetchError, prompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
         if (fetchError) {
             logger.error(formatError(fetchError, ERROR_MESSAGES.FETCH_FAILED('prompts')), fetchError);
@@ -108,7 +108,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
 
         // If name is being updated, check for duplicates
         if (promptData.name) {
-            const [checkError, allPrompts] = await attemptPromise(() => promptsApi.getAll());
+            const [checkError, allPrompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
             if (checkError) {
                 throw checkError;
@@ -126,7 +126,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw updateError;
         }
 
-        const [fetchError, prompts] = await attemptPromise(() => promptsApi.getAll());
+        const [fetchError, prompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
         if (fetchError) {
             logger.error(formatError(fetchError, ERROR_MESSAGES.FETCH_FAILED('prompts')), fetchError);
@@ -158,7 +158,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw deleteError;
         }
 
-        const [refetchError, prompts] = await attemptPromise(() => promptsApi.getAll());
+        const [refetchError, prompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
         if (refetchError) {
             logger.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('prompts')), refetchError);
@@ -193,7 +193,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw addError;
         }
 
-        const [refetchError, prompts] = await attemptPromise(() => promptsApi.getAll());
+        const [refetchError, prompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
         if (refetchError) {
             logger.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('prompts')), refetchError);
@@ -206,7 +206,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
 
     // Export all prompts as JSON and trigger download
     exportPrompts: async () => {
-        const [error, allPrompts] = await attemptPromise(() => promptsApi.getAll());
+        const [error, allPrompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.FETCH_FAILED('prompts'));
@@ -259,7 +259,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             }
         }
 
-        const [fetchError, prompts] = await attemptPromise(() => promptsApi.getAll());
+        const [fetchError, prompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
         if (fetchError) {
             const message = formatError(fetchError, ERROR_MESSAGES.FETCH_FAILED('prompts'));
@@ -284,7 +284,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
         for (const attempt of attempts) {
             const candidateName = generateCandidateName(attempt);
 
-            const [checkError, allPrompts] = await attemptPromise(() => promptsApi.getAll());
+            const [checkError, allPrompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
             if (checkError) {
                 logger.error('Error checking for existing prompt', checkError);
