@@ -19,6 +19,9 @@ export const useBrainstormChatsByStoryQuery = (storyId: string) => {
     });
 };
 
+// Alias for backwards compatibility
+export const useBrainstormByStoryQuery = useBrainstormChatsByStoryQuery;
+
 // Fetch single brainstorm chat
 export const useBrainstormChatQuery = (id: string) => {
     return useQuery({

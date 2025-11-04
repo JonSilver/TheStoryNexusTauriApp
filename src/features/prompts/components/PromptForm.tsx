@@ -65,16 +65,12 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
     const [selectedModels, setSelectedModels] = useState<AllowedModel[]>(prompt?.allowedModels || []);
     const createPromptMutation = useCreatePromptMutation();
     const updatePromptMutation = useUpdatePromptMutation();
-    const [temperature, setTemperature] = useState(prompt?.temperature || 1.0);
-    const [maxTokens, setMaxTokens] = useState(prompt?.maxTokens || 2048);
-    const [topP, setTopP] = useState(prompt?.top_p !== undefined ? prompt.top_p : 1.0);
-    const [topK, setTopK] = useState(prompt?.top_k !== undefined ? prompt.top_k : 50);
-    const [repetitionPenalty, setRepetitionPenalty] = useState(
-        prompt?.repetition_penalty !== undefined ? prompt.repetition_penalty : 1.0
-    );
-    const [minP, setMinP] = useState(
-        prompt?.min_p !== undefined ? prompt.min_p : 0.0
-    );
+    const [temperature, setTemperature] = useState(prompt?.temperature ?? 1.0);
+    const [maxTokens, setMaxTokens] = useState(prompt?.maxTokens ?? 2048);
+    const [topP, setTopP] = useState(prompt?.top_p ?? 1.0);
+    const [topK, setTopK] = useState(prompt?.top_k ?? 50);
+    const [repetitionPenalty, setRepetitionPenalty] = useState(prompt?.repetition_penalty ?? 1.0);
+    const [minP, setMinP] = useState(prompt?.min_p ?? 0.0);
 
     const {
         initialize,
