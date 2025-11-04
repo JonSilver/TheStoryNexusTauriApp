@@ -52,29 +52,14 @@ export const useUpdatePromptMutation = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<Prompt> }) =>
             promptsApi.update(id, data),
-        onMutate: async ({ id, data }) => {
-            // Cancel outgoing refetches
-            await queryClient.cancelQueries({ queryKey: promptsKeys.detail(id) });
-
-            // Snapshot previous value
-            const previousPrompt = queryClient.getQueryData(promptsKeys.detail(id));
-
-            // Optimistically update
-            if (previousPrompt) {
-                queryClient.setQueryData(promptsKeys.detail(id), { ...previousPrompt, ...data });
-            }
-
-            return { previousPrompt };
+        onSuccess: (updatedPrompt, variables) => {
+            queryClient.setQueryData(promptsKeys.detail(variables.id), updatedPrompt);
+            queryClient.setQueryData<Prompt[]>(promptsKeys.lists(), (old) =>
+                old?.map(p => p.id === updatedPrompt.id ? updatedPrompt : p)
+            );
         },
-        onError: (_error, variables, context) => {
-            // Rollback on error
-            if (context?.previousPrompt) {
-                queryClient.setQueryData(promptsKeys.detail(variables.id), context.previousPrompt);
-            }
-            toast.error('Failed to update prompt');
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: promptsKeys.lists() });
+        onError: (error: Error) => {
+            toast.error(`Failed to update prompt: ${error.message}`);
         },
     });
 };

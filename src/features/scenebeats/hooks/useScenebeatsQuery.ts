@@ -51,29 +51,15 @@ export const useUpdateScenebeatMutation = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<SceneBeat> }) =>
             scenebeatsApi.update(id, data),
-        onMutate: async ({ id, data }) => {
-            // Cancel outgoing refetches
-            await queryClient.cancelQueries({ queryKey: scenebeatsKeys.detail(id) });
-
-            // Snapshot previous value
-            const previousScenebeat = queryClient.getQueryData(scenebeatsKeys.detail(id));
-
-            // Optimistically update
-            if (previousScenebeat) {
-                queryClient.setQueryData(scenebeatsKeys.detail(id), { ...previousScenebeat, ...data });
-            }
-
-            return { previousScenebeat };
-        },
-        onError: (_error, variables, context) => {
-            // Rollback on error
-            if (context?.previousScenebeat) {
-                queryClient.setQueryData(scenebeatsKeys.detail(variables.id), context.previousScenebeat);
-            }
+        onError: () => {
             toast.error('Failed to update scene beat');
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: scenebeatsKeys.all });
+        onSuccess: (updatedScenebeat, variables) => {
+            queryClient.setQueryData(scenebeatsKeys.detail(variables.id), updatedScenebeat);
+            queryClient.setQueryData<SceneBeat[]>(
+                scenebeatsKeys.byChapter(updatedScenebeat.chapterId),
+                (old) => old?.map(sb => sb.id === updatedScenebeat.id ? updatedScenebeat : sb)
+            );
         },
     });
 };

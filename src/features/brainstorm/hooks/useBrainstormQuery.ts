@@ -51,29 +51,15 @@ export const useUpdateBrainstormChatMutation = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<AIChat> }) =>
             brainstormApi.update(id, data),
-        onMutate: async ({ id, data }) => {
-            // Cancel outgoing refetches
-            await queryClient.cancelQueries({ queryKey: brainstormKeys.detail(id) });
-
-            // Snapshot previous value
-            const previousChat = queryClient.getQueryData(brainstormKeys.detail(id));
-
-            // Optimistically update
-            if (previousChat) {
-                queryClient.setQueryData(brainstormKeys.detail(id), { ...previousChat, ...data });
-            }
-
-            return { previousChat };
+        onSuccess: (updatedChat, variables) => {
+            queryClient.setQueryData(brainstormKeys.detail(variables.id), updatedChat);
+            queryClient.setQueryData<AIChat[]>(
+                brainstormKeys.byStory(updatedChat.storyId),
+                (old) => old?.map(c => c.id === updatedChat.id ? updatedChat : c)
+            );
         },
-        onError: (_error, variables, context) => {
-            // Rollback on error
-            if (context?.previousChat) {
-                queryClient.setQueryData(brainstormKeys.detail(variables.id), context.previousChat);
-            }
+        onError: () => {
             toast.error('Failed to update brainstorm chat');
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: brainstormKeys.all });
         },
     });
 };

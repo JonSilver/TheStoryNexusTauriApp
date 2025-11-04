@@ -51,29 +51,15 @@ export const useUpdateChapterMutation = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<Chapter> }) =>
             chaptersApi.update(id, data),
-        onMutate: async ({ id, data }) => {
-            // Cancel outgoing refetches
-            await queryClient.cancelQueries({ queryKey: chaptersKeys.detail(id) });
-
-            // Snapshot previous value
-            const previousChapter = queryClient.getQueryData(chaptersKeys.detail(id));
-
-            // Optimistically update
-            if (previousChapter) {
-                queryClient.setQueryData(chaptersKeys.detail(id), { ...previousChapter, ...data });
-            }
-
-            return { previousChapter };
+        onSuccess: (updatedChapter) => {
+            queryClient.setQueryData(chaptersKeys.detail(updatedChapter.id), updatedChapter);
+            queryClient.setQueryData<Chapter[]>(
+                chaptersKeys.byStory(updatedChapter.storyId),
+                (old) => old?.map(ch => ch.id === updatedChapter.id ? updatedChapter : ch)
+            );
         },
-        onError: (_error, variables, context) => {
-            // Rollback on error
-            if (context?.previousChapter) {
-                queryClient.setQueryData(chaptersKeys.detail(variables.id), context.previousChapter);
-            }
+        onError: () => {
             toast.error('Failed to update chapter');
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: chaptersKeys.all });
         },
     });
 };

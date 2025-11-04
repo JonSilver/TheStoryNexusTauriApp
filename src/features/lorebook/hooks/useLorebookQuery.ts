@@ -62,9 +62,12 @@ export const useUpdateLorebookMutation = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<LorebookEntry> }) =>
             lorebookApi.update(id, data),
-        onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: lorebookKeys.all });
-            queryClient.invalidateQueries({ queryKey: lorebookKeys.detail(variables.id) });
+        onSuccess: (updatedEntry, variables) => {
+            queryClient.setQueryData(lorebookKeys.detail(variables.id), updatedEntry);
+            queryClient.setQueryData<LorebookEntry[]>(
+                lorebookKeys.byStory(updatedEntry.storyId),
+                (old) => old?.map(e => e.id === updatedEntry.id ? updatedEntry : e)
+            );
             toast.success('Lorebook entry updated successfully');
         },
         onError: (error: Error) => {
