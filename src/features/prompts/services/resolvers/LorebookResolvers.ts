@@ -1,6 +1,14 @@
 import { PromptContext, LorebookEntry } from '@/types/story';
-import { useLorebookStore } from '@/features/lorebook/stores/useLorebookStore';
+import { useLorebookContext } from '@/features/lorebook/context/LorebookContext';
 import { IVariableResolver, ILorebookFormatter } from './types';
+
+const getFilteredEntries = (entries: LorebookEntry[], includeDisabled = false): LorebookEntry[] => {
+    return includeDisabled ? entries : entries.filter(entry => !entry.isDisabled);
+};
+
+const getEntriesByCategory = (entries: LorebookEntry[], category: LorebookEntry['category']): LorebookEntry[] => {
+    return entries.filter(entry => entry.category === category && !entry.isDisabled);
+};
 
 export class MatchedEntriesChapterResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
@@ -58,16 +66,16 @@ export class AllEntriesResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
     async resolve(context: PromptContext, category?: string): Promise<string> {
-        const { getFilteredEntries } = useLorebookStore.getState();
+        const { entries } = useLorebookContext();
 
-        let entries = getFilteredEntries();
-        entries = entries.filter(entry => entry.storyId === context.storyId);
+        let filtered = getFilteredEntries(entries);
+        filtered = filtered.filter(entry => entry.storyId === context.storyId);
 
         if (category) {
-            entries = entries.filter(entry => entry.category === category);
+            filtered = filtered.filter(entry => entry.category === category);
         }
 
-        return this.formatter.formatEntries(entries);
+        return this.formatter.formatEntries(filtered);
     }
 }
 
@@ -75,16 +83,16 @@ export class CharacterResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
     async resolve(context: PromptContext, name: string): Promise<string> {
-        const { getFilteredEntries } = useLorebookStore.getState();
+        const { entries } = useLorebookContext();
 
-        const entries = getFilteredEntries()
+        const filtered = getFilteredEntries(entries)
             .filter(entry =>
                 entry.storyId === context.storyId &&
                 entry.category === 'character' &&
                 entry.name.toLowerCase() === name.toLowerCase()
             );
 
-        const matchedEntry = entries[0];
+        const matchedEntry = filtered[0];
 
         return matchedEntry ? this.formatter.formatEntries([matchedEntry]) : '';
     }
@@ -93,72 +101,88 @@ export class CharacterResolver implements IVariableResolver {
 export class AllCharactersResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
-    async resolve(_context: PromptContext): Promise<string> {
-        const { getEntriesByCategory } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getEntriesByCategory('character'));
+    async resolve(context: PromptContext): Promise<string> {
+        const { entries } = useLorebookContext();
+        const filtered = getEntriesByCategory(entries, 'character')
+            .filter(entry => entry.storyId === context.storyId);
+        return this.formatter.formatEntries(filtered);
     }
 }
 
 export class AllLocationsResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
-    async resolve(_context: PromptContext): Promise<string> {
-        const { getEntriesByCategory } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getEntriesByCategory('location'));
+    async resolve(context: PromptContext): Promise<string> {
+        const { entries } = useLorebookContext();
+        const filtered = getEntriesByCategory(entries, 'location')
+            .filter(entry => entry.storyId === context.storyId);
+        return this.formatter.formatEntries(filtered);
     }
 }
 
 export class AllItemsResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
-    async resolve(_context: PromptContext): Promise<string> {
-        const { getEntriesByCategory } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getEntriesByCategory('item'));
+    async resolve(context: PromptContext): Promise<string> {
+        const { entries } = useLorebookContext();
+        const filtered = getEntriesByCategory(entries, 'item')
+            .filter(entry => entry.storyId === context.storyId);
+        return this.formatter.formatEntries(filtered);
     }
 }
 
 export class AllEventsResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
-    async resolve(_context: PromptContext): Promise<string> {
-        const { getEntriesByCategory } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getEntriesByCategory('event'));
+    async resolve(context: PromptContext): Promise<string> {
+        const { entries } = useLorebookContext();
+        const filtered = getEntriesByCategory(entries, 'event')
+            .filter(entry => entry.storyId === context.storyId);
+        return this.formatter.formatEntries(filtered);
     }
 }
 
 export class AllNotesResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
-    async resolve(_context: PromptContext): Promise<string> {
-        const { getEntriesByCategory } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getEntriesByCategory('note'));
+    async resolve(context: PromptContext): Promise<string> {
+        const { entries } = useLorebookContext();
+        const filtered = getEntriesByCategory(entries, 'note')
+            .filter(entry => entry.storyId === context.storyId);
+        return this.formatter.formatEntries(filtered);
     }
 }
 
 export class AllSynopsisResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
-    async resolve(_context: PromptContext): Promise<string> {
-        const { getEntriesByCategory } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getEntriesByCategory('synopsis'));
+    async resolve(context: PromptContext): Promise<string> {
+        const { entries } = useLorebookContext();
+        const filtered = getEntriesByCategory(entries, 'synopsis')
+            .filter(entry => entry.storyId === context.storyId);
+        return this.formatter.formatEntries(filtered);
     }
 }
 
 export class AllStartingScenariosResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
-    async resolve(_context: PromptContext): Promise<string> {
-        const { getEntriesByCategory } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getEntriesByCategory('starting scenario'));
+    async resolve(context: PromptContext): Promise<string> {
+        const { entries } = useLorebookContext();
+        const filtered = getEntriesByCategory(entries, 'starting scenario')
+            .filter(entry => entry.storyId === context.storyId);
+        return this.formatter.formatEntries(filtered);
     }
 }
 
 export class AllTimelinesResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
-    async resolve(_context: PromptContext): Promise<string> {
-        const { getEntriesByCategory } = useLorebookStore.getState();
-        return this.formatter.formatEntries(getEntriesByCategory('timeline'));
+    async resolve(context: PromptContext): Promise<string> {
+        const { entries } = useLorebookContext();
+        const filtered = getEntriesByCategory(entries, 'timeline')
+            .filter(entry => entry.storyId === context.storyId);
+        return this.formatter.formatEntries(filtered);
     }
 }
 
@@ -166,6 +190,7 @@ export class SceneBeatContextResolver implements IVariableResolver {
     constructor(private formatter: ILorebookFormatter) {}
 
     async resolve(context: PromptContext): Promise<string> {
+        const { entries } = useLorebookContext();
         const uniqueEntries = new Map<string, LorebookEntry>();
 
         if (context.sceneBeatContext) {
@@ -184,12 +209,7 @@ export class SceneBeatContextResolver implements IVariableResolver {
             }
 
             if (useCustomContext && customContextItems && customContextItems.length > 0) {
-                const lorebookStore = useLorebookStore.getState();
-                if (lorebookStore.entries.length === 0 && context.storyId) {
-                    await lorebookStore.loadEntries(context.storyId);
-                }
-
-                const customEntries = lorebookStore.entries.filter(entry =>
+                const customEntries = entries.filter(entry =>
                     customContextItems.includes(entry.id)
                 );
 

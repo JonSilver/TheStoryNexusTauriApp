@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router";
 import { useChaptersByStoryQuery } from "@/features/chapters/hooks/useChaptersQuery";
+import { LorebookProvider } from "@/features/lorebook/context/LorebookContext";
 
 export default function StoryDashboard() {
     const { storyId } = useParams();
@@ -139,7 +140,9 @@ export default function StoryDashboard() {
                 "flex-1 transition-all duration-300 ease-in-out",
                 isExpanded ? "ml-[150px]" : "ml-12"
             )}>
-                <Outlet />
+                <LorebookProvider storyId={storyId || ''}>
+                    <Outlet />
+                </LorebookProvider>
             </div>
         </div>
     );
