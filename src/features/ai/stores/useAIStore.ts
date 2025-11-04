@@ -6,7 +6,8 @@ import {
     AISettings,
     PromptParserConfig,
     PromptMessage,
-    AllowedModel
+    AllowedModel,
+    LorebookEntry
 } from '@/types/story';
 import { aiService } from '@/services/ai/AIService';
 import { aiApi, promptsApi } from '@/services/api/client';
@@ -168,12 +169,12 @@ export const useAIStore = create<AIState>((set, get) => ({
         await aiService.processStreamedResponse(response, onToken, onComplete, onError);
     },
 
-    generateWithPrompt: async (config: PromptParserConfig, selectedModel: AllowedModel) => {
+    generateWithPrompt: async (config: PromptParserConfig, selectedModel: AllowedModel, entries: LorebookEntry[]) => {
         if (!get().isInitialized) {
             await get().initialize();
         }
 
-        const promptParser = createPromptParser();
+        const promptParser = createPromptParser({ entries });
         const { messages, error } = await promptParser.parse(config);
 
         if (error || !messages.length) {

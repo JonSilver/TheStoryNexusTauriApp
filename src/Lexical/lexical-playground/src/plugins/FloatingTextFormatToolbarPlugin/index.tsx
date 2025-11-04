@@ -41,6 +41,7 @@ import { setFloatingElemPosition } from "../../utils/setFloatingElemPosition";
 import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
 import { useAIStore } from "@/features/ai/stores/useAIStore";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
+import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
 import { createPromptParser } from "@/features/prompts/services/promptParser";
 import { toast } from "react-toastify";
 import {
@@ -73,6 +74,7 @@ function TextFormatFloatingToolbar({
 }): JSX.Element {
   const popupCharStylesEditorRef = useRef<HTMLDivElement | null>(null);
   const { currentStoryId, currentChapterId } = useStoryContext();
+  const { entries } = useLorebookContext();
   const { data: prompts = [], isLoading, error } = usePromptsQuery();
   const { generateWithPrompt, processStreamedResponse } = useAIStore();
   const { data: currentStory } = useStoryQuery(currentStoryId || '');
@@ -319,7 +321,7 @@ function TextFormatFloatingToolbar({
 
     const [error] = await attemptPromise(async () => {
       const config = createPromptConfig(selectedPrompt);
-      const response = await generateWithPrompt(config, selectedModel);
+      const response = await generateWithPrompt(config, selectedModel, entries);
 
       let fullText = "";
 
@@ -365,7 +367,7 @@ function TextFormatFloatingToolbar({
     setPreviewError(null);
     setPreviewMessages(undefined);
 
-    const promptParser = createPromptParser();
+    const promptParser = createPromptParser({ entries });
     const config = createPromptConfig(selectedPrompt);
 
     const [error, result] = await attemptPromise(async () =>

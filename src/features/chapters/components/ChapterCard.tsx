@@ -53,7 +53,7 @@ import { toast } from "react-toastify";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
 import { useAIStore } from "@/features/ai/stores/useAIStore";
 import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
-import { useLorebookByStoryQuery } from "@/features/lorebook/hooks/useLorebookQuery";
+import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
 import { PromptParserConfig } from "@/types/story";
 import { AIGenerateMenu } from "@/components/ui/ai-generate-menu";
 import { DownloadMenu } from "@/components/ui/DownloadMenu";
@@ -96,10 +96,10 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
   const { setCurrentChapterId } = useStoryContext();
   const navigate = useNavigate();
   const { generateWithPrompt, processStreamedResponse } = useAIStore();
+  const { entries } = useLorebookContext();
   const { data: prompts = [], isLoading, error: queryError } = usePromptsQuery({ includeSystem: true });
-  const { data: lorebookEntries = [] } = useLorebookByStoryQuery(storyId);
   const [isGenerating, setIsGenerating] = useState(false);
-  const characterEntries = lorebookEntries.filter((entry) => entry.category === "character");
+  const characterEntries = entries.filter((entry) => entry.category === "character");
   const error = queryError?.message ?? null;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -199,7 +199,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
         },
       };
 
-      const response = await generateWithPrompt(config, model);
+      const response = await generateWithPrompt(config, model, entries);
       let text = "";
 
       await new Promise<void>((resolve, reject) => {

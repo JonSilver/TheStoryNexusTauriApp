@@ -1,7 +1,8 @@
 import { useState } from "react";
-import type { AllowedModel, PromptMessage } from "@/types/story";
+import type { AllowedModel, PromptMessage, LorebookEntry } from "@/types/story";
 import is from '@sindresorhus/is';
 import { useAIStore } from "@/features/ai/stores/useAIStore";
+import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
 import { toast } from "react-toastify";
 import { createPromptParser } from "@/features/prompts/services/promptParser";
 import type { PromptParserConfig } from "@/types/story";
@@ -35,6 +36,7 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
+  const { entries } = useLorebookContext();
   const { generateWithPrompt, processStreamedResponse, abortGeneration } = useAIStore();
 
   const generateWithConfig = async (
@@ -51,7 +53,7 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
     setStreamComplete(false);
 
     const [error] = await attemptPromise(async () => {
-      const response = await generateWithPrompt(config, model);
+      const response = await generateWithPrompt(config, model, entries);
 
       // Handle aborted responses (204) similar to the chat interface
       if (!response.ok && response.status !== 204) {
@@ -89,7 +91,7 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
     setPreviewError(null);
     setPreviewMessages(undefined);
 
-    const promptParser = createPromptParser();
+    const promptParser = createPromptParser({ entries });
 
     const [error, parsedPrompt] = await attemptPromise(async () =>
       promptParser.parse(config)

@@ -1,6 +1,6 @@
 import { useAIStore } from "@/features/ai/stores/useAIStore";
 import { useChaptersByStoryQuery } from "@/features/chapters/hooks/useChaptersQuery";
-import { useLorebookByStoryQuery } from "@/features/lorebook/hooks/useLorebookQuery";
+import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
 import { LorebookFilterService } from "@/features/lorebook/stores/LorebookFilterService";
 import { createPromptParser } from "@/features/prompts/services/promptParser";
 import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
@@ -38,7 +38,7 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
     const editingTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
     // Queries
-    const { data: lorebookEntries = [] } = useLorebookByStoryQuery(storyId);
+    const { entries: lorebookEntries } = useLorebookContext();
     const { data: prompts = [], isLoading: promptsLoading, error: promptsQueryError } = usePromptsQuery({ includeSystem: true });
     const { data: chapters = [] } = useChaptersByStoryQuery(storyId);
     const promptsError = promptsQueryError?.message ?? null;
@@ -145,7 +145,7 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
         dispatch({ type: "START_PREVIEW" });
 
         const config = createPromptConfig(state.selectedPrompt);
-        const promptParser = createPromptParser();
+        const promptParser = createPromptParser({ entries: lorebookEntries });
 
         const [error, parsedPrompt] = await attemptPromise(async () =>
             promptParser.parse(config)
@@ -221,7 +221,8 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
             const config = createPromptConfig(state.selectedPrompt);
             const response = await generateWithPrompt(
                 config,
-                state.selectedModel
+                state.selectedModel,
+                lorebookEntries
             );
 
             if (!response.ok && response.status !== 204) {
