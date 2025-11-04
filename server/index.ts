@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'node:path';
 import { runMigrations } from './db/migrate';
+import { seedSystemPrompts } from './db/seedSystemPrompts';
 
 // Import routes
 import storiesRouter from './routes/stories';
@@ -18,8 +19,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// Run migrations on startup
-runMigrations();
+// Run migrations and seed system prompts on startup
+const initializeDatabase = async () => {
+    runMigrations();
+    await seedSystemPrompts();
+};
+
+initializeDatabase().catch((error) => {
+    console.error('Failed to initialize database:', error);
+    process.exit(1);
+});
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));

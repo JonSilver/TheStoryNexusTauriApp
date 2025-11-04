@@ -1,5 +1,5 @@
 import { useStoryContext } from '@/features/stories/context/StoryContext';
-import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
+import { useChapterQuery } from '@/features/chapters/hooks/useChaptersQuery';
 import { ReactNode } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -39,9 +39,7 @@ const EditorErrorFallback = (error: Error, resetError: () => void) => (
 
 export default function EmbeddedPlayground({ maximizeButton }: EmbeddedPlaygroundProps) {
     const { currentChapterId } = useStoryContext();
-    const { currentChapter } = useChapterStore();
-
-    // Note: getChapter is called by LoadChapterContentPlugin, no need to duplicate here
+    const { data: currentChapter } = useChapterQuery(currentChapterId || '');
 
     if (!currentChapterId || !currentChapter) {
         return (

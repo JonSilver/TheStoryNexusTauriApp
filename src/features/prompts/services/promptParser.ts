@@ -1,4 +1,3 @@
-import { StoryDatabase, db } from '@/services/database';
 import {
     PromptMessage,
     PromptParserConfig,
@@ -9,6 +8,7 @@ import is from '@sindresorhus/is';
 import { useLorebookStore } from '@/features/lorebook/stores/useLorebookStore';
 import { ContextBuilder } from './ContextBuilder';
 import { attemptPromise } from '@jfdi/attempt';
+import { promptsApi } from '@/services/api/client';
 import {
     VariableResolverRegistry,
     LorebookFormatter,
@@ -45,8 +45,8 @@ export class PromptParser {
     private readonly contextBuilder: ContextBuilder;
     private readonly formatter: LorebookFormatter;
 
-    constructor(private database: StoryDatabase) {
-        this.contextBuilder = new ContextBuilder(database);
+    constructor() {
+        this.contextBuilder = new ContextBuilder();
         this.formatter = new LorebookFormatter();
         this.registry = this.initializeRegistry();
     }
@@ -95,7 +95,7 @@ export class PromptParser {
 
     async parse(config: PromptParserConfig): Promise<ParsedPrompt> {
         const [promptError, prompt] = await attemptPromise(() =>
-            this.database.prompts.get(config.promptId)
+            promptsApi.getById(config.promptId)
         );
 
         if (promptError || !prompt) {
@@ -253,4 +253,4 @@ export class PromptParser {
     }
 }
 
-export const createPromptParser = () => new PromptParser(db);
+export const createPromptParser = () => new PromptParser();

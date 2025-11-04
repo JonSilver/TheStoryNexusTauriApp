@@ -1,13 +1,13 @@
-import { StoryDatabase } from '@/services/database';
 import { PromptParserConfig, PromptContext } from '@/types/story';
+import { chaptersApi } from '@/services/api/client';
 
 export class ContextBuilder {
-    constructor(private database: StoryDatabase) {}
+    constructor() {}
 
     async buildContext(config: PromptParserConfig): Promise<PromptContext> {
         const [chapters, currentChapter] = await Promise.all([
-            this.database.chapters.where('storyId').equals(config.storyId).toArray(),
-            config.chapterId ? this.database.chapters.get(config.chapterId) : undefined
+            chaptersApi.getByStory(config.storyId),
+            config.chapterId ? chaptersApi.getById(config.chapterId) : Promise.resolve(undefined)
         ]);
 
         return {

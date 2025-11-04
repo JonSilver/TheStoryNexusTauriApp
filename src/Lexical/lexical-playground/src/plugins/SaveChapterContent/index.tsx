@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
+import { useUpdateChapterMutation } from '@/features/chapters/hooks/useChaptersQuery';
 import { useStoryContext } from '@/features/stories/context/StoryContext';
 import { debounce } from 'lodash';
 import { logger } from '@/utils/logger';
@@ -8,19 +8,23 @@ import { logger } from '@/utils/logger';
 export function SaveChapterContentPlugin(): null {
     const [editor] = useLexicalComposerContext();
     const { currentChapterId } = useStoryContext();
-    const { updateChapter } = useChapterStore();
+    const updateChapterMutation = useUpdateChapterMutation();
 
     // Create stable debounced save function using ref
     const saveContentRef = useRef(
         debounce((chapterId: string, content: string) => {
             logger.info('SaveChapterContent - Saving content for chapter:', chapterId);
-            updateChapter(chapterId, { content })
-                .then(() => {
-                    logger.info('SaveChapterContent - Content saved successfully');
-                })
-                .catch((error) => {
-                    logger.error('SaveChapterContent - Failed to save content:', error);
-                });
+            updateChapterMutation.mutate(
+                { id: chapterId, data: { content } },
+                {
+                    onSuccess: () => {
+                        logger.info('SaveChapterContent - Content saved successfully');
+                    },
+                    onError: (error) => {
+                        logger.error('SaveChapterContent - Failed to save content:', error);
+                    },
+                }
+            );
         }, 1000)
     );
 

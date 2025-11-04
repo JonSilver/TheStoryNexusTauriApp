@@ -2,7 +2,7 @@ import { PromptContext } from '@/types/story';
 import is from '@sindresorhus/is';
 import { useLorebookStore } from '@/features/lorebook/stores/useLorebookStore';
 import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
-import { db } from '@/services/database';
+import { chaptersApi } from '@/services/api/client';
 import { IVariableResolver, ILorebookFormatter } from './types';
 import { attemptPromise } from '@jfdi/attempt';
 import { logger } from '@/utils/logger';
@@ -102,7 +102,7 @@ export class BrainstormContextResolver implements IVariableResolver {
                 (selectedContent as string[]).map(async id => {
                     logger.info(`DEBUG: Fetching content for chapter ID: ${id}`);
 
-                    const [chapterError, chapter] = await attemptPromise(() => db.chapters.get(id));
+                    const [chapterError, chapter] = await attemptPromise(() => chaptersApi.getById(id));
 
                     if (chapterError) {
                         logger.error(`DEBUG: Error fetching chapter ${id}:`, chapterError);

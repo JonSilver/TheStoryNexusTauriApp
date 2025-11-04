@@ -38,7 +38,7 @@ import {
 import { getDOMRangeRect } from "../../utils/getDOMRangeRect";
 import { getSelectedNode } from "../../utils/getSelectedNode";
 import { setFloatingElemPosition } from "../../utils/setFloatingElemPosition";
-import { usePromptStore } from "@/features/prompts/store/promptStore";
+import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
 import { useAIStore } from "@/features/ai/stores/useAIStore";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
 import { createPromptParser } from "@/features/prompts/services/promptParser";
@@ -51,9 +51,9 @@ import {
 } from "@/types/story";
 import { PromptSelectMenu } from "@/components/ui/prompt-select-menu";
 import { Separator } from "@/components/ui/separator";
-import { useStoryStore } from "@/features/stories/stores/useStoryStore";
+import { useStoryQuery } from "@/features/stories/hooks/useStoriesQuery";
 import { PromptPreviewDialog } from "@/components/ui/prompt-preview-dialog";
-import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
+import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
 import { $isSceneBeatNode } from "../../nodes/SceneBeatNode";
 import { attemptPromise } from '@jfdi/attempt';
 import { logger } from '@/utils/logger';
@@ -73,10 +73,10 @@ function TextFormatFloatingToolbar({
 }): JSX.Element {
   const popupCharStylesEditorRef = useRef<HTMLDivElement | null>(null);
   const { currentStoryId, currentChapterId } = useStoryContext();
-  const { prompts, fetchPrompts, isLoading, error } = usePromptStore();
+  const { data: prompts = [], isLoading, error } = usePromptsQuery();
   const { generateWithPrompt, processStreamedResponse } = useAIStore();
-  const { currentStory } = useStoryStore();
-  const { currentChapter } = useChapterStore();
+  const { data: currentStory } = useStoryQuery(currentStoryId || '');
+  const { data: currentChapter } = useChapterQuery(currentChapterId || '');
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt>();
   const [selectedModel, setSelectedModel] = useState<AllowedModel>();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -86,13 +86,6 @@ function TextFormatFloatingToolbar({
   const [previewMessages, setPreviewMessages] = useState<PromptMessage[]>();
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
-
-  // Fetch prompts when the component mounts
-  useEffect(() => {
-    fetchPrompts().catch((error) => {
-      logger.error("Error loading prompts:", error);
-    });
-  }, [fetchPrompts]);
 
   function mouseMoveListener(e: MouseEvent) {
     if (
@@ -450,7 +443,7 @@ function TextFormatFloatingToolbar({
               <>
                 <PromptSelectMenu
                   isLoading={isLoading}
-                  error={error}
+                  error={error?.message || null}
                   prompts={prompts}
                   promptType="selection_specific"
                   selectedPrompt={selectedPrompt}
