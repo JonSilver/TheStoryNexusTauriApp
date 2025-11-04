@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
 import { z } from 'zod';
-import { db } from '@/services/database';
+import { promptsApi } from '@/services/api/client';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { logger } from '@/utils/logger';
 import { promptsExportSchema, promptSchema, parseJSON } from '@/schemas/entities';
 import { downloadJSONDataURI, generateExportFilename } from '@/utils/jsonExportUtils';
-import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
+import { validatePartialUpdate } from '@/utils/crudHelpers';
 import type { Prompt, PromptMessage } from '@/types/story';
 
 interface PromptStore {
@@ -47,7 +47,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
     fetchPrompts: async () => {
         set({ isLoading: true });
 
-        const [error, prompts] = await attemptPromise(() => db.prompts.toArray());
+        const [error, prompts] = await attemptPromise(() => promptsApi.getAll());
 
         if (error) {
             set({ error: formatError(error, ERROR_MESSAGES.FETCH_FAILED('prompts')), isLoading: false });
@@ -63,43 +63,34 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
         }
 
         // Check for duplicate name
-        const [checkError, existingPrompt] = await attemptPromise(() =>
-            db.prompts.where('name').equals(promptData.name).first()
-        );
+        const [checkError, allPrompts] = await attemptPromise(() => promptsApi.getAll());
 
         if (checkError) {
             throw checkError;
         }
 
+        const existingPrompt = allPrompts.find(p => p.name === promptData.name);
         if (existingPrompt) {
             throw new Error('A prompt with this name already exists');
         }
 
-        let prompt: Prompt;
-        try {
-            prompt = createValidatedEntity(
-                promptData,
-                promptSchema,
-                {
-                    temperature: promptData.temperature || 1.0,
-                    maxTokens: promptData.maxTokens || 4096,
-                    top_p: promptData.top_p !== undefined ? promptData.top_p : 1.0,
-                    top_k: promptData.top_k !== undefined ? promptData.top_k : 50,
-                    repetition_penalty: promptData.repetition_penalty !== undefined ? promptData.repetition_penalty : 1.0,
-                    min_p: promptData.min_p !== undefined ? promptData.min_p : 0.0
-                }
-            );
-        } catch (error) {
-            throw error instanceof Error ? error : new Error('Validation failed');
-        }
+        const dataToCreate = {
+            ...promptData,
+            temperature: promptData.temperature || 1.0,
+            maxTokens: promptData.maxTokens || 4096,
+            top_p: promptData.top_p !== undefined ? promptData.top_p : 1.0,
+            top_k: promptData.top_k !== undefined ? promptData.top_k : 50,
+            repetition_penalty: promptData.repetition_penalty !== undefined ? promptData.repetition_penalty : 1.0,
+            min_p: promptData.min_p !== undefined ? promptData.min_p : 0.0
+        };
 
-        const [addError] = await attemptPromise(() => db.prompts.add(prompt));
+        const [addError] = await attemptPromise(() => promptsApi.create(dataToCreate));
 
         if (addError) {
             throw addError;
         }
 
-        const [fetchError, prompts] = await attemptPromise(() => db.prompts.toArray());
+        const [fetchError, prompts] = await attemptPromise(() => promptsApi.getAll());
 
         if (fetchError) {
             logger.error(formatError(fetchError, ERROR_MESSAGES.FETCH_FAILED('prompts')), fetchError);
@@ -117,30 +108,25 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
 
         // If name is being updated, check for duplicates
         if (promptData.name) {
-            const [checkError, existingPrompt] = await attemptPromise(() =>
-                db.prompts
-                    .where('name')
-                    .equals(promptData.name || '')
-                    .and(item => item.id !== id)
-                    .first()
-            );
+            const [checkError, allPrompts] = await attemptPromise(() => promptsApi.getAll());
 
             if (checkError) {
                 throw checkError;
             }
 
+            const existingPrompt = allPrompts.find(p => p.name === promptData.name && p.id !== id);
             if (existingPrompt) {
                 throw new Error('A prompt with this name already exists');
             }
         }
 
-        const [updateError] = await attemptPromise(() => db.prompts.update(id, promptData));
+        const [updateError] = await attemptPromise(() => promptsApi.update(id, promptData));
 
         if (updateError) {
             throw updateError;
         }
 
-        const [fetchError, prompts] = await attemptPromise(() => db.prompts.toArray());
+        const [fetchError, prompts] = await attemptPromise(() => promptsApi.getAll());
 
         if (fetchError) {
             logger.error(formatError(fetchError, ERROR_MESSAGES.FETCH_FAILED('prompts')), fetchError);
@@ -150,7 +136,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
     },
 
     deletePrompt: async (id) => {
-        const [fetchError, prompt] = await attemptPromise(() => db.prompts.get(id));
+        const [fetchError, prompt] = await attemptPromise(() => promptsApi.getById(id));
 
         if (fetchError || !prompt) {
             const message = formatError(fetchError || new Error('Prompt not found'), ERROR_MESSAGES.NOT_FOUND('prompt'));
@@ -164,7 +150,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw new Error(message);
         }
 
-        const [deleteError] = await attemptPromise(() => db.prompts.delete(id));
+        const [deleteError] = await attemptPromise(() => promptsApi.delete(id));
 
         if (deleteError) {
             const message = formatError(deleteError, ERROR_MESSAGES.DELETE_FAILED('prompt'));
@@ -172,7 +158,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw deleteError;
         }
 
-        const [refetchError, prompts] = await attemptPromise(() => db.prompts.toArray());
+        const [refetchError, prompts] = await attemptPromise(() => promptsApi.getAll());
 
         if (refetchError) {
             logger.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('prompts')), refetchError);
@@ -182,7 +168,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
     },
 
     clonePrompt: async (id) => {
-        const [fetchError, originalPrompt] = await attemptPromise(() => db.prompts.get(id));
+        const [fetchError, originalPrompt] = await attemptPromise(() => promptsApi.getById(id));
 
         if (fetchError || !originalPrompt) {
             const message = formatError(fetchError || new Error('Prompt not found'), ERROR_MESSAGES.NOT_FOUND('prompt'));
@@ -190,21 +176,16 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw fetchError || new Error('Prompt not found');
         }
 
-        let clonedPrompt: Prompt;
-        try {
-            clonedPrompt = createValidatedEntity(
-                { ...originalPrompt },
-                promptSchema,
-                {
-                    name: `${originalPrompt.name} (Copy)`,
-                    isSystem: false // Always set to false for cloned prompts
-                }
-            );
-        } catch (error) {
-            throw error instanceof Error ? error : new Error('Validation failed');
-        }
+        const clonedPromptData = {
+            ...originalPrompt,
+            name: `${originalPrompt.name} (Copy)`,
+            isSystem: false // Always set to false for cloned prompts
+        };
 
-        const [addError] = await attemptPromise(() => db.prompts.add(clonedPrompt));
+        // Remove id and createdAt as they will be generated by the API
+        const { id: _id, createdAt: _createdAt, ...dataToCreate } = clonedPromptData;
+
+        const [addError] = await attemptPromise(() => promptsApi.create(dataToCreate));
 
         if (addError) {
             const message = formatError(addError, ERROR_MESSAGES.CREATE_FAILED('cloned prompt'));
@@ -212,7 +193,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             throw addError;
         }
 
-        const [refetchError, prompts] = await attemptPromise(() => db.prompts.toArray());
+        const [refetchError, prompts] = await attemptPromise(() => promptsApi.getAll());
 
         if (refetchError) {
             logger.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('prompts')), refetchError);
@@ -225,7 +206,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
 
     // Export all prompts as JSON and trigger download
     exportPrompts: async () => {
-        const [error, allPrompts] = await attemptPromise(() => db.prompts.toArray());
+        const [error, allPrompts] = await attemptPromise(() => promptsApi.getAll());
 
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.FETCH_FAILED('prompts'));
@@ -259,17 +240,18 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             // Ensure unique name - check DB for existing name and append suffix if needed
             const newName = await get().findUniqueName(p.name || 'Imported Prompt');
 
-            const newPrompt: Prompt = {
-                ...p,
-                id: crypto.randomUUID(),
+            // Remove id and createdAt as they will be generated by the API
+            const { id: _id, createdAt: _createdAt, ...promptData } = p;
+
+            const dataToCreate = {
+                ...promptData,
                 name: newName,
-                createdAt: new Date(),
                 // Ensure imported prompts are not treated as system prompts
                 isSystem: false
             };
 
-            // Add to DB
-            const [addError] = await attemptPromise(() => db.prompts.add(newPrompt));
+            // Add via API
+            const [addError] = await attemptPromise(() => promptsApi.create(dataToCreate));
 
             if (addError) {
                 logger.error(`Failed to import prompt "${newName}"`, addError);
@@ -277,7 +259,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
             }
         }
 
-        const [fetchError, prompts] = await attemptPromise(() => db.prompts.toArray());
+        const [fetchError, prompts] = await attemptPromise(() => promptsApi.getAll());
 
         if (fetchError) {
             const message = formatError(fetchError, ERROR_MESSAGES.FETCH_FAILED('prompts'));
@@ -302,14 +284,14 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
         for (const attempt of attempts) {
             const candidateName = generateCandidateName(attempt);
 
-            const [checkError, existing] = await attemptPromise(() =>
-                db.prompts.where('name').equals(candidateName).first()
-            );
+            const [checkError, allPrompts] = await attemptPromise(() => promptsApi.getAll());
 
             if (checkError) {
                 logger.error('Error checking for existing prompt', checkError);
                 throw checkError;
             }
+
+            const existing = allPrompts.find(p => p.name === candidateName);
 
             if (!existing) {
                 return candidateName;

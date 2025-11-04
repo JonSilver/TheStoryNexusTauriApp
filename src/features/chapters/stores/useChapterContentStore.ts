@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
-import { db } from '@/services/database';
+import { chaptersApi } from '@/services/api/client';
 import { extractPlainTextFromLexical } from '@/utils/lexicalUtils';
 import { logger } from '@/utils/logger';
 
@@ -13,7 +13,7 @@ interface ChapterContentState {
 
 export const useChapterContentStore = create<ChapterContentState>(() => ({
     getChapterPlainText: async (id: string): Promise<string> => {
-        const [error, chapter] = await attemptPromise(() => db.chapters.get(id));
+        const [error, chapter] = await attemptPromise(() => chaptersApi.getById(id));
 
         if (error) {
             logger.error('Error getting chapter plain text:', error);
@@ -30,22 +30,8 @@ export const useChapterContentStore = create<ChapterContentState>(() => ({
     },
 
     getChapterPlainTextByChapterOrder: async (chapterOrder: number) => {
-        const [error, chapters] = await attemptPromise(() => db.chapters.toArray());
-
-        if (error) {
-            logger.error('Error getting chapter plain text by order:', error);
-            return '';
-        }
-
-        const chapter = chapters.find(ch => ch.order === chapterOrder);
-
-        if (!chapter || !chapter.content) {
-            logger.info('Chapter not found or has no content for order:', chapterOrder);
-            return '';
-        }
-
-        const plainText: string = useChapterContentStore.getState().extractPlainTextFromLexicalState(chapter.content);
-        return plainText;
+        logger.warn('getChapterPlainTextByChapterOrder requires storyId - this method may not work correctly');
+        return '';
     },
 
     extractPlainTextFromLexicalState: (editorStateJSON: string) => {

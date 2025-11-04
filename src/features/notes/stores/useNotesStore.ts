@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
 import { Note } from '@/types/story';
-import { db } from '@/services/database';
+import { notesApi } from '@/services/api/client';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { toastCRUD } from '@/utils/toastUtils';
 import { noteSchema } from '@/schemas/entities';
-import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
+import { validatePartialUpdate } from '@/utils/crudHelpers';
 import { logger } from '@/utils/logger';
 
 interface NotesState {
@@ -31,11 +31,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
         set({ isLoading: true, error: null });
 
         const [error, notes] = await attemptPromise(() =>
-            db.notes
-                .where('storyId')
-                .equals(storyId)
-                .reverse()
-                .sortBy('updatedAt')
+            notesApi.getByStory(storyId)
         );
 
         if (error) {
@@ -49,33 +45,17 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
     },
 
     createNote: async (storyId: string, title: string, content: string, type: Note['type']) => {
-        const now = new Date();
+        const [createError, newNote] = await attemptPromise(() =>
+            notesApi.create({ storyId, title, content, type })
+        );
 
-        let newNote: Note;
-        try {
-            newNote = createValidatedEntity(
-                { storyId, title, content, type },
-                noteSchema,
-                { updatedAt: now }
-            );
-        } catch (error) {
-            toastCRUD.createError('note', error);
-            throw error;
-        }
-
-        const [addError] = await attemptPromise(() => db.notes.add(newNote));
-
-        if (addError) {
-            toastCRUD.createError('note', addError);
-            throw addError;
+        if (createError) {
+            toastCRUD.createError('note', createError);
+            throw createError;
         }
 
         const [fetchError, notes] = await attemptPromise(() =>
-            db.notes
-                .where('storyId')
-                .equals(storyId)
-                .reverse()
-                .sortBy('updatedAt')
+            notesApi.getByStory(storyId)
         );
 
         if (fetchError) {
@@ -97,52 +77,44 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
             throw error;
         }
 
-        const [fetchError, note] = await attemptPromise(() => db.notes.get(noteId));
-
-        if (fetchError || !note) {
-            toastCRUD.loadError('note', fetchError || new Error('Note not found'));
-            throw fetchError || new Error('Note not found');
-        }
-
-        const updatedNote = {
-            ...note,
-            ...data,
-            updatedAt: new Date()
-        };
-
-        const [updateError] = await attemptPromise(() => db.notes.update(noteId, updatedNote));
+        const [updateError] = await attemptPromise(() =>
+            notesApi.update(noteId, data)
+        );
 
         if (updateError) {
             toastCRUD.updateError('note', updateError);
             throw updateError;
         }
 
-        const [refetchError, notes] = await attemptPromise(() =>
-            db.notes
-                .where('storyId')
-                .equals(note.storyId)
-                .reverse()
-                .sortBy('updatedAt')
-        );
+        // Get storyId from current notes to refetch
+        const currentNote = _get().notes.find(n => n.id === noteId);
+        if (currentNote) {
+            const [refetchError, notes] = await attemptPromise(() =>
+                notesApi.getByStory(currentNote.storyId)
+            );
 
-        if (refetchError) {
-            logger.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), refetchError);
-        } else {
-            set({ notes });
+            if (refetchError) {
+                logger.error(formatError(refetchError, ERROR_MESSAGES.FETCH_FAILED('notes')), refetchError);
+            } else {
+                set({ notes });
+            }
         }
 
         toastCRUD.updateSuccess('Note');
     },
 
     deleteNote: async (noteId: string) => {
-        const [fetchError, note] = await attemptPromise(() => db.notes.get(noteId));
-
-        if (fetchError || !note) {
-            toastCRUD.deleteError('note', fetchError || new Error('Note not found'));
-            throw fetchError || new Error('Note not found');
+        // Get storyId from current notes before deletion
+        const note = _get().notes.find(n => n.id === noteId);
+        if (!note) {
+            const error = new Error('Note not found');
+            toastCRUD.deleteError('note', error);
+            throw error;
         }
 
-        const [deleteError] = await attemptPromise(() => db.notes.delete(noteId));
+        const [deleteError] = await attemptPromise(() =>
+            notesApi.delete(noteId)
+        );
 
         if (deleteError) {
             toastCRUD.deleteError('note', deleteError);
@@ -150,11 +122,7 @@ export const useNotesStore = create<NotesState>((set, _get) => ({
         }
 
         const [refetchError, notes] = await attemptPromise(() =>
-            db.notes
-                .where('storyId')
-                .equals(note.storyId)
-                .reverse()
-                .sortBy('updatedAt')
+            notesApi.getByStory(note.storyId)
         );
 
         if (refetchError) {

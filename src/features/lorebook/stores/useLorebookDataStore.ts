@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
-import { db } from '@/services/database';
+import { lorebookApi } from '@/services/api/client';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { lorebookEntrySchema } from '@/schemas/entities';
@@ -36,7 +36,7 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
     loadEntries: async (storyId: string) => {
         set({ isLoading: true, error: null });
 
-        const [error, entries] = await attemptPromise(() => db.getLorebookEntriesByStory(storyId));
+        const [error, entries] = await attemptPromise(() => lorebookApi.getByStory(storyId));
 
         if (error) {
             set({
@@ -50,9 +50,9 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
     },
 
     createEntry: async (entryData) => {
-        let newEntry: LorebookEntry;
+        let validatedEntry: Omit<LorebookEntry, 'createdAt'>;
         try {
-            newEntry = createValidatedEntity(
+            validatedEntry = createValidatedEntity(
                 entryData,
                 lorebookEntrySchema,
                 { isDisabled: false }
@@ -63,7 +63,7 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
             throw error;
         }
 
-        const [error] = await attemptPromise(() => db.lorebookEntries.add(newEntry));
+        const [error, newEntry] = await attemptPromise(() => lorebookApi.create(validatedEntry));
 
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.CREATE_FAILED('lorebook entry'));
@@ -83,7 +83,7 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
             throw error;
         }
 
-        const [error] = await attemptPromise(() => db.lorebookEntries.update(id, data));
+        const [error] = await attemptPromise(() => lorebookApi.update(id, data));
 
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.UPDATE_FAILED('lorebook entry'));
@@ -99,7 +99,7 @@ export const useLorebookDataStore = create<LorebookDataState>((set) => ({
     },
 
     deleteEntry: async (id) => {
-        const [error] = await attemptPromise(() => db.lorebookEntries.delete(id));
+        const [error] = await attemptPromise(() => lorebookApi.delete(id));
 
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.DELETE_FAILED('lorebook entry'));

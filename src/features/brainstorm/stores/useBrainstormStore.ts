@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
-import { db } from '@/services/database';
+import { brainstormApi } from '@/services/api/client';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { aiChatSchema } from '@/schemas/entities';
@@ -39,10 +39,7 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
         set({ isLoading: true, error: null });
 
         const [error, chats] = await attemptPromise(() =>
-            db.aiChats
-                .where('storyId')
-                .equals(storyId)
-                .toArray()
+            brainstormApi.getByStory(storyId)
         );
 
         if (error) {
@@ -60,9 +57,9 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
     },
 
     addChat: async (storyId: string, title: string, messages: ChatMessage[]) => {
-        let newChat: AIChat;
+        let chatData: Omit<AIChat, 'createdAt'>;
         try {
-            newChat = createValidatedEntity(
+            chatData = createValidatedEntity(
                 { storyId, title, messages },
                 aiChatSchema,
                 { updatedAt: new Date() }
@@ -73,7 +70,7 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
             throw error;
         }
 
-        const [error] = await attemptPromise(() => db.aiChats.add(newChat));
+        const [error, newChat] = await attemptPromise(() => brainstormApi.create(chatData));
 
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.CREATE_FAILED('chat'));
@@ -94,9 +91,9 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
     },
 
     createNewChat: async (storyId: string) => {
-        let newChat: AIChat;
+        let chatData: Omit<AIChat, 'createdAt'>;
         try {
-            newChat = createValidatedEntity(
+            chatData = createValidatedEntity(
                 {
                     storyId,
                     title: `New Chat ${new Date().toLocaleString()}`,
@@ -111,7 +108,7 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
             throw error;
         }
 
-        const [error] = await attemptPromise(() => db.aiChats.add(newChat));
+        const [error, newChat] = await attemptPromise(() => brainstormApi.create(chatData));
 
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.CREATE_FAILED('chat'));
@@ -128,7 +125,7 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
     },
 
     deleteChat: async (chatId: string) => {
-        const [error] = await attemptPromise(() => db.aiChats.delete(chatId));
+        const [error] = await attemptPromise(() => brainstormApi.delete(chatId));
 
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.DELETE_FAILED('chat'));
@@ -157,7 +154,7 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
             updatedAt: new Date()
         };
 
-        const [updateError] = await attemptPromise(() => db.aiChats.update(chatId, updatedData));
+        const [updateError] = await attemptPromise(() => brainstormApi.update(chatId, updatedData));
 
         if (updateError) {
             const message = formatError(updateError, ERROR_MESSAGES.UPDATE_FAILED('chat'));
@@ -166,7 +163,7 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
         }
 
         // Fetch the updated chat to ensure we have all the data
-        const [fetchError, updatedChat] = await attemptPromise(() => db.aiChats.get(chatId));
+        const [fetchError, updatedChat] = await attemptPromise(() => brainstormApi.getById(chatId));
 
         if (fetchError) {
             const message = formatError(fetchError, ERROR_MESSAGES.FETCH_FAILED('chat'));
@@ -213,7 +210,7 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
         });
 
         // Persist to DB using existing updateChat path
-        const [fetchError, chat] = await attemptPromise(() => db.aiChats.get(chatId));
+        const [fetchError, chat] = await attemptPromise(() => brainstormApi.getById(chatId));
 
         if (fetchError || !chat) {
             // Rollback optimistic update
@@ -233,7 +230,7 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
         );
 
         const [updateError] = await attemptPromise(() =>
-            db.aiChats.update(chatId, { messages: updatedMessages, updatedAt: new Date() })
+            brainstormApi.update(chatId, { messages: updatedMessages, updatedAt: new Date() })
         );
 
         if (updateError) {
@@ -252,7 +249,7 @@ export const useBrainstormStore = create<BrainstormState>((set, get) => ({
 
     // Convenience helper to mark a message as edited and persist originalContent
     setMessageEdited: async (chatId: string, messageId: string, editedContent: string) => {
-        const [fetchError, chat] = await attemptPromise(() => db.aiChats.get(chatId));
+        const [fetchError, chat] = await attemptPromise(() => brainstormApi.getById(chatId));
 
         if (fetchError || !chat) {
             const message = formatError(fetchError || new Error('Chat not found'), ERROR_MESSAGES.NOT_FOUND('chat'));

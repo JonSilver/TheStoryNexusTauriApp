@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
-import { db } from '@/services/database';
+import { chaptersApi } from '@/services/api/client';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { chapterSchema } from '@/schemas/entities';
@@ -35,7 +35,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
             throw new Error(message);
         }
 
-        const [error] = await attemptPromise(() => db.chapters.update(id, updateData));
+        const [error] = await attemptPromise(() => chaptersApi.update(id, updateData));
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.UPDATE_FAILED('chapter summary'));
             logger.error(message, error);
@@ -52,7 +52,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
             throw new Error(message);
         }
 
-        const [error] = await attemptPromise(() => db.chapters.update(id, updateData));
+        const [error] = await attemptPromise(() => chaptersApi.update(id, updateData));
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.UPDATE_FAILED('summary'));
             logger.error(message, error);
@@ -61,18 +61,16 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
     },
 
     getPreviousChapterSummaries: async (storyId: string, currentOrder: number) => {
-        const [error, previousChapters] = await attemptPromise(() =>
-            db.chapters
-                .where('storyId')
-                .equals(storyId)
-                .filter(chapter => chapter.order <= currentOrder)
-                .sortBy('order')
-        );
+        const [error, allChapters] = await attemptPromise(() => chaptersApi.getByStory(storyId));
 
         if (error) {
             logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('previous chapter summaries')), error);
             return '';
         }
+
+        const previousChapters = allChapters
+            .filter(chapter => chapter.order <= currentOrder)
+            .sort((a, b) => a.order - b.order);
 
         const summaries = previousChapters
             .map(chapter => chapter.summary?.trim() || '')
@@ -83,22 +81,18 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
     },
 
     getChapterSummaries: async (storyId: string, currentOrder: number, includeLatest: boolean = false) => {
-        const [error, chapters] = await attemptPromise(() =>
-            db.chapters
-                .where('storyId')
-                .equals(storyId)
-                .filter(chapter => includeLatest
-                    ? true
-                    : chapter.order < currentOrder)
-                .sortBy('order')
-        );
+        const [error, allChapters] = await attemptPromise(() => chaptersApi.getByStory(storyId));
 
         if (error) {
             logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter summaries')), error);
             return '';
         }
 
-        const summaries = chapters
+        const filteredChapters = allChapters
+            .filter(chapter => includeLatest ? true : chapter.order < currentOrder)
+            .sort((a, b) => a.order - b.order);
+
+        const summaries = filteredChapters
             .map(chapter => {
                 const summary = chapter.summary?.trim();
                 return summary
@@ -112,7 +106,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
     },
 
     getChapterSummary: async (id: string) => {
-        const [error, chapter] = await attemptPromise(() => db.chapters.get(id));
+        const [error, chapter] = await attemptPromise(() => chaptersApi.getById(id));
 
         if (error) {
             logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter summary')), error);
@@ -127,19 +121,16 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
     },
 
     getAllChapterSummaries: async (storyId: string) => {
-        const [error, chapters] = await attemptPromise(() =>
-            db.chapters
-                .where('storyId')
-                .equals(storyId)
-                .sortBy('order')
-        );
+        const [error, chapters] = await attemptPromise(() => chaptersApi.getByStory(storyId));
 
         if (error) {
             logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter summaries')), error);
             return '';
         }
 
-        const summaries = chapters
+        const sortedChapters = chapters.sort((a, b) => a.order - b.order);
+
+        const summaries = sortedChapters
             .map(chapter => {
                 const summary = chapter.summary?.trim();
                 return summary
@@ -161,7 +152,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
             throw new Error(message);
         }
 
-        const [error] = await attemptPromise(() => db.chapters.update(id, updateData));
+        const [error] = await attemptPromise(() => chaptersApi.update(id, updateData));
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.UPDATE_FAILED('chapter outline'));
             logger.error(message, error);
@@ -172,7 +163,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
     getChapterOutline: async (id: string | undefined) => {
         if (!id) return null;
 
-        const [error, chapter] = await attemptPromise(() => db.chapters.get(id));
+        const [error, chapter] = await attemptPromise(() => chaptersApi.getById(id));
 
         if (error) {
             logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter outline')), error);
@@ -191,7 +182,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
             throw new Error(message);
         }
 
-        const [error] = await attemptPromise(() => db.chapters.update(id, updateData));
+        const [error] = await attemptPromise(() => chaptersApi.update(id, updateData));
         if (error) {
             const message = formatError(error, ERROR_MESSAGES.UPDATE_FAILED('chapter notes'));
             logger.error(message, error);
@@ -200,7 +191,7 @@ export const useChapterMetadataStore = create<ChapterMetadataState>(() => ({
     },
 
     getChapterNotes: async (id: string) => {
-        const [error, chapter] = await attemptPromise(() => db.chapters.get(id));
+        const [error, chapter] = await attemptPromise(() => chaptersApi.getById(id));
 
         if (error) {
             logger.error(formatError(error, ERROR_MESSAGES.FETCH_FAILED('chapter notes')), error);

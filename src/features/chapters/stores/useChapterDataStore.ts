@@ -1,12 +1,10 @@
 import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
-import { db } from '@/services/database';
+import { chaptersApi } from '@/services/api/client';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { storageService, STORAGE_KEYS } from '@/utils/storageService';
-import { chapterSchema } from '@/schemas/entities';
 import { countWords } from '@/utils/textUtils';
-import { createValidatedEntity, validatePartialUpdate } from '@/utils/crudHelpers';
 import type { Chapter } from '@/types/story';
 import { logger } from '@/utils/logger';
 
@@ -44,7 +42,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
         set({ loading: true, error: null });
 
         const [error, chapters] = await attemptPromise(() =>
-            db.chapters.where('storyId').equals(storyId).sortBy('order')
+            chaptersApi.getByStory(storyId)
         );
 
         if (error) {
@@ -61,7 +59,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
     getChapter: async (id: string) => {
         set({ loading: true, error: null });
 
-        const [error, chapter] = await attemptPromise(() => db.chapters.get(id));
+        const [error, chapter] = await attemptPromise(() => chaptersApi.getById(id));
 
         if (error) {
             set({
@@ -86,7 +84,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
         set({ loading: true, error: null });
 
         const [fetchError, storyChapters] = await attemptPromise(() =>
-            db.chapters.where('storyId').equals(chapterData.storyId).toArray()
+            chaptersApi.getByStory(chapterData.storyId)
         );
 
         if (fetchError) {
@@ -103,40 +101,21 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
 
         const chapterId = crypto.randomUUID();
 
-        let newChapterData: Chapter;
-        try {
-            newChapterData = createValidatedEntity(
-                { ...chapterData, order: nextOrder, wordCount: countWords(chapterData.content) },
-                chapterSchema
-            );
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
-            set({ error: errorMessage, loading: false });
-            throw error;
-        }
+        const [createError, newChapter] = await attemptPromise(() =>
+            chaptersApi.create({
+                id: chapterId,
+                ...chapterData,
+                order: nextOrder,
+                wordCount: countWords(chapterData.content)
+            })
+        );
 
-        // Override the auto-generated ID to use our pre-generated one for tracking
-        newChapterData = { ...newChapterData, id: chapterId };
-
-        const [addError] = await attemptPromise(() => db.chapters.add(newChapterData));
-
-        if (addError) {
+        if (createError) {
             set({
-                error: formatError(addError, ERROR_MESSAGES.CREATE_FAILED('chapter')),
+                error: formatError(createError, ERROR_MESSAGES.CREATE_FAILED('chapter')),
                 loading: false
             });
-            throw addError;
-        }
-
-        const [getError, newChapter] = await attemptPromise(() => db.chapters.get(chapterId));
-
-        if (getError || !newChapter) {
-            const error = getError || new Error('Failed to retrieve created chapter');
-            set({
-                error: formatError(error, ERROR_MESSAGES.CREATE_FAILED('chapter')),
-                loading: false
-            });
-            throw error;
+            throw createError;
         }
 
         set(state => ({
@@ -149,19 +128,13 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
     },
 
     updateChapter: async (id: string, chapterData: Partial<Chapter>) => {
-        try {
-            validatePartialUpdate(chapterData, chapterSchema);
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
-            set({ error: errorMessage, loading: false });
-            throw error;
-        }
-
         set({ loading: true, error: null });
 
+        const updateData = { ...chapterData };
+
         if (chapterData.content) {
-            chapterData.wordCount = countWords(chapterData.content);
-            const [getError, chapter] = await attemptPromise(() => db.chapters.get(id));
+            updateData.wordCount = countWords(chapterData.content);
+            const [getError, chapter] = await attemptPromise(() => chaptersApi.getById(id));
             if (!getError && chapter) {
                 const { lastEditedChapterIds } = get();
                 const newLastEdited = {
@@ -173,7 +146,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
             }
         }
 
-        const [updateError] = await attemptPromise(() => db.chapters.update(id, chapterData));
+        const [updateError] = await attemptPromise(() => chaptersApi.update(id, updateData));
 
         if (updateError) {
             set({
@@ -183,7 +156,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
             return;
         }
 
-        const [getError, updatedChapter] = await attemptPromise(() => db.chapters.get(id));
+        const [getError, updatedChapter] = await attemptPromise(() => chaptersApi.getById(id));
 
         if (getError || !updatedChapter) {
             const error = getError || new Error('Chapter not found after update');
@@ -206,7 +179,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
     deleteChapter: async (id: string) => {
         set({ loading: true, error: null });
 
-        const [error] = await attemptPromise(() => db.chapters.delete(id));
+        const [error] = await attemptPromise(() => chaptersApi.delete(id));
 
         if (error) {
             set({
@@ -230,13 +203,11 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
     updateChapterOrders: async (updates: Array<{ id: string, order: number }>) => {
         set({ loading: true, error: null });
 
-        const [error] = await attemptPromise(() =>
-            db.transaction('rw', db.chapters, async () => {
-                for (const update of updates) {
-                    await db.chapters.update(update.id, { order: update.order });
-                }
-            })
-        );
+        const [error] = await attemptPromise(async () => {
+            for (const update of updates) {
+                await chaptersApi.update(update.id, { order: update.order });
+            }
+        });
 
         if (error) {
             set({
@@ -274,7 +245,7 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
 
     getPreviousChapter: async (chapterId: string) => {
         const [getCurrentError, currentChapter] = await attemptPromise(() =>
-            db.chapters.get(chapterId)
+            chaptersApi.getById(chapterId)
         );
 
         if (getCurrentError || !currentChapter) {
@@ -282,18 +253,18 @@ export const useChapterDataStore = create<ChapterDataState>((set, get) => ({
             return null;
         }
 
-        const [getPrevError, previousChapter] = await attemptPromise(() =>
-            db.chapters
-                .where('storyId')
-                .equals(currentChapter.storyId)
-                .and(chapter => chapter.order === currentChapter.order - 1)
-                .first()
+        const [getChaptersError, storyChapters] = await attemptPromise(() =>
+            chaptersApi.getByStory(currentChapter.storyId)
         );
 
-        if (getPrevError) {
-            logger.error('Error getting previous chapter:', getPrevError);
+        if (getChaptersError) {
+            logger.error('Error getting previous chapter:', getChaptersError);
             return null;
         }
+
+        const previousChapter = storyChapters.find(
+            chapter => chapter.order === currentChapter.order - 1
+        );
 
         return previousChapter || null;
     }
