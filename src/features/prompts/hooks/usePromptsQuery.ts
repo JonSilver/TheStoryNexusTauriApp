@@ -53,10 +53,11 @@ export const useUpdatePromptMutation = () => {
         mutationFn: ({ id, data }: { id: string; data: Partial<Prompt> }) =>
             promptsApi.update(id, data),
         onSuccess: (updatedPrompt, variables) => {
+            // Update detail cache
             queryClient.setQueryData(promptsKeys.detail(variables.id), updatedPrompt);
-            queryClient.setQueryData<Prompt[]>(promptsKeys.lists(), (old) =>
-                old?.map(p => p.id === updatedPrompt.id ? updatedPrompt : p)
-            );
+            // Invalidate all list queries since they may have different params (includeSystem, etc)
+            queryClient.invalidateQueries({ queryKey: promptsKeys.lists() });
+            toast.success('Prompt updated successfully');
         },
         onError: (error: Error) => {
             toast.error(`Failed to update prompt: ${error.message}`);
