@@ -5,6 +5,42 @@ import { db, schema } from '../db/client';
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB limit
 
+// GET export database as JSON (from SQLite)
+router.get('/export', async (req, res) => {
+    try {
+        const [stories, chapters, prompts, lorebookEntries, aiChats, sceneBeats, notes, aiSettings] = await Promise.all([
+            db.select().from(schema.stories),
+            db.select().from(schema.chapters),
+            db.select().from(schema.prompts),
+            db.select().from(schema.lorebookEntries),
+            db.select().from(schema.aiChats),
+            db.select().from(schema.sceneBeats),
+            db.select().from(schema.notes),
+            db.select().from(schema.aiSettings),
+        ]);
+
+        const exportData = {
+            version: "1.0",
+            exportedAt: new Date().toISOString(),
+            tables: {
+                stories,
+                chapters,
+                prompts,
+                lorebookEntries,
+                aiChats,
+                sceneBeats,
+                notes,
+                aiSettings,
+            }
+        };
+
+        res.json(exportData);
+    } catch (error) {
+        console.error('Error exporting database:', error);
+        res.status(500).json({ error: 'Failed to export database', details: (error as Error).message });
+    }
+});
+
 // POST import database from JSON
 router.post('/import', upload.single('file'), async (req, res) => {
     try {
