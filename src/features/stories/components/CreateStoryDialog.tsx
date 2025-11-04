@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useStoryStore } from "@/features/stories/stores/useStoryStore";
+import { useCreateStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -14,8 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusCircle } from "lucide-react";
-import { attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
 
 
 export function CreateStoryDialog() {
@@ -24,28 +22,26 @@ export function CreateStoryDialog() {
     const [author, setAuthor] = useState("");
     const [language, setLanguage] = useState("English");
     const [synopsis, setSynopsis] = useState("");
-    const createStory = useStoryStore((state) => state.createStory);
+    const createStoryMutation = useCreateStoryMutation();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const [error] = await attemptPromise(async () =>
-            createStory({
-                title,
-                author,
-                language,
-                synopsis,
-            })
-        );
-        if (error) {
-            logger.error("Failed to create story:", error);
-            return;
-        }
-        setOpen(false);
-        // Reset form
-        setTitle("");
-        setAuthor("");
-        setLanguage("English");
-        setSynopsis("");
+        createStoryMutation.mutate({
+            id: crypto.randomUUID(),
+            title,
+            author,
+            language,
+            synopsis,
+        }, {
+            onSuccess: () => {
+                setOpen(false);
+                // Reset form
+                setTitle("");
+                setAuthor("");
+                setLanguage("English");
+                setSynopsis("");
+            },
+        });
     };
 
     return (
