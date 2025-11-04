@@ -65,7 +65,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
         await db.delete(schema.chapters);
         await db.delete(schema.prompts);
         await db.delete(schema.stories);
-        // Don't delete aiSettings - keep existing configuration
+        await db.delete(schema.aiSettings);
 
         // Insert new data (in order of dependencies)
         if (tables.stories?.length) {
@@ -133,6 +133,16 @@ router.post('/import', upload.single('file'), async (req, res) => {
             }
         }
 
+        if (tables.aiSettings?.length) {
+            for (const setting of tables.aiSettings) {
+                await db.insert(schema.aiSettings).values({
+                    ...setting,
+                    createdAt: new Date(setting.createdAt),
+                    updatedAt: setting.updatedAt ? new Date(setting.updatedAt) : undefined,
+                });
+            }
+        }
+
         res.json({
             success: true,
             imported: {
@@ -143,6 +153,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
                 aiChats: tables.aiChats?.length || 0,
                 sceneBeats: tables.sceneBeats?.length || 0,
                 notes: tables.notes?.length || 0,
+                aiSettings: tables.aiSettings?.length || 0,
             }
         });
     } catch (error) {
