@@ -138,29 +138,27 @@ server: {
 
 ### 6. Data Migration Utilities
 
-**Export from Dexie (Old App):**
-- Add export utility to Tauri app before removal
-- Button in UI to trigger export
-- Dumps entire IndexedDB to JSON file
-- Download via browser file save dialog
+Both features in new web app only:
+
+**Export IndexedDB → JSON:**
+- Admin/migration page with export button
+- Reads entire IndexedDB (Dexie) client-side
+- Downloads JSON file via browser
 - Format: `{ version: "1.0", exportedAt: ISO8601, tables: { stories: [...], chapters: [...], ... } }`
-- Include all tables: stories, chapters, aiChats, prompts, aiSettings, lorebookEntries, sceneBeats, notes
+- All tables: stories, chapters, aiChats, prompts, aiSettings, lorebookEntries, sceneBeats, notes
 
-**Import to SQLite (New App):**
-- Admin page in new web app
-- Upload JSON file from old export
-- Validates JSON structure
-- **Replaces all database contents** (destructive operation)
-- Transaction-wrapped: all-or-nothing import
-- Backend endpoint: `POST /api/admin/import` (accepts multipart/form-data)
-- Shows preview of what will be imported (counts per table)
-- Confirmation step before executing
+**Import JSON → SQLite:**
+- Same admin page with file upload
+- Upload JSON from previous export
+- **Replaces all database contents** (destructive, with confirmation)
+- Backend endpoint: `POST /api/admin/import` (multipart/form-data)
+- Transaction-wrapped: all-or-nothing
+- Validates schema before applying
 
-**Implementation notes:**
-- Export utility: `src/services/exportDatabase.ts` using Dexie.tables API
-- Import endpoint: `server/routes/admin.ts` with file upload handling (multer)
-- Import service: `server/services/importDatabase.ts` with validation and SQLite transaction
-- Both use identical JSON schema for compatibility
+**Implementation:**
+- Client: `src/services/migration.ts` (export IndexedDB, upload file)
+- Server: `server/routes/admin.ts` + `server/services/importDatabase.ts`
+- Single JSON schema for both operations
 
 ## Key Technical Notes
 
