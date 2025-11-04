@@ -32,9 +32,5 @@ dist-ssr
 .cursorrules
 .cursor/
 
-# Sensitive data files
-*-PRIVATE.json
-*-private.json
-
 # Windows reserved device names
 NUL
