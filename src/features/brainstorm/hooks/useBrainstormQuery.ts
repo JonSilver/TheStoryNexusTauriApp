@@ -82,3 +82,8 @@ export const useDeleteBrainstormChatMutation = () => {
         },
     });
 };
+
+// Backwards compatibility aliases
+export const useCreateBrainstormMutation = useCreateBrainstormChatMutation;
+export const useUpdateBrainstormMutation = useUpdateBrainstormChatMutation;
+export const useDeleteBrainstormMutation = useDeleteBrainstormChatMutation;
