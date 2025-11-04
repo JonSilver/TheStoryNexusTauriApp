@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useNotesStore } from '../stores/useNotesStore';
+import { useNoteQuery, useUpdateNoteMutation } from '../hooks/useNotesQuery';
 import Editor from 'react-simple-wysiwyg';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { attemptPromise } from '@jfdi/attempt';
 
 interface NoteEditorProps {
-    storyId: string;
+    selectedNoteId: string | null;
 }
 
-export default function NoteEditor({ storyId: _storyId }: NoteEditorProps) {
-    const { selectedNote, updateNote } = useNotesStore();
+export default function NoteEditor({ selectedNoteId }: NoteEditorProps) {
+    const { data: selectedNote } = useNoteQuery(selectedNoteId || '');
+    const updateNoteMutation = useUpdateNoteMutation();
     const [content, setContent] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (selectedNote) {
@@ -26,12 +25,13 @@ export default function NoteEditor({ storyId: _storyId }: NoteEditorProps) {
     const handleSave = async () => {
         if (!selectedNote) return;
 
-        setIsSaving(true);
-        await attemptPromise(async () => updateNote(selectedNote.id, { content }));
-        setIsSaving(false);
+        await updateNoteMutation.mutateAsync({
+            id: selectedNote.id,
+            data: { content }
+        });
     };
 
-    if (!selectedNote) {
+    if (!selectedNoteId || !selectedNote) {
         return (
             <div className="h-full flex items-center justify-center text-muted-foreground">
                 <p>Select a note to start editing</p>
@@ -50,7 +50,7 @@ export default function NoteEditor({ storyId: _storyId }: NoteEditorProps) {
                 </div>
                 <Button
                     onClick={handleSave}
-                    disabled={isSaving}
+                    disabled={updateNoteMutation.isPending}
                     className="flex items-center gap-2"
                 >
                     <Save className="h-4 w-4" />

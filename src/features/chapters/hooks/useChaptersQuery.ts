@@ -84,7 +84,7 @@ export const useDeleteChapterMutation = () => {
 
     return useMutation({
         mutationFn: chaptersApi.delete,
-        onSuccess: (_data, deletedId) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: chaptersKeys.all });
             toast.success('Chapter deleted successfully');
         },

@@ -94,7 +94,7 @@ export const promptsApi = {
         return fetchJSON<Prompt[]>(`/prompts?${query}`);
     },
     getById: (id: string) => fetchJSON<Prompt>(`/prompts/${id}`),
-    create: (data: Omit<Prompt, 'createdAt'>) => fetchJSON<Prompt>('/prompts', {
+    create: (data: Omit<Prompt, 'id' | 'createdAt'>) => fetchJSON<Prompt>('/prompts', {
         method: 'POST',
         body: JSON.stringify(data),
     }),
@@ -154,7 +154,7 @@ export const scenebeatsApi = {
 export const notesApi = {
     getByStory: (storyId: string) => fetchJSON<Note[]>(`/notes/story/${storyId}`),
     getById: (id: string) => fetchJSON<Note>(`/notes/${id}`),
-    create: (data: Omit<Note, 'createdAt' | 'updatedAt'>) => fetchJSON<Note>('/notes', {
+    create: (data: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => fetchJSON<Note>('/notes', {
         method: 'POST',
         body: JSON.stringify(data),
     }),

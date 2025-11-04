@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useBrainstormStore } from '../stores/useBrainstormStore';
+import { useState } from 'react';
+import {
+    useBrainstormByStoryQuery,
+    useCreateBrainstormMutation,
+    useUpdateBrainstormMutation,
+    useDeleteBrainstormMutation
+} from '../hooks/useBrainstormQuery';
 import { cn } from '@/lib/utils';
 import { Plus, Trash2, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'react-toastify';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { AIChat } from '@/types/story';
@@ -13,32 +17,46 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { attemptPromise } from '@jfdi/attempt';
 
 interface ChatListProps {
     storyId: string;
+    selectedChat: AIChat | null;
+    onSelectChat: (chat: AIChat) => void;
 }
 
-export default function ChatList({ storyId }: ChatListProps) {
-    const { chats, fetchChats, selectedChat, selectChat, deleteChat, createNewChat, updateChat } = useBrainstormStore();
+export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatListProps) {
+    const { data: chats = [], isLoading } = useBrainstormByStoryQuery(storyId);
+    const createMutation = useCreateBrainstormMutation();
+    const updateMutation = useUpdateBrainstormMutation();
+    const deleteMutation = useDeleteBrainstormMutation();
+
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingChat, setEditingChat] = useState<AIChat | null>(null);
     const [newTitle, setNewTitle] = useState('');
 
-    useEffect(() => {
-        if (storyId) {
-            fetchChats(storyId);
-        }
-    }, [fetchChats, storyId]);
+    const handleCreateNewChat = () => {
+        createMutation.mutate({
+            id: crypto.randomUUID(),
+            storyId,
+            title: `New Chat ${new Date().toLocaleString()}`,
+            messages: [],
+            updatedAt: new Date(),
+        }, {
+            onSuccess: (newChat) => {
+                onSelectChat(newChat);
+            }
+        });
+    };
 
-    const handleDeleteChat = async (chatId: string) => {
-        const [error] = await attemptPromise(async () => deleteChat(chatId));
-        if (error) {
-            toast.error('Failed to delete chat');
-            return;
-        }
-        toast.success('Chat deleted successfully');
+    const handleDeleteChat = (chatId: string) => {
+        deleteMutation.mutate(chatId, {
+            onSuccess: () => {
+                if (selectedChat?.id === chatId) {
+                    onSelectChat(null as any);
+                }
+            }
+        });
     };
 
     const handleEditClick = (chat: AIChat, e: React.MouseEvent) => {
@@ -48,19 +66,18 @@ export default function ChatList({ storyId }: ChatListProps) {
         setIsEditDialogOpen(true);
     };
 
-    const handleSaveTitle = async () => {
+    const handleSaveTitle = () => {
         if (editingChat && newTitle.trim()) {
-            const [error] = await attemptPromise(async () =>
-                updateChat(editingChat.id, { title: newTitle.trim() })
-            );
-            if (error) {
-                toast.error('Failed to rename chat');
-                return;
-            }
-            toast.success('Chat renamed successfully');
-            setIsEditDialogOpen(false);
-            setEditingChat(null);
-            setNewTitle('');
+            updateMutation.mutate({
+                id: editingChat.id,
+                data: { title: newTitle.trim() }
+            }, {
+                onSuccess: () => {
+                    setIsEditDialogOpen(false);
+                    setEditingChat(null);
+                    setNewTitle('');
+                }
+            });
         }
     };
 
@@ -94,7 +111,7 @@ export default function ChatList({ storyId }: ChatListProps) {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => createNewChat(storyId)}
+                                onClick={handleCreateNewChat}
                                 className="flex items-center gap-1"
                             >
                                 <Plus className="h-4 w-4" />
@@ -103,11 +120,15 @@ export default function ChatList({ storyId }: ChatListProps) {
                         </div>
                     </div>
                     <ul className="overflow-y-auto flex-1">
-                        {chats.length === 0 ? (
+                        {isLoading ? (
+                            <li className="p-8 flex items-center justify-center">
+                                <p className="text-muted-foreground">Loading chats...</p>
+                            </li>
+                        ) : chats.length === 0 ? (
                             <li className="p-8 flex flex-col items-center justify-center text-center">
                                 <p className="text-muted-foreground mb-4">No chats yet</p>
                                 <Button
-                                    onClick={() => createNewChat(storyId)}
+                                    onClick={handleCreateNewChat}
                                     className="flex items-center gap-1"
                                 >
                                     <Plus className="h-4 w-4" />
@@ -124,7 +145,7 @@ export default function ChatList({ storyId }: ChatListProps) {
                                     )}
                                 >
                                     <div
-                                        onClick={() => selectChat(chat)}
+                                        onClick={() => onSelectChat(chat)}
                                         className="flex flex-col gap-2"
                                     >
                                         {/* Title and timestamp with tooltip */}

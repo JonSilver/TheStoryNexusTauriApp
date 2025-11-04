@@ -4,7 +4,7 @@ import { useParams } from "react-router";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChapterCard } from "@/features/chapters/components/ChapterCard";
-import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
+import { useChaptersByStoryQuery, useCreateChapterMutation, useUpdateChapterMutation } from "@/features/chapters/hooks/useChaptersQuery";
 import { usePromptStore } from "@/features/prompts/store/promptStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -56,15 +56,9 @@ interface CreateChapterForm {
 export default function Chapters() {
   const { storyId } = useParams();
   const { setCurrentStoryId } = useStoryContext();
-  const {
-    chapters,
-    loading,
-    error,
-    fetchChapters,
-    createChapter,
-    updateChapter: _updateChapter,
-    updateChapterOrders,
-  } = useChapterStore();
+  const { data: chapters = [], isLoading: loading, error: queryError } = useChaptersByStoryQuery(storyId || "");
+  const createChapterMutation = useCreateChapterMutation();
+  const updateChapterMutation = useUpdateChapterMutation();
   const { fetchPrompts } = usePromptStore();
   const { entries } = useLorebookStore();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -73,6 +67,8 @@ export default function Chapters() {
       povType: "Third Person Omniscient",
     },
   });
+
+  const error = queryError?.message || null;
 
   const povType = form.watch("povType");
   const characterEntries = entries.filter(
@@ -89,11 +85,9 @@ export default function Chapters() {
   useEffect(() => {
     if (storyId) {
       setCurrentStoryId(storyId);
-      Promise.all([fetchChapters(storyId), fetchPrompts()]).catch(
-        console.error
-      );
+      fetchPrompts().catch(console.error);
     }
-  }, [storyId, fetchChapters, setCurrentStoryId, fetchPrompts]);
+  }, [storyId, setCurrentStoryId, fetchPrompts]);
 
   // Reset POV character when switching to omniscient
   useEffect(() => {
@@ -102,7 +96,7 @@ export default function Chapters() {
     }
   }, [povType, form]);
 
-  const handleCreateChapter = async (data: CreateChapterForm) => {
+  const handleCreateChapter = (data: CreateChapterForm) => {
     if (!storyId) return;
 
     const nextOrder =
@@ -116,31 +110,26 @@ export default function Chapters() {
         ? data.povCharacter
         : undefined;
 
-    const [error] = await attemptPromise(async () =>
-      createChapter({
-        storyId,
-        title: data.title,
-        content: "",
-        povCharacter,
-        povType: data.povType,
-        order: nextOrder,
-        outline: { content: "", lastUpdated: new Date() },
-      })
-    );
-
-    if (error) {
-      logger.error("Failed to create chapter:", error);
-      toast.error("Failed to create chapter");
-      return;
-    }
-
-    setIsCreateDialogOpen(false);
-    form.reset({
-      title: "",
-      povType: "Third Person Omniscient",
-      povCharacter: undefined,
+    createChapterMutation.mutate({
+      id: "",
+      storyId,
+      title: data.title,
+      content: "",
+      povCharacter,
+      povType: data.povType,
+      order: nextOrder,
+      outline: { content: "", lastUpdated: new Date() },
+      wordCount: 0,
+    }, {
+      onSuccess: () => {
+        setIsCreateDialogOpen(false);
+        form.reset({
+          title: "",
+          povType: "Third Person Omniscient",
+          povCharacter: undefined,
+        });
+      }
     });
-    toast.success("Chapter created successfully");
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -158,22 +147,21 @@ export default function Chapters() {
 
     const updatedChapters = arrayMove(chapters, oldIndex, newIndex);
 
-    const [error] = await attemptPromise(async () =>
-      updateChapterOrders(
-        updatedChapters.map((chapter: Chapter, index) => ({
-          id: chapter.id,
-          order: index + 1,
-        }))
-      )
-    );
+    // Update all chapters with new order
+    const [error] = await attemptPromise(async () => {
+      await Promise.all(
+        updatedChapters.map((chapter: Chapter, index) =>
+          updateChapterMutation.mutateAsync({
+            id: chapter.id,
+            data: { order: index + 1 }
+          })
+        )
+      );
+    });
 
     if (error) {
       logger.error("Failed to update chapter order:", error);
       toast.error("Failed to update chapter order");
-      // Refetch to ensure UI is in sync with database
-      if (storyId) {
-        await fetchChapters(storyId);
-      }
     }
   };
 

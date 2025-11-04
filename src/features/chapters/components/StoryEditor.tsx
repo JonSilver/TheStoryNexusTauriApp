@@ -23,6 +23,7 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
+import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
 
 type DrawerType = "matchedTags" | "chapterOutline" | "chapterPOV" | "chapterNotes" | null;
 
@@ -30,6 +31,7 @@ export function StoryEditor() {
     const [openDrawer, setOpenDrawer] = useState<DrawerType>(null);
     const [isMaximized, setIsMaximized] = useState(false);
     const { currentChapterId } = useStoryContext();
+    const { data: currentChapter } = useChapterQuery(currentChapterId || "");
 
     const handleOpenDrawer = (drawer: DrawerType) => {
         setOpenDrawer(drawer === openDrawer ? null : drawer);
@@ -144,7 +146,7 @@ export function StoryEditor() {
                         </DrawerDescription>
                     </DrawerHeader>
                     <div className="px-4 overflow-y-auto max-h-[60vh]">
-                        <ChapterOutline />
+                        {currentChapter && <ChapterOutline chapter={currentChapter} />}
                     </div>
                     <DrawerFooter>
                         <DrawerClose asChild>
@@ -164,7 +166,7 @@ export function StoryEditor() {
                         </DrawerDescription>
                     </DrawerHeader>
                     <div className="px-4 overflow-y-auto max-h-[60vh]">
-                        <ChapterPOVEditor onClose={() => setOpenDrawer(null)} />
+                        {currentChapter && <ChapterPOVEditor chapter={currentChapter} onClose={() => setOpenDrawer(null)} />}
                     </div>
                     <DrawerFooter>
                         <DrawerClose asChild>
@@ -184,7 +186,7 @@ export function StoryEditor() {
                         <SheetTitle>Scribble</SheetTitle>
                     </SheetHeader>
                     <div className="overflow-y-auto h-[100vh]">
-                        <ChapterNotesEditor onClose={() => setOpenDrawer(null)} />
+                        {currentChapter && <ChapterNotesEditor chapter={currentChapter} onClose={() => setOpenDrawer(null)} />}
                     </div>
                 </SheetContent>
             </Sheet>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { attemptPromise } from '@jfdi/attempt';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight, Loader2, Download, Upload, AlertTriangle } from "lucide-react";
 import { aiService } from '@/services/ai/AIService';
 import { toast } from 'react-toastify';
 import { AIModel } from '@/types/story';
 import { cn } from '@/lib/utils';
 import { API_URLS } from '@/constants/urls';
 import { logger } from '@/utils/logger';
+import { downloadDatabaseExport } from '@/services/exportDexieDatabase';
+import { adminApi } from '@/services/api/client';
 
 export default function AISettingsPage() {
     const [openaiKey, setOpenaiKey] = useState('');
@@ -26,6 +28,8 @@ export default function AISettingsPage() {
     const [defaultOpenAIModel, setDefaultOpenAIModel] = useState<string | undefined>();
     const [defaultOpenRouterModel, setDefaultOpenRouterModel] = useState<string | undefined>();
     const [localModels, setLocalModels] = useState<AIModel[]>([]);
+    const [isMigrationLoading, setIsMigrationLoading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         loadInitialData();
@@ -198,6 +202,47 @@ export default function AISettingsPage() {
         if (error) {
             logger.error('Error updating default model:', error);
             toast.error('Failed to update default model');
+        }
+    };
+
+    const handleExportDatabase = async () => {
+        setIsMigrationLoading(true);
+        const [error] = await attemptPromise(async () => {
+            await downloadDatabaseExport();
+            toast.success('Database exported successfully');
+        });
+
+        if (error) {
+            logger.error('Error exporting database:', error);
+            toast.error('Failed to export database');
+        }
+        setIsMigrationLoading(false);
+    };
+
+    const handleImportDatabase = async (file: File) => {
+        if (!file) return;
+
+        setIsMigrationLoading(true);
+        const [error] = await attemptPromise(async () => {
+            await adminApi.importDatabase(file);
+            toast.success('Database imported successfully. Please reload the application.');
+        });
+
+        if (error) {
+            logger.error('Error importing database:', error);
+            toast.error('Failed to import database');
+        }
+        setIsMigrationLoading(false);
+    };
+
+    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            handleImportDatabase(file);
+        }
+        // Reset input so the same file can be selected again
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
         }
     };
 
@@ -423,6 +468,71 @@ export default function AISettingsPage() {
                                     </p>
                                 </div>
                             )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Database Migration Section */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Database Migration</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-start gap-2 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-md">
+                                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+                                <div className="text-sm text-amber-800 dark:text-amber-200">
+                                    <p className="font-semibold mb-1">Warning</p>
+                                    <p>Import will replace all existing data. Export your current database first.</p>
+                                </div>
+                            </div>
+
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label>Export Database</Label>
+                                    <Button
+                                        onClick={handleExportDatabase}
+                                        disabled={isMigrationLoading}
+                                        className="w-full"
+                                        variant="outline"
+                                    >
+                                        {isMigrationLoading ? (
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                            <Download className="h-4 w-4 mr-2" />
+                                        )}
+                                        Export to JSON
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground">
+                                        Download all stories, chapters, and settings as JSON
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Import Database</Label>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept=".json"
+                                        onChange={handleFileSelect}
+                                        className="hidden"
+                                    />
+                                    <Button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isMigrationLoading}
+                                        className="w-full"
+                                        variant="outline"
+                                    >
+                                        {isMigrationLoading ? (
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                            <Upload className="h-4 w-4 mr-2" />
+                                        )}
+                                        Import from JSON
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground">
+                                        Restore database from exported JSON file
+                                    </p>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>

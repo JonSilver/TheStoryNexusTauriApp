@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLorebookStore } from "../stores/useLorebookStore";
-import { toast } from "react-toastify";
+import { useCreateLorebookMutation, useUpdateLorebookMutation } from "../hooks/useLorebookQuery";
 import type { LorebookEntry } from "@/types/story";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -60,8 +60,9 @@ export function CreateEntryDialog({
   storyId,
   entry,
 }: CreateEntryDialogProps) {
-  const { createEntry, updateEntryAndRebuildTags } = useLorebookStore();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { buildTagMap } = useLorebookStore();
+  const createMutation = useCreateLorebookMutation();
+  const updateMutation = useUpdateLorebookMutation();
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Initial form state in a separate constant for reuse
@@ -104,7 +105,6 @@ export function CreateEntryDialog({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsSubmitting(true);
 
     const [error] = await attemptPromise(async () => {
       const processedTags = tagInput
@@ -118,22 +118,25 @@ export function CreateEntryDialog({
       };
 
       if (entry) {
-        await updateEntryAndRebuildTags(entry.id, dataToSubmit);
-        toast.success("Entry updated successfully");
+        await updateMutation.mutateAsync({
+          id: entry.id,
+          data: dataToSubmit,
+        });
+        buildTagMap();
       } else {
-        await createEntry({
+        await createMutation.mutateAsync({
+          id: crypto.randomUUID(),
           ...dataToSubmit,
           storyId,
-        } as Omit<LorebookEntry, "id" | "createdAt">);
-        toast.success("Entry created successfully");
+        } as Omit<LorebookEntry, "createdAt">);
+        buildTagMap();
         resetForm();
       }
       onOpenChange(false);
     });
     if (error) {
-      toast.error(entry ? "Failed to update entry" : "Failed to create entry");
+      // Error toast is already handled by the mutation
     }
-    setIsSubmitting(false);
   };
 
   return (
@@ -363,8 +366,8 @@ export function CreateEntryDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : entry ? "Update" : "Create"}
+            <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+              {(createMutation.isPending || updateMutation.isPending) ? "Saving..." : entry ? "Update" : "Create"}
             </Button>
           </div>
         </form>

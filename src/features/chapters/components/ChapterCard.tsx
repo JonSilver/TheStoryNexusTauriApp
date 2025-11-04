@@ -11,6 +11,7 @@ import {
   ChevronDown,
   GripVertical,
 } from "lucide-react";
+import { useUpdateChapterMutation, useDeleteChapterMutation } from "@/features/chapters/hooks/useChaptersQuery";
 import { useChapterStore } from "../stores/useChapterStore";
 import type { AllowedModel, Chapter, Prompt } from "../../../types/story";
 import { useNavigate } from "react-router";
@@ -79,10 +80,10 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     return parseLocalStorage(z.boolean(), expandedStateKey, false);
   });
   const [summary, setSummary] = useState(chapter.summary || "");
-  const deleteChapter = useChapterStore((state) => state.deleteChapter);
-  const updateChapter = useChapterStore((state) => state.updateChapter);
-  const updateChapterSummaryOptimistic = useChapterStore(
-    (state) => state.updateChapterSummaryOptimistic
+  const deleteChapterMutation = useDeleteChapterMutation();
+  const updateChapterMutation = useUpdateChapterMutation();
+  const getChapterPlainText = useChapterStore(
+    (state) => state.getChapterPlainText
   );
   const form = useForm<EditChapterForm>({
     defaultValues: {
@@ -97,9 +98,6 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
   const { generateWithPrompt, processStreamedResponse } = useAIStore();
   const { prompts, isLoading, error } = usePromptStore();
   const [isGenerating, setIsGenerating] = useState(false);
-  const getChapterPlainText = useChapterStore(
-    (state) => state.getChapterPlainText
-  );
   const { entries } = useLorebookStore();
   const characterEntries = entries.filter((entry) => entry.category === "character");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -146,67 +144,41 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     }
   }, [povType, form]);
 
-  const handleDelete = async () => {
-    const [error] = await attemptPromise(async () =>
-      deleteChapter(chapter.id)
-    );
-
-    if (error) {
-      logger.error("Failed to delete chapter:", error);
-      toast.error("Failed to delete chapter");
-      return;
-    }
-
-    setShowDeleteDialog(false);
-    toast.success(`Chapter ${chapter.order}: ${chapter.title} deleted`);
+  const handleDelete = () => {
+    deleteChapterMutation.mutate(chapter.id, {
+      onSuccess: () => {
+        setShowDeleteDialog(false);
+      }
+    });
   };
 
-  const handleEdit = async (data: EditChapterForm) => {
+  const handleEdit = (data: EditChapterForm) => {
     // Only include povCharacter if not omniscient
     const povCharacter =
       data.povType !== "Third Person Omniscient"
         ? data.povCharacter
         : undefined;
 
-    const [error] = await attemptPromise(async () =>
-      updateChapter(chapter.id, {
+    updateChapterMutation.mutate({
+      id: chapter.id,
+      data: {
         ...data,
         povCharacter,
-      })
-    );
-
-    if (error) {
-      logger.error("Failed to update chapter:", error);
-      toast.error("Failed to update chapter");
-      return;
-    }
-
-    setShowEditDialog(false);
-    toast.success("Chapter updated successfully", {
-      position: "bottom-center",
-      autoClose: 1000,
-      closeOnClick: true,
+      }
+    }, {
+      onSuccess: () => {
+        setShowEditDialog(false);
+      }
     });
   };
 
-  const handleSaveSummary = async (e: React.MouseEvent) => {
+  const handleSaveSummary = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (summary !== chapter.summary) {
-      const [error] = await attemptPromise(async () =>
-        updateChapterSummaryOptimistic(chapter.id, summary)
-      );
-
-      if (error) {
-        logger.error("Failed to save summary:", error);
-        toast.error("Failed to save summary");
-        return;
-      }
-
-      toast.success("Summary saved successfully", {
-        position: "bottom-center",
-        autoClose: 1000,
-        closeOnClick: true,
+      updateChapterMutation.mutate({
+        id: chapter.id,
+        data: { summary }
       });
     }
   };
@@ -241,7 +213,10 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
         );
       });
 
-      await updateChapterSummaryOptimistic(chapter.id, text);
+      updateChapterMutation.mutate({
+        id: chapter.id,
+        data: { summary: text }
+      });
       toast.success("Summary generated successfully");
     });
 

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { usePromptStore } from '../store/promptStore';
+import { useCreatePromptMutation, useUpdatePromptMutation } from '../hooks/usePromptsQuery';
 import { useAIStore } from '@/features/ai/stores/useAIStore';
 import { aiService } from '@/services/ai/AIService';
 import type { Prompt, PromptMessage, AIModel, AllowedModel } from '@/types/story';
@@ -63,7 +63,8 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
     const [promptType, setPromptType] = useState<PromptType>(fixedType || prompt?.promptType || 'scene_beat');
     const [availableModels, setAvailableModels] = useState<AIModel[]>([]);
     const [selectedModels, setSelectedModels] = useState<AllowedModel[]>(prompt?.allowedModels || []);
-    const { createPrompt, updatePrompt } = usePromptStore();
+    const createPromptMutation = useCreatePromptMutation();
+    const updatePromptMutation = useUpdatePromptMutation();
     const [temperature, setTemperature] = useState(prompt?.temperature || 1.0);
     const [maxTokens, setMaxTokens] = useState(prompt?.maxTokens || 2048);
     const [topP, setTopP] = useState(prompt?.top_p !== undefined ? prompt.top_p : 1.0);
@@ -293,11 +294,12 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
 
         const [error] = await attemptPromise(async () => {
             if (prompt?.id) {
-                await updatePrompt(prompt.id, promptData);
-                toast.success('Prompt updated successfully');
+                await updatePromptMutation.mutateAsync({
+                    id: prompt.id,
+                    data: promptData
+                });
             } else {
-                await createPrompt(promptData);
-                toast.success('Prompt created successfully');
+                await createPromptMutation.mutateAsync(promptData);
             }
             onSave?.();
         });

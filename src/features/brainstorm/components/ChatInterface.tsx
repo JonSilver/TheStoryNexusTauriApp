@@ -5,16 +5,17 @@ import { createPromptParser } from "@/features/prompts/services/promptParser";
 import { usePromptStore } from "@/features/prompts/store/promptStore";
 import { db } from "@/services/database";
 import {
+    AIChat,
     AllowedModel,
     ChatMessage,
     Prompt,
     PromptParserConfig,
 } from "@/types/story";
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import is from '@sindresorhus/is';
 import { chatReducer, initialChatState } from "../reducers/chatReducer";
-import { useBrainstormStore } from "../stores/useBrainstormStore";
+import { useCreateBrainstormMutation, useUpdateBrainstormMutation } from "../hooks/useBrainstormQuery";
 import { ChatMessageList } from "./ChatMessageList";
 import { ContextSelector } from "./ContextSelector";
 import { MessageInputArea } from "./MessageInputArea";
@@ -24,12 +25,15 @@ import { logger } from '@/utils/logger';
 
 interface ChatInterfaceProps {
     storyId: string;
+    selectedChat: AIChat;
+    onChatUpdate: (chat: AIChat) => void;
 }
 
-export default function ChatInterface({ storyId }: ChatInterfaceProps) {
+export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: ChatInterfaceProps) {
+    const [draftMessage, setDraftMessage] = useState('');
     const [state, dispatch] = useReducer(chatReducer, {
         ...initialChatState,
-        input: useBrainstormStore.getState().draftMessage,
+        input: draftMessage,
     });
     const editingTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -48,16 +52,11 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
         processStreamedResponse,
         abortGeneration,
     } = useAIStore();
-    const {
-        addChat,
-        updateChat,
-        selectedChat,
-        draftMessage,
-        setDraftMessage,
-        clearDraftMessage,
-        setMessageEdited,
-    } = useBrainstormStore();
     const { fetchChapters } = useChapterStore();
+
+    // Mutations
+    const createMutation = useCreateBrainstormMutation();
+    const updateMutation = useUpdateBrainstormMutation();
 
     // Initialize
     useEffect(() => {
@@ -199,7 +198,7 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
                 throw new Error("Prompt or model not selected");
             }
 
-            clearDraftMessage();
+            setDraftMessage('');
 
             const userMessage: ChatMessage = {
                 id: crypto.randomUUID(),
@@ -213,7 +212,21 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
                 const newTitle =
                     userMessage.content.substring(0, 40) +
                     (userMessage.content.length > 40 ? "..." : "");
-                chatId = await addChat(storyId, newTitle, [userMessage]);
+
+                const newChat = {
+                    id: crypto.randomUUID(),
+                    storyId,
+                    title: newTitle,
+                    messages: [userMessage],
+                    updatedAt: new Date(),
+                };
+
+                createMutation.mutate(newChat, {
+                    onSuccess: (created) => {
+                        chatId = created.id;
+                        onChatUpdate(created);
+                    }
+                });
             }
 
             const config = createPromptConfig(state.selectedPrompt);
@@ -259,12 +272,21 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
                 },
                 () => {
                     dispatch({ type: "COMPLETE_GENERATION" });
-                    updateChat(chatId, {
-                        messages: [
-                            ...state.messages,
-                            userMessage,
-                            { ...assistantMessage, content: fullResponse },
-                        ],
+                    const updatedMessages = [
+                        ...state.messages,
+                        userMessage,
+                        { ...assistantMessage, content: fullResponse },
+                    ];
+                    updateMutation.mutate({
+                        id: chatId,
+                        data: { messages: updatedMessages }
+                    }, {
+                        onSuccess: async () => {
+                            const updatedChat = await db.aiChats.get(chatId);
+                            if (updatedChat) {
+                                onChatUpdate(updatedChat);
+                            }
+                        }
                     });
                 },
                 (error) => {
@@ -324,33 +346,61 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
         }
 
         const [error] = await attemptPromise(async () => {
+            const existingMsg = selectedChat.messages?.find(m => m.id === messageId);
+            if (!existingMsg) {
+                throw new Error("Message not found");
+            }
+
+            const originalContent = existingMsg.originalContent ?? existingMsg.content;
+            const editedAt = new Date().toISOString();
+
+            const updatedMessages = selectedChat.messages?.map(msg =>
+                msg.id === messageId
+                    ? {
+                        ...msg,
+                        content: state.editingContent,
+                        originalContent,
+                        editedAt,
+                        editedBy: 'user' as const
+                    }
+                    : msg
+            );
+
             dispatch({
                 type: "UPDATE_EDITED_MESSAGE",
                 payload: {
                     id: messageId,
                     content: state.editingContent,
-                    editedAt: new Date().toISOString(),
+                    editedAt,
                 },
             });
 
-            if (!selectedChat) throw new Error("No chat selected");
-            await setMessageEdited(
-                selectedChat.id,
-                messageId,
-                state.editingContent
-            );
+            await new Promise<void>((resolve, reject) => {
+                updateMutation.mutate({
+                    id: selectedChat.id,
+                    data: { messages: updatedMessages }
+                }, {
+                    onSuccess: async () => {
+                        const updatedChat = await db.aiChats.get(selectedChat.id);
+                        if (updatedChat) {
+                            onChatUpdate(updatedChat);
+                        }
+                        resolve();
+                    },
+                    onError: reject
+                });
+            });
         });
         if (error) {
             logger.error("Failed to save edit", error);
             toast.error("Failed to save edit");
 
-            if (selectedChat) {
-                const fresh = await db.aiChats.get(selectedChat.id);
-                if (fresh)
-                    dispatch({
-                        type: "SET_MESSAGES",
-                        payload: fresh.messages || [],
-                    });
+            const fresh = await db.aiChats.get(selectedChat.id);
+            if (fresh) {
+                dispatch({
+                    type: "SET_MESSAGES",
+                    payload: fresh.messages || [],
+                });
             }
             return;
         }
