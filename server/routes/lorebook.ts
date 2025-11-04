@@ -4,13 +4,29 @@ import { eq, and, like, sql } from 'drizzle-orm';
 
 const router = express.Router();
 
+const parseJson = (value: unknown) => {
+    if (typeof value !== 'string') return value;
+    try {
+        return JSON.parse(value);
+    } catch {
+        return value;
+    }
+};
+
 // GET all lorebook entries for a story
 router.get('/story/:storyId', async (req, res) => {
     try {
         const entries = await db.select()
             .from(schema.lorebookEntries)
             .where(eq(schema.lorebookEntries.storyId, req.params.storyId));
-        res.json(entries);
+
+        const parsed = entries.map(entry => ({
+            ...entry,
+            tags: parseJson(entry.tags),
+            metadata: parseJson(entry.metadata),
+        }));
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error fetching lorebook entries:', error);
         res.status(500).json({ error: 'Failed to fetch lorebook entries' });
@@ -26,7 +42,14 @@ router.get('/story/:storyId/category/:category', async (req, res) => {
                 eq(schema.lorebookEntries.storyId, req.params.storyId),
                 eq(schema.lorebookEntries.category, req.params.category)
             ));
-        res.json(entries);
+
+        const parsed = entries.map(entry => ({
+            ...entry,
+            tags: parseJson(entry.tags),
+            metadata: parseJson(entry.metadata),
+        }));
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error fetching lorebook entries by category:', error);
         res.status(500).json({ error: 'Failed to fetch lorebook entries' });
@@ -36,13 +59,17 @@ router.get('/story/:storyId/category/:category', async (req, res) => {
 // GET entries by tag - requires JSON search
 router.get('/story/:storyId/tag/:tag', async (req, res) => {
     try {
-        // Get all entries for the story and filter by tag in application code
-        // SQLite JSON querying is limited without extensions
         const allEntries = await db.select()
             .from(schema.lorebookEntries)
             .where(eq(schema.lorebookEntries.storyId, req.params.storyId));
 
-        const filtered = allEntries.filter(entry => {
+        const parsed = allEntries.map(entry => ({
+            ...entry,
+            tags: parseJson(entry.tags),
+            metadata: parseJson(entry.metadata),
+        }));
+
+        const filtered = parsed.filter(entry => {
             const tags = entry.tags as string[];
             return tags.includes(req.params.tag);
         });
@@ -61,7 +88,14 @@ router.get('/:id', async (req, res) => {
         if (!entry.length) {
             return res.status(404).json({ error: 'Lorebook entry not found' });
         }
-        res.json(entry[0]);
+
+        const parsed = {
+            ...entry[0],
+            tags: parseJson(entry[0].tags),
+            metadata: parseJson(entry[0].metadata),
+        };
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error fetching lorebook entry:', error);
         res.status(500).json({ error: 'Failed to fetch lorebook entry' });

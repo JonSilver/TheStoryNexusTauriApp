@@ -4,13 +4,28 @@ import { eq } from 'drizzle-orm';
 
 const router = express.Router();
 
+const parseJson = (value: unknown) => {
+    if (typeof value !== 'string') return value;
+    try {
+        return JSON.parse(value);
+    } catch {
+        return value;
+    }
+};
+
 // GET all AI chats for a story
 router.get('/story/:storyId', async (req, res) => {
     try {
         const chats = await db.select()
             .from(schema.aiChats)
             .where(eq(schema.aiChats.storyId, req.params.storyId));
-        res.json(chats);
+
+        const parsed = chats.map(chat => ({
+            ...chat,
+            messages: parseJson(chat.messages),
+        }));
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error fetching AI chats:', error);
         res.status(500).json({ error: 'Failed to fetch AI chats' });
@@ -24,7 +39,13 @@ router.get('/:id', async (req, res) => {
         if (!chat.length) {
             return res.status(404).json({ error: 'AI chat not found' });
         }
-        res.json(chat[0]);
+
+        const parsed = {
+            ...chat[0],
+            messages: parseJson(chat[0].messages),
+        };
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error fetching AI chat:', error);
         res.status(500).json({ error: 'Failed to fetch AI chat' });

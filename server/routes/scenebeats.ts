@@ -4,13 +4,28 @@ import { eq } from 'drizzle-orm';
 
 const router = express.Router();
 
+const parseJson = (value: unknown) => {
+    if (typeof value !== 'string') return value;
+    try {
+        return JSON.parse(value);
+    } catch {
+        return value;
+    }
+};
+
 // GET scene beats by chapter
 router.get('/chapter/:chapterId', async (req, res) => {
     try {
         const sceneBeats = await db.select()
             .from(schema.sceneBeats)
             .where(eq(schema.sceneBeats.chapterId, req.params.chapterId));
-        res.json(sceneBeats);
+
+        const parsed = sceneBeats.map(sb => ({
+            ...sb,
+            metadata: parseJson(sb.metadata),
+        }));
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error fetching scene beats:', error);
         res.status(500).json({ error: 'Failed to fetch scene beats' });
@@ -24,7 +39,13 @@ router.get('/:id', async (req, res) => {
         if (!sceneBeat.length) {
             return res.status(404).json({ error: 'Scene beat not found' });
         }
-        res.json(sceneBeat[0]);
+
+        const parsed = {
+            ...sceneBeat[0],
+            metadata: parseJson(sceneBeat[0].metadata),
+        };
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error fetching scene beat:', error);
         res.status(500).json({ error: 'Failed to fetch scene beat' });

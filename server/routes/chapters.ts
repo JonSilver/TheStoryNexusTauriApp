@@ -4,6 +4,15 @@ import { eq, and } from 'drizzle-orm';
 
 const router = express.Router();
 
+const parseJson = (value: unknown) => {
+    if (typeof value !== 'string') return value;
+    try {
+        return JSON.parse(value);
+    } catch {
+        return value;
+    }
+};
+
 // GET all chapters for a story
 router.get('/story/:storyId', async (req, res) => {
     try {
@@ -11,7 +20,14 @@ router.get('/story/:storyId', async (req, res) => {
             .from(schema.chapters)
             .where(eq(schema.chapters.storyId, req.params.storyId))
             .orderBy(schema.chapters.order);
-        res.json(chapters);
+
+        const parsed = chapters.map(ch => ({
+            ...ch,
+            outline: parseJson(ch.outline),
+            notes: parseJson(ch.notes),
+        }));
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error fetching chapters:', error);
         res.status(500).json({ error: 'Failed to fetch chapters' });
@@ -25,7 +41,14 @@ router.get('/:id', async (req, res) => {
         if (!chapter.length) {
             return res.status(404).json({ error: 'Chapter not found' });
         }
-        res.json(chapter[0]);
+
+        const parsed = {
+            ...chapter[0],
+            outline: parseJson(chapter[0].outline),
+            notes: parseJson(chapter[0].notes),
+        };
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error fetching chapter:', error);
         res.status(500).json({ error: 'Failed to fetch chapter' });

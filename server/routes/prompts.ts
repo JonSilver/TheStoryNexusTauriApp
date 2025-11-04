@@ -4,6 +4,15 @@ import { eq, and, or, isNull } from 'drizzle-orm';
 
 const router = express.Router();
 
+const parseJson = (value: unknown) => {
+    if (typeof value !== 'string') return value;
+    try {
+        return JSON.parse(value);
+    } catch {
+        return value;
+    }
+};
+
 // GET all prompts (optionally filtered by story or type)
 router.get('/', async (req, res) => {
     try {
@@ -31,7 +40,13 @@ router.get('/', async (req, res) => {
             filtered = filtered.filter(p => !p.isSystem);
         }
 
-        res.json(filtered);
+        const parsed = filtered.map(p => ({
+            ...p,
+            messages: parseJson(p.messages),
+            allowedModels: parseJson(p.allowedModels),
+        }));
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error fetching prompts:', error);
         res.status(500).json({ error: 'Failed to fetch prompts' });
@@ -45,7 +60,14 @@ router.get('/:id', async (req, res) => {
         if (!prompt.length) {
             return res.status(404).json({ error: 'Prompt not found' });
         }
-        res.json(prompt[0]);
+
+        const parsed = {
+            ...prompt[0],
+            messages: parseJson(prompt[0].messages),
+            allowedModels: parseJson(prompt[0].allowedModels),
+        };
+
+        res.json(parsed);
     } catch (error) {
         console.error('Error fetching prompt:', error);
         res.status(500).json({ error: 'Failed to fetch prompt' });
