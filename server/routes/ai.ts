@@ -14,7 +14,7 @@ const asyncHandler = (fn: (req: express.Request, res: express.Response) => Promi
     }
   };
 
-router.get('/settings', asyncHandler(async (req, res) => {
+router.get('/settings', asyncHandler(async (_, res) => {
   const [settings] = await db.select().from(schema.aiSettings);
   if (!settings) {
     const initial = {
@@ -23,7 +23,8 @@ router.get('/settings', asyncHandler(async (req, res) => {
       createdAt: new Date(),
     };
     await db.insert(schema.aiSettings).values(initial);
-    return res.json(initial);
+    res.json(initial);
+    return;
   }
   res.json(settings);
 }));

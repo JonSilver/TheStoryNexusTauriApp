@@ -4,10 +4,9 @@ import { attemptPromise } from '@jfdi/attempt';
 import { db, schema } from '../db/client.js';
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB limit
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
-// GET export database as JSON (from SQLite)
-router.get('/export', async (req, res) => {
+router.get('/export', async (_, res) => {
     const [error, tables] = await attemptPromise(() => Promise.all([
         db.select().from(schema.stories),
         db.select().from(schema.chapters),
@@ -21,11 +20,11 @@ router.get('/export', async (req, res) => {
 
     if (error) {
         console.error('Error exporting database:', error);
-        return res.status(500).json({ error: 'Failed to export database', details: error.message });
+        res.status(500).json({ error: 'Failed to export database', details: error.message });
+        return;
     }
 
     const [stories, chapters, prompts, lorebookEntries, aiChats, sceneBeats, notes, aiSettings] = tables;
-
     res.json({
         version: "1.0",
         exportedAt: new Date().toISOString(),
@@ -33,10 +32,10 @@ router.get('/export', async (req, res) => {
     });
 });
 
-// POST import database from JSON
 router.post('/import', upload.single('file'), async (req, res) => {
     if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+        res.status(400).json({ error: 'No file uploaded' });
+        return;
     }
 
     const [parseError, jsonData] = await attemptPromise(() =>
@@ -44,11 +43,13 @@ router.post('/import', upload.single('file'), async (req, res) => {
     );
 
     if (parseError) {
-        return res.status(400).json({ error: 'Invalid JSON file', details: parseError.message });
+        res.status(400).json({ error: 'Invalid JSON file', details: parseError.message });
+        return;
     }
 
     if (!jsonData.version || !jsonData.tables) {
-        return res.status(400).json({ error: 'Invalid import file format' });
+        res.status(400).json({ error: 'Invalid import file format' });
+        return;
     }
 
     const { tables } = jsonData;
@@ -126,7 +127,8 @@ router.post('/import', upload.single('file'), async (req, res) => {
 
     if (error) {
         console.error('Error importing database:', error);
-        return res.status(500).json({ error: 'Failed to import database', details: error.message });
+        res.status(500).json({ error: 'Failed to import database', details: error.message });
+        return;
     }
 
     res.json({

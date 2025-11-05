@@ -80,7 +80,10 @@ export const createCrudRouter = (config: CrudConfig): Router => {
   router.put('/:id', asyncHandler(async (req, res) => {
     const { id, createdAt, ...updates } = req.body;
     const [updated] = await db.update(table).set(updates).where(eq(table.id, req.params.id)).returning();
-    if (!updated) return res.status(404).json({ error: `${name} not found` });
+    if (!updated) {
+      res.status(404).json({ error: `${name} not found` });
+      return;
+    }
     res.json(applyTransform(updated));
   }));
 

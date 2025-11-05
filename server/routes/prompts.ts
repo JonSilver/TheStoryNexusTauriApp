@@ -35,7 +35,8 @@ export default createCrudRouter({
     router.delete('/:id', asyncHandler(async (req, res) => {
       const [prompt] = await db.select().from(table).where(eq(table.id, req.params.id));
       if (prompt?.isSystem) {
-        return res.status(403).json({ error: 'Cannot delete system prompts' });
+        res.status(403).json({ error: 'Cannot delete system prompts' });
+        return;
       }
       await db.delete(table).where(eq(table.id, req.params.id));
       res.json({ success: true });
