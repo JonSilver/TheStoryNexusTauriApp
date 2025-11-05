@@ -1,4 +1,4 @@
-import { db } from '@/services/database';
+import { storiesApi, chaptersApi } from '@/services/api/client';
 import { extractPlainTextFromLexical } from './lexicalUtils';
 
 interface SerializedLexicalNode {
@@ -78,15 +78,13 @@ function downloadAsFile(content: string, filename: string, contentType: string) 
  * @param format The format to download ('html' or 'text')
  */
 export async function downloadStory(storyId: string, format: 'html' | 'text') {
-    const story = await db.stories.get(storyId);
+    const story = await storiesApi.getById(storyId);
     if (!story) {
         throw new Error('Story not found');
     }
 
-    const chapters = await db.chapters
-        .where('storyId')
-        .equals(storyId)
-        .sortBy('order');
+    const chaptersUnsorted = await chaptersApi.getByStory(storyId);
+    const chapters = chaptersUnsorted.sort((a, b) => a.order - b.order);
 
     if (format === 'html') {
         const chapterHtmlParts = await Promise.all(
@@ -148,12 +146,12 @@ export async function downloadStory(storyId: string, format: 'html' | 'text') {
  * @param format The format to download ('html' or 'text')
  */
 export async function downloadChapter(chapterId: string, format: 'html' | 'text') {
-    const chapter = await db.chapters.get(chapterId);
+    const chapter = await chaptersApi.getById(chapterId);
     if (!chapter) {
         throw new Error('Chapter not found');
     }
 
-    const story = await db.stories.get(chapter.storyId);
+    const story = await storiesApi.getById(chapter.storyId);
     if (!story) {
         throw new Error('Story not found');
     }

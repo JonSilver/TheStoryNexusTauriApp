@@ -1,4 +1,4 @@
-import { db } from '@/services/database';
+import { lorebookApi } from '@/services/api/client';
 import type { LorebookEntry } from '@/types/story';
 import { attemptPromise } from '@jfdi/attempt';
 import { lorebookExportSchema, parseJSON } from '@/schemas/entities';
@@ -32,15 +32,14 @@ export class LorebookImportExportService {
         const newEntries: LorebookEntry[] = [];
 
         for (const entry of result.data.entries) {
-            const newEntry: LorebookEntry = {
+            const newEntryData = {
                 ...entry,
                 id: crypto.randomUUID(),
                 storyId: targetStoryId,
-                createdAt: new Date(),
             };
 
-            const [addError] = await attemptPromise(() =>
-                db.lorebookEntries.add(newEntry)
+            const [addError, createdEntry] = await attemptPromise(() =>
+                lorebookApi.create(newEntryData)
             );
 
             if (addError) {
@@ -48,7 +47,7 @@ export class LorebookImportExportService {
                 throw addError;
             }
 
-            newEntries.push(newEntry);
+            newEntries.push(createdEntry);
         }
 
         onEntriesAdded(newEntries);

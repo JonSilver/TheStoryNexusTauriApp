@@ -18,7 +18,7 @@ import type { z } from 'zod';
  *   noteSchema,
  *   { updatedAt: new Date() }
  * );
- * await db.notes.add(note);
+ * await notesApi.create(note);
  * ```
  */
 export const createValidatedEntity = <T extends z.ZodTypeAny>(
@@ -57,7 +57,7 @@ export const createValidatedEntity = <T extends z.ZodTypeAny>(
  *   { title: 'New Title' },
  *   noteSchema
  * );
- * await db.notes.update(noteId, validatedUpdate);
+ * await notesApi.update(noteId, validatedUpdate);
  * ```
  */
 export const validatePartialUpdate = <T extends z.ZodObject<any>>(
