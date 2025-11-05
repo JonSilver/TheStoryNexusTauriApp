@@ -42,6 +42,7 @@ export const aiChats = sqliteTable('aiChats', {
     messages: text('messages', { mode: 'json' }).notNull(), // JSON: ChatMessage[]
     createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updatedAt', { mode: 'timestamp' }),
+    lastUsedPromptId: text('lastUsedPromptId'),
     isDemo: integer('isDemo', { mode: 'boolean' }),
 }, (table) => ({
     storyIdIdx: index('chat_story_id_idx').on(table.storyId),

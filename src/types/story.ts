@@ -60,6 +60,7 @@ export interface AIChat extends BaseEntity {
     title: string;
     messages: ChatMessage[];
     updatedAt?: Date;
+    lastUsedPromptId?: string;
 }
 
 export interface ChatMessage {

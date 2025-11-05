@@ -69,6 +69,20 @@ export class StoryDatabase extends Dexie {
             }
         });
 
+        // Version 14: Add lastUsedPromptId to aiChats
+        this.version(14).stores({
+            stories: 'id, title, createdAt, language, isDemo',
+            chapters: 'id, storyId, order, createdAt, isDemo',
+            aiChats: 'id, storyId, createdAt, isDemo',
+            prompts: 'id, name, promptType, storyId, createdAt, isSystem',
+            aiSettings: 'id, lastModelsFetch',
+            lorebookEntries: 'id, storyId, name, category, *tags, isDemo',
+            sceneBeats: 'id, storyId, chapterId',
+            notes: 'id, storyId, title, type, createdAt, updatedAt',
+        }).upgrade(async () => {
+            logger.info('Upgraded to v14: Added lastUsedPromptId field to aiChats');
+        });
+
         this.on('populate', async () => {
             logger.info('Populating database with initial data...');
 
