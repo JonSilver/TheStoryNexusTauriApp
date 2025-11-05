@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useParams } from "react-router";
 import { useLorebookStore } from "../stores/useLorebookStore";
+import { useLorebookByStoryQuery } from "../hooks/useLorebookQuery";
 import { CreateEntryDialog } from "../components/CreateEntryDialog";
 import { LorebookEntryList } from "../components/LorebookEntryList";
 import { Button } from "@/components/ui/button";
@@ -11,28 +12,23 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "react-toastify";
 import { attempt, attemptPromise } from '@jfdi/attempt';
 import { logger } from '@/utils/logger';
+import { LorebookImportExportService } from '../stores/LorebookImportExportService';
+import { useQueryClient } from '@tanstack/react-query';
+import { lorebookKeys } from '../hooks/useLorebookQuery';
 
 export default function LorebookPage() {
     const { storyId } = useParams<{ storyId: string }>();
-    const {
-        loadEntries,
-        entries,
-        isLoading,
-        error,
-        buildTagMap,
-        exportEntries,
-        importEntries
-    } = useLorebookStore();
+    const { buildTagMap } = useLorebookStore();
+    const queryClient = useQueryClient();
+    const { data: entries = [], isLoading, error } = useLorebookByStoryQuery(storyId!);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("all");
 
     useEffect(() => {
-        if (storyId) {
-            loadEntries(storyId).then(() => {
-                buildTagMap();
-            });
+        if (entries.length > 0) {
+            buildTagMap(entries);
         }
-    }, [storyId, loadEntries, buildTagMap]);
+    }, [entries, buildTagMap]);
 
     // Calculate category counts from the current entries
     const categoryCounts = entries.reduce((acc, entry) => {
@@ -46,7 +42,7 @@ export default function LorebookPage() {
     // Handle export functionality
     const handleExport = () => {
         if (storyId) {
-            const [error] = attempt(() => exportEntries(storyId));
+            const [error] = attempt(() => LorebookImportExportService.exportEntries(entries, storyId));
             if (error) {
                 logger.error("Export failed:", error);
                 toast.error("Failed to export lorebook entries");
@@ -66,10 +62,10 @@ export default function LorebookPage() {
         reader.onload = async (e) => {
             const [error] = await attemptPromise(async () => {
                 const content = e.target?.result as string;
-                await importEntries(content, storyId);
-                // Reload entries after import
-                await loadEntries(storyId);
-                buildTagMap();
+                await LorebookImportExportService.importEntries(content, storyId, () => {
+                    queryClient.invalidateQueries({ queryKey: lorebookKeys.byStory(storyId) });
+                });
+                buildTagMap(entries);
             });
             if (error) {
                 logger.error("Import failed:", error);
@@ -87,7 +83,7 @@ export default function LorebookPage() {
     if (error) {
         return (
             <div className="p-4">
-                <p className="text-destructive">Error loading lorebook: {error}</p>
+                <p className="text-destructive">Error loading lorebook: {error.message}</p>
             </div>
         );
     }

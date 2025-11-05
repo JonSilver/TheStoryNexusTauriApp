@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
-import { usePromptStore } from "@/features/prompts/store/promptStore";
+import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
 import type {
   Prompt,
   AllowedModel,
@@ -35,7 +35,7 @@ import { useStoryContext } from "@/features/stories/context/StoryContext";
 import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
 import { PromptPreviewDialog } from "@/components/ui/prompt-preview-dialog";
 import { SceneBeatMatchedEntries } from "./SceneBeatMatchedEntries";
-import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
+import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
 import { sceneBeatService } from "@/features/scenebeats/services/sceneBeatService";
 
 // Extracted components
@@ -70,8 +70,8 @@ export type SerializedSceneBeatNode = Spread<
 function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
   const [editor] = useLexicalComposerContext();
   const { currentStoryId, currentChapterId } = useStoryContext();
-  const { currentChapter } = useChapterStore();
-  const { prompts, fetchPrompts, isLoading, error } = usePromptStore();
+  const { data: currentChapter } = useChapterQuery(currentChapterId || '');
+  const { data: prompts = [], isLoading, error } = usePromptsQuery();
   const { tagMap, chapterMatchedEntries, entries } = useLorebookStore();
 
   // UI state
@@ -155,14 +155,6 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
     () => entries.filter((entry) => entry.category === "character"),
     [entries]
   );
-
-  // Load prompts on mount
-  useEffect(() => {
-    fetchPrompts().catch((error) => {
-      toast.error("Failed to load prompts");
-      logger.error("Error loading prompts:", error);
-    });
-  }, [fetchPrompts]);
 
   // Save command changes (debounced via useSceneBeatSync)
   useEffect(() => {
@@ -393,7 +385,7 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
           {/* Generation Controls */}
           <GenerationControls
             isLoading={isLoading}
-            error={error}
+            error={error?.message || null}
             prompts={prompts}
             selectedPrompt={selectedPrompt}
             selectedModel={selectedModel}

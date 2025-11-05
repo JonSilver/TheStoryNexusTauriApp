@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useStoryStore } from "@/features/stories/stores/useStoryStore";
+import { useStoriesQuery } from "@/features/stories/hooks/useStoriesQuery";
 import { CreateStoryDialog } from "@/features/stories/components/CreateStoryDialog";
 import { EditStoryDialog } from "@/features/stories/components/EditStoryDialog";
 import { StoryCard } from "@/features/stories/components/StoryCard";
@@ -12,7 +12,7 @@ import { attemptPromise } from '@jfdi/attempt';
 import { logger } from '@/utils/logger';
 
 export default function Home() {
-    const { stories, fetchStories } = useStoryStore();
+    const { data: stories = [], refetch: fetchStories } = useStoriesQuery();
     const { resetContext } = useStoryContext();
     const [editingStory, setEditingStory] = useState<Story | null>(null);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -20,8 +20,7 @@ export default function Home() {
 
     useEffect(() => {
         resetContext();
-        fetchStories();
-    }, [fetchStories, resetContext]);
+    }, [resetContext]);
 
     const handleEditStory = (story: Story) => {
         setEditingStory(story);

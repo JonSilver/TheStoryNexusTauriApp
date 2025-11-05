@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { attemptPromise } from '@jfdi/attempt';
-import { db } from '@/services/database';
+import { storiesApi } from '@/services/api/client';
 import { formatError } from '@/utils/errorUtils';
 import { ERROR_MESSAGES } from '@/constants/errorMessages';
 import { storySchema } from '@/schemas/entities';
@@ -33,7 +33,7 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
     fetchStories: async () => {
         set({ loading: true, error: null });
 
-        const [error, stories] = await attemptPromise(() => db.stories.toArray());
+        const [error, stories] = await attemptPromise(() => storiesApi.getAll());
 
         if (error) {
             set({
@@ -50,7 +50,7 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
     getStory: async (id: string) => {
         set({ loading: true, error: null });
 
-        const [error, story] = await attemptPromise(() => db.getFullStory(id));
+        const [error, story] = await attemptPromise(() => storiesApi.getById(id));
 
         if (error) {
             set({
@@ -84,22 +84,12 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
 
         set({ loading: true, error: null });
 
-        const [createError, storyId] = await attemptPromise(() =>
-            db.createNewStory(validatedStory)
+        const [createError, newStory] = await attemptPromise(() =>
+            storiesApi.create(validatedStory)
         );
 
-        if (createError) {
-            set({
-                error: formatError(createError, ERROR_MESSAGES.CREATE_FAILED('story')),
-                loading: false
-            });
-            throw createError;
-        }
-
-        const [getError, newStory] = await attemptPromise(() => db.stories.get(storyId));
-
-        if (getError || !newStory) {
-            const error = getError || new Error('Failed to retrieve created story');
+        if (createError || !newStory) {
+            const error = createError || new Error('Failed to create story');
             set({
                 error: formatError(error, ERROR_MESSAGES.CREATE_FAILED('story')),
                 loading: false
@@ -113,7 +103,7 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
             loading: false
         }));
 
-        return storyId;
+        return newStory.id;
     },
 
     // Update a story
@@ -128,7 +118,7 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
 
         set({ loading: true, error: null });
 
-        const [updateError] = await attemptPromise(() => db.stories.update(id, storyData));
+        const [updateError] = await attemptPromise(() => storiesApi.update(id, storyData));
 
         if (updateError) {
             set({
@@ -138,7 +128,7 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
             return;
         }
 
-        const [getError, updatedStory] = await attemptPromise(() => db.stories.get(id));
+        const [getError, updatedStory] = await attemptPromise(() => storiesApi.getById(id));
 
         if (getError || !updatedStory) {
             const error = getError || new Error('Story not found after update');
@@ -162,7 +152,7 @@ export const useStoryStore = create<StoryState>((set, _get) => ({
     deleteStory: async (id: string) => {
         set({ loading: true, error: null });
 
-        const [error] = await attemptPromise(() => db.deleteStoryWithRelated(id));
+        const [error] = await attemptPromise(() => storiesApi.delete(id));
 
         if (error) {
             set({

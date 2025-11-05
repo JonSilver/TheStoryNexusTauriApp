@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Story } from "@/types/story";
-import { useStoryStore } from "@/features/stories/stores/useStoryStore";
+import { useUpdateStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -14,8 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
 
 
 
@@ -30,7 +28,7 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
     const [author, setAuthor] = useState("");
     const [language, setLanguage] = useState("English");
     const [synopsis, setSynopsis] = useState("");
-    const updateStory = useStoryStore((state) => state.updateStory);
+    const updateStoryMutation = useUpdateStoryMutation();
 
     useEffect(() => {
         if (story) {
@@ -45,19 +43,19 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
         e.preventDefault();
         if (!story) return;
 
-        const [error] = await attemptPromise(async () =>
-            updateStory(story.id, {
+        updateStoryMutation.mutate({
+            id: story.id,
+            data: {
                 title,
                 author,
                 language,
                 synopsis,
-            })
-        );
-        if (error) {
-            logger.error("Failed to update story:", error);
-            return;
-        }
-        onOpenChange(false);
+            }
+        }, {
+            onSuccess: () => {
+                onOpenChange(false);
+            },
+        });
     };
 
     return (

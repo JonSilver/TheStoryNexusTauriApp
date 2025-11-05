@@ -1,19 +1,30 @@
+import { useState } from 'react';
 import { useParams } from 'react-router';
 import NoteList from '../components/NoteList';
 import NoteEditor from '../components/NoteEditor';
+import type { Note } from '@/types/story';
 
 export default function NotesPage() {
     const { storyId } = useParams();
+    const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
     if (!storyId) {
         return <div>Story ID is required</div>;
     }
 
+    const handleSelectNote = (note: Note | null) => {
+        setSelectedNoteId(note?.id || null);
+    };
+
     return (
         <div className="h-full flex">
-            <NoteList storyId={storyId} />
+            <NoteList
+                storyId={storyId}
+                selectedNoteId={selectedNoteId}
+                onSelectNote={handleSelectNote}
+            />
             <div className="flex-1">
-                <NoteEditor storyId={storyId} />
+                <NoteEditor selectedNoteId={selectedNoteId} />
             </div>
         </div>
     );

@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
-import { usePromptStore } from '../store/promptStore';
+import { usePromptsQuery, useDeletePromptMutation, useClonePromptMutation } from '../hooks/usePromptsQuery';
 import { Button } from "@/components/ui/button";
 import { Trash2, Copy, ChevronDown, ChevronRight } from 'lucide-react';
-import { toast } from 'react-toastify';
 import type { Prompt } from '@/types/story';
 import { cn } from '@/lib/utils';
-import { attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
 
 interface PromptsListProps {
     onPromptSelect: (prompt: Prompt) => void;
@@ -28,7 +25,9 @@ const getPromptTypeLabel = (type: Prompt['promptType']) => {
 };
 
 export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, filterByType }: PromptsListProps) {
-    const { prompts, fetchPrompts, deletePrompt, clonePrompt, isLoading, error } = usePromptStore();
+    const { data: prompts = [], isLoading } = usePromptsQuery({ includeSystem: true });
+    const deletePromptMutation = useDeletePromptMutation();
+    const clonePromptMutation = useClonePromptMutation();
 
     // Filter prompts by type if specified
     const filteredPrompts = filterByType
@@ -36,13 +35,6 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
         : prompts;
     // Track which groups are expanded (default all expanded)
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
-
-    useEffect(() => {
-        fetchPrompts().catch(error => {
-            toast.error('Failed to load prompts');
-            logger.error('Error loading prompts:', error);
-        });
-    }, [fetchPrompts]);
 
     // Initialize all groups as expanded when prompts are loaded
     useEffect(() => {
@@ -62,38 +54,19 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
         }));
     };
 
-    const handleDelete = async (e: React.MouseEvent, promptId: string) => {
+    const handleDelete = (e: React.MouseEvent, promptId: string) => {
         e.stopPropagation();
-        const [error] = await attemptPromise(async () => {
-            await deletePrompt(promptId);
-            onPromptDelete(promptId);
+        deletePromptMutation.mutate(promptId, {
+            onSuccess: () => {
+                onPromptDelete(promptId);
+            },
         });
-        if (error) {
-            toast.error('Failed to delete prompt');
-            logger.error('Error deleting prompt:', error);
-            return;
-        }
-        toast.success('Prompt deleted successfully');
     };
 
-    const handleClone = async (e: React.MouseEvent, promptId: string) => {
+    const handleClone = (e: React.MouseEvent, promptId: string) => {
         e.stopPropagation();
-        const [error] = await attemptPromise(async () => clonePrompt(promptId));
-        if (error) {
-            toast.error('Failed to clone prompt');
-            logger.error('Error cloning prompt:', error);
-            return;
-        }
-        toast.success('Prompt cloned successfully');
+        clonePromptMutation.mutate(promptId);
     };
-
-    if (error) {
-        return (
-            <div className="p-4 text-destructive h-full">
-                Error loading prompts: {error}
-            </div>
-        );
-    }
 
     if (isLoading) {
         return (

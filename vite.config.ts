@@ -2,11 +2,8 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { defineConfig } from "vite";
 
-// @ts-expect-error process is a nodejs global
-const host = process.env.TAURI_DEV_HOST;
-
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig(() => ({
     plugins: [react()],
     resolve: {
         alias: {
@@ -16,7 +13,6 @@ export default defineConfig(async () => ({
                 "src/Lexical/lexical-playground/src"
             ),
             shared: path.resolve(__dirname, "src/Lexical/shared/src"),
-            // Add this to resolve Lexical packages properly
             lexical: path.resolve(__dirname, "node_modules/lexical"),
             "@lexical/react": path.resolve(
                 __dirname,
@@ -24,26 +20,17 @@ export default defineConfig(async () => ({
             ),
         },
     },
-
-    // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
-    //
-    // 1. prevent vite from obscuring rust errors
-    clearScreen: false,
-    // 2. tauri expects a fixed port, fail if that port is not available
     server: {
-        port: 1420,
-        strictPort: true,
-        host: host || true,
-        hmr: host
-            ? {
-                  protocol: "ws",
-                  host,
-                  port: 1421,
-              }
-            : undefined,
-        watch: {
-            // 3. tell vite to ignore watching `src-tauri`
-            ignored: ["**/src-tauri/**"],
+        port: 5173,
+        proxy: {
+            "/api": {
+                target: "http://localhost:3001",
+                changeOrigin: true,
+            },
         },
+        host: true,
+    },
+    build: {
+        outDir: "dist/client",
     },
 }));

@@ -15,31 +15,25 @@ import { z } from "zod";
 import { parseLocalStorage } from "@/schemas/entities";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useStoryStore } from "@/features/stories/stores/useStoryStore";
+import { useStoryQuery } from "@/features/stories/hooks/useStoriesQuery";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router";
-import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
+import { useChaptersByStoryQuery } from "@/features/chapters/hooks/useChaptersQuery";
+import { LorebookProvider } from "@/features/lorebook/context/LorebookContext";
 
 export default function StoryDashboard() {
     const { storyId } = useParams();
-    const { getStory } = useStoryStore();
+    useStoryQuery(storyId || '');
+    const { data: chapters = [] } = useChaptersByStoryQuery(storyId || '');
     const location = useLocation();
     const [isExpanded, setIsExpanded] = useState(() => {
         return parseLocalStorage(z.boolean(), 'nav-expanded', false);
     });
 
-    const { getLastEditedChapterId, chapters } = useChapterStore();
-
-    // Check if the last edited chapter still exists
-    const lastEditedChapterId = storyId ? getLastEditedChapterId(storyId) : null;
+    // Get last edited chapter ID from localStorage
+    const lastEditedChapterId = storyId ? localStorage.getItem(`lastEditedChapter_${storyId}`) : null;
     const lastEditedChapterExists = lastEditedChapterId && chapters.some(chapter => chapter.id === lastEditedChapterId);
-
-    useEffect(() => {
-        if (storyId) {
-            getStory(storyId);
-        }
-    }, [storyId, getStory]);
 
     // Save navigation state to localStorage when it changes
     useEffect(() => {
@@ -146,7 +140,9 @@ export default function StoryDashboard() {
                 "flex-1 transition-all duration-300 ease-in-out",
                 isExpanded ? "ml-[150px]" : "ml-12"
             )}>
-                <Outlet />
+                <LorebookProvider storyId={storyId || ''}>
+                    <Outlet />
+                </LorebookProvider>
             </div>
         </div>
     );

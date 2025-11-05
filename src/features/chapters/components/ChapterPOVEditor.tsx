@@ -1,11 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { attemptPromise } from "@jfdi/attempt";
-import { useChapterStore } from "../stores/useChapterStore";
-import { useStoryContext } from "@/features/stories/context/StoryContext";
+import { useUpdateChapterMutation } from "@/features/chapters/hooks/useChaptersQuery";
 import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-toastify";
 import {
     Form,
     FormControl,
@@ -22,9 +19,10 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { logger } from '@/utils/logger';
+import type { Chapter } from "@/types/story";
 
 interface ChapterPOVEditorProps {
+    chapter: Chapter;
     onClose?: () => void;
 }
 
@@ -33,9 +31,8 @@ interface POVForm {
     povCharacter?: string;
 }
 
-export function ChapterPOVEditor({ onClose }: ChapterPOVEditorProps) {
-    const { currentChapterId: _currentChapterId } = useStoryContext();
-    const { currentChapter, updateChapter } = useChapterStore();
+export function ChapterPOVEditor({ chapter, onClose }: ChapterPOVEditorProps) {
+    const updateChapterMutation = useUpdateChapterMutation();
     const { entries } = useLorebookStore();
 
     const characterEntries = useMemo(() => {
@@ -44,8 +41,8 @@ export function ChapterPOVEditor({ onClose }: ChapterPOVEditorProps) {
 
     const form = useForm<POVForm>({
         defaultValues: {
-            povType: currentChapter?.povType || 'Third Person Omniscient',
-            povCharacter: currentChapter?.povCharacter,
+            povType: chapter?.povType || 'Third Person Omniscient',
+            povCharacter: chapter?.povCharacter,
         },
     });
 
@@ -59,40 +56,21 @@ export function ChapterPOVEditor({ onClose }: ChapterPOVEditorProps) {
     }, [povType, form]);
 
     const handleSubmit = async (data: POVForm) => {
-        if (!currentChapter) return;
-
         // Only include povCharacter if not omniscient
         const povCharacter = data.povType !== 'Third Person Omniscient' ? data.povCharacter : undefined;
 
-        const [error] = await attemptPromise(async () =>
-            updateChapter(currentChapter.id, {
+        updateChapterMutation.mutate({
+            id: chapter.id,
+            data: {
                 povType: data.povType,
                 povCharacter
-            })
-        );
-
-        if (error) {
-            logger.error('Failed to update chapter POV:', error);
-            toast.error('Failed to update chapter POV');
-            return;
-        }
-
-        toast.success('Chapter POV updated successfully', {
-            position: "bottom-center",
-            autoClose: 1000,
-            closeOnClick: true,
+            }
+        }, {
+            onSuccess: () => {
+                if (onClose) onClose();
+            }
         });
-
-        if (onClose) onClose();
     };
-
-    if (!currentChapter) {
-        return (
-            <div className="flex items-center justify-center p-4">
-                <p className="text-muted-foreground">No chapter selected</p>
-            </div>
-        );
-    }
 
     return (
         <div className="p-4">

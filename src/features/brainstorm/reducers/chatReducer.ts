@@ -1,4 +1,4 @@
-import { ChatMessage, Prompt, AllowedModel, LorebookEntry, Chapter } from "@/types/story";
+import { ChatMessage, Prompt, AllowedModel, LorebookEntry, Chapter, PromptMessage } from "@/types/story";
 
 export interface ChatState {
   // Chat state
@@ -20,7 +20,7 @@ export interface ChatState {
   selectedModel: AllowedModel | null;
   availableModels: AllowedModel[];
   showPreview: boolean;
-  previewMessages: any;
+  previewMessages: PromptMessage[] | undefined;
   previewLoading: boolean;
   previewError: string | null;
 
@@ -56,11 +56,11 @@ export type ChatAction =
   | { type: "SET_PROMPT_AND_MODEL"; payload: { prompt: Prompt; model: AllowedModel } }
   | { type: "SET_AVAILABLE_MODELS"; payload: AllowedModel[] }
   | { type: "SET_SHOW_PREVIEW"; payload: boolean }
-  | { type: "SET_PREVIEW_MESSAGES"; payload: any }
+  | { type: "SET_PREVIEW_MESSAGES"; payload: PromptMessage[] | undefined }
   | { type: "SET_PREVIEW_LOADING"; payload: boolean }
   | { type: "SET_PREVIEW_ERROR"; payload: string | null }
   | { type: "START_PREVIEW" }
-  | { type: "PREVIEW_SUCCESS"; payload: any }
+  | { type: "PREVIEW_SUCCESS"; payload: PromptMessage[] }
   | { type: "PREVIEW_ERROR"; payload: string }
   | { type: "CLOSE_PREVIEW" }
   | { type: "SET_EDITING_MESSAGE_ID"; payload: string | null }
@@ -141,7 +141,17 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return { ...state, includeFullContext: action.payload };
 
     case "TOGGLE_FULL_CONTEXT":
-      return { ...state, includeFullContext: !state.includeFullContext };
+      const newIncludeFullContext = !state.includeFullContext;
+      return {
+        ...state,
+        includeFullContext: newIncludeFullContext,
+        // Clear context selections when enabling full context
+        ...(newIncludeFullContext ? {
+          selectedSummaries: [],
+          selectedItems: [],
+          selectedChapterContent: [],
+        } : {})
+      };
 
     case "SET_CONTEXT_OPEN":
       return { ...state, contextOpen: action.payload };

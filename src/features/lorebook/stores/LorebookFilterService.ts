@@ -15,7 +15,7 @@ export class LorebookFilterService {
 
     static getEntriesByTag(entries: LorebookEntry[], tag: string): LorebookEntry[] {
         return this.getFilteredEntries(entries).filter(entry =>
-            entry.tags.some(t => stringEquals(t, tag)) ||
+            (entry.tags && entry.tags.some(t => stringEquals(t, tag))) ||
             stringEquals(entry.name, tag)
         );
     }
@@ -56,7 +56,7 @@ export class LorebookFilterService {
 
     static getEntriesByCustomField(entries: LorebookEntry[], field: string, value: unknown): LorebookEntry[] {
         return this.getFilteredEntries(entries).filter(entry => {
-            const metadata = entry.metadata as any;
+            const metadata = entry.metadata as Record<string, unknown> | undefined;
             return metadata?.[field] === value;
         });
     }
@@ -64,11 +64,19 @@ export class LorebookFilterService {
     static buildTagMap(entries: LorebookEntry[]): Record<string, LorebookEntry> {
         const tagMap: Record<string, LorebookEntry> = {};
 
+        if (!entries || !Array.isArray(entries)) {
+            return tagMap;
+        }
+
         entries.forEach(entry => {
-            if (entry.isDisabled) return;
+            if (!entry || entry.isDisabled) return;
 
             const normalizedName = normalizeString(entry.name);
             tagMap[normalizedName] = entry;
+
+            if (!entry.tags || !Array.isArray(entry.tags)) {
+                return;
+            }
 
             entry.tags.forEach(tag => {
                 const normalizedTag = normalizeString(tag);

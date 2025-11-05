@@ -1,8 +1,7 @@
-import { PromptContext } from '@/types/story';
+import { PromptContext, LorebookEntry } from '@/types/story';
 import is from '@sindresorhus/is';
-import { useLorebookStore } from '@/features/lorebook/stores/useLorebookStore';
 import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
-import { db } from '@/services/database';
+import { chaptersApi } from '@/services/api/client';
 import { IVariableResolver, ILorebookFormatter } from './types';
 import { attemptPromise } from '@jfdi/attempt';
 import { logger } from '@/utils/logger';
@@ -30,25 +29,23 @@ export class UserInputResolver implements IVariableResolver {
 }
 
 export class BrainstormContextResolver implements IVariableResolver {
-    constructor(private formatter: ILorebookFormatter) {}
+    constructor(
+        private formatter: ILorebookFormatter,
+        private entries: LorebookEntry[]
+    ) {}
 
     async resolve(context: PromptContext): Promise<string> {
-        const lorebookStore = useLorebookStore.getState();
         const chapterStore = useChapterStore.getState();
 
         logger.info('DEBUG: brainstormContext additionalContext:', context.additionalContext);
 
-        if (lorebookStore.entries.length === 0) {
-            await lorebookStore.loadEntries(context.storyId);
-        }
-
         if (context.additionalContext?.includeFullContext === true) {
             const chapterSummary = await chapterStore.getAllChapterSummaries(context.storyId);
-            const entries = lorebookStore.getAllEntries();
+            const filteredEntries = this.entries.filter(e => !e.isDisabled && e.storyId === context.storyId);
 
             const parts = [
                 chapterSummary ? `Story Chapter Summaries:\n${chapterSummary}` : '',
-                entries.length > 0 ? (chapterSummary ? "Story World Information:\n" : '') + this.formatter.formatEntries(entries) : ''
+                filteredEntries.length > 0 ? (chapterSummary ? "Story World Information:\n" : '') + this.formatter.formatEntries(filteredEntries) : ''
             ];
 
             return parts.filter(Boolean).join('\n\n');
@@ -56,7 +53,7 @@ export class BrainstormContextResolver implements IVariableResolver {
 
         const summaries = await this.getSelectedSummaries(context, chapterStore);
         const chapterContent = await this.getSelectedChapterContent(context, chapterStore);
-        const lorebookEntries = this.getSelectedLorebookEntries(context, lorebookStore);
+        const lorebookEntries = this.getSelectedLorebookEntries(context);
 
         if (!summaries && !chapterContent && !lorebookEntries) {
             return "No story context is available for this query. Feel free to ask about anything related to writing or storytelling in general.";
@@ -102,7 +99,7 @@ export class BrainstormContextResolver implements IVariableResolver {
                 (selectedContent as string[]).map(async id => {
                     logger.info(`DEBUG: Fetching content for chapter ID: ${id}`);
 
-                    const [chapterError, chapter] = await attemptPromise(() => db.chapters.get(id));
+                    const [chapterError, chapter] = await attemptPromise(() => chaptersApi.getById(id));
 
                     if (chapterError) {
                         logger.error(`DEBUG: Error fetching chapter ${id}:`, chapterError);
@@ -147,15 +144,15 @@ export class BrainstormContextResolver implements IVariableResolver {
         return contentText;
     }
 
-    private getSelectedLorebookEntries(context: PromptContext, lorebookStore: ReturnType<typeof useLorebookStore.getState>): string {
+    private getSelectedLorebookEntries(context: PromptContext): string {
         const selectedItems = context.additionalContext?.selectedItems;
         if (!selectedItems || !is.array(selectedItems) || selectedItems.length === 0) {
             return '';
         }
 
         const selectedItemIds = selectedItems as string[];
-        const entries = lorebookStore.entries.filter(entry => selectedItemIds.includes(entry.id));
+        const selectedEntries = this.entries.filter(entry => selectedItemIds.includes(entry.id));
 
-        return entries.length > 0 ? this.formatter.formatEntries(entries) : '';
+        return selectedEntries.length > 0 ? this.formatter.formatEntries(selectedEntries) : '';
     }
 }

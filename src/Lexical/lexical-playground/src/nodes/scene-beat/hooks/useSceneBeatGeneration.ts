@@ -2,8 +2,9 @@ import { useState } from "react";
 import type { AllowedModel, PromptMessage } from "@/types/story";
 import is from '@sindresorhus/is';
 import { useAIStore } from "@/features/ai/stores/useAIStore";
+import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
+import { usePromptParser } from "@/features/prompts/hooks/usePromptParser";
 import { toast } from "react-toastify";
-import { createPromptParser } from "@/features/prompts/services/promptParser";
 import type { PromptParserConfig } from "@/types/story";
 import { attemptPromise } from '@jfdi/attempt';
 import { logger } from '@/utils/logger';
@@ -35,7 +36,9 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
-  const { generateWithPrompt, processStreamedResponse, abortGeneration } = useAIStore();
+  const { processStreamedResponse, abortGeneration } = useAIStore();
+  const { generateWithPrompt } = useGenerateWithPrompt();
+  const { parsePrompt } = usePromptParser();
 
   const generateWithConfig = async (
     config: PromptParserConfig,
@@ -89,10 +92,8 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
     setPreviewError(null);
     setPreviewMessages(undefined);
 
-    const promptParser = createPromptParser();
-
     const [error, parsedPrompt] = await attemptPromise(async () =>
-      promptParser.parse(config)
+      parsePrompt(config)
     );
     if (error) {
       const errorMessage = is.error(error) ? error.message : String(error);

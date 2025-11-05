@@ -1,10 +1,12 @@
 import { useAIStore } from "@/features/ai/stores/useAIStore";
-import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
-import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
-import { createPromptParser } from "@/features/prompts/services/promptParser";
-import { usePromptStore } from "@/features/prompts/store/promptStore";
-import { db } from "@/services/database";
+import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
+import { usePromptParser } from "@/features/prompts/hooks/usePromptParser";
+import { useChaptersByStoryQuery } from "@/features/chapters/hooks/useChaptersQuery";
+import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
+import { LorebookFilterService } from "@/features/lorebook/stores/LorebookFilterService";
+import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
 import {
+    AIChat,
     AllowedModel,
     ChatMessage,
     Prompt,
@@ -14,7 +16,7 @@ import { useEffect, useReducer, useRef } from "react";
 import { toast } from "react-toastify";
 import is from '@sindresorhus/is';
 import { chatReducer, initialChatState } from "../reducers/chatReducer";
-import { useBrainstormStore } from "../stores/useBrainstormStore";
+import { useCreateBrainstormMutation, useUpdateBrainstormMutation } from "../hooks/useBrainstormQuery";
 import { ChatMessageList } from "./ChatMessageList";
 import { ContextSelector } from "./ContextSelector";
 import { MessageInputArea } from "./MessageInputArea";
@@ -24,54 +26,55 @@ import { logger } from '@/utils/logger';
 
 interface ChatInterfaceProps {
     storyId: string;
+    selectedChat: AIChat;
+    onChatUpdate: (chat: AIChat) => void;
 }
 
-export default function ChatInterface({ storyId }: ChatInterfaceProps) {
+export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: ChatInterfaceProps) {
     const [state, dispatch] = useReducer(chatReducer, {
         ...initialChatState,
-        input: useBrainstormStore.getState().draftMessage,
+        currentChatId: selectedChat.id || "",
+        messages: selectedChat.messages || [],
     });
     const editingTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+    const prevChatIdRef = useRef(selectedChat.id);
 
-    // Stores
-    const { loadEntries, entries: lorebookEntries } = useLorebookStore();
-    const {
-        fetchPrompts,
-        prompts,
-        isLoading: promptsLoading,
-        error: promptsError,
-    } = usePromptStore();
+    // Handle chat selection changes - reset state when switching chats
+    if (prevChatIdRef.current !== selectedChat.id) {
+        prevChatIdRef.current = selectedChat.id;
+        // Use a microtask to avoid dispatching during render
+        Promise.resolve().then(() => {
+            dispatch({ type: "SET_CURRENT_CHAT_ID", payload: selectedChat.id });
+            dispatch({ type: "SET_MESSAGES", payload: selectedChat.messages || [] });
+        });
+    }
+
+    // Queries
+    const { entries: lorebookEntries } = useLorebookContext();
+    const { data: prompts = [], isLoading: promptsLoading, error: promptsQueryError } = usePromptsQuery({ includeSystem: true });
+    const { data: chapters = [] } = useChaptersByStoryQuery(storyId);
+    const promptsError = promptsQueryError?.message ?? null;
+
+    // AI Store (for client-side AI operations)
     const {
         initialize: initializeAI,
         getAvailableModels,
-        generateWithPrompt,
         processStreamedResponse,
         abortGeneration,
     } = useAIStore();
-    const {
-        addChat,
-        updateChat,
-        selectedChat,
-        draftMessage,
-        setDraftMessage,
-        clearDraftMessage,
-        setMessageEdited,
-    } = useBrainstormStore();
-    const { fetchChapters } = useChapterStore();
+
+    // Generation hooks
+    const { generateWithPrompt } = useGenerateWithPrompt();
+    const { parsePrompt } = usePromptParser();
+
+    // Mutations
+    const createMutation = useCreateBrainstormMutation();
+    const updateMutation = useUpdateBrainstormMutation();
 
     // Initialize
     useEffect(() => {
         const loadData = async () => {
-            await loadEntries(storyId);
-            await fetchPrompts();
             await initializeAI();
-            await fetchChapters(storyId);
-
-            const chaptersData = await db.chapters
-                .where("storyId")
-                .equals(storyId)
-                .sortBy("order");
-            dispatch({ type: "SET_CHAPTERS", payload: chaptersData });
 
             const models = await getAvailableModels();
             if (models.length > 0) {
@@ -88,38 +91,11 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
 
         dispatch({ type: "CLEAR_CONTEXT_SELECTIONS" });
         loadData();
-    }, [
-        storyId,
-        loadEntries,
-        fetchPrompts,
-        initializeAI,
-        fetchChapters,
-        getAvailableModels,
-    ]);
-
-    useEffect(() => {
-        dispatch({ type: "SET_INPUT", payload: draftMessage });
-    }, [draftMessage]);
-
-    useEffect(() => {
-        if (selectedChat) {
-            dispatch({ type: "SET_CURRENT_CHAT_ID", payload: selectedChat.id });
-            dispatch({
-                type: "SET_MESSAGES",
-                payload: selectedChat.messages || [],
-            });
-        }
-    }, [selectedChat]);
-
-    useEffect(() => {
-        if (state.includeFullContext) {
-            dispatch({ type: "CLEAR_CONTEXT_SELECTIONS" });
-        }
-    }, [state.includeFullContext]);
+    }, [initializeAI, getAvailableModels]);
 
     // Helper functions
     const getFilteredEntries = () => {
-        return useLorebookStore.getState().getFilteredEntries();
+        return LorebookFilterService.getFilteredEntries(lorebookEntries, false);
     };
 
     const createPromptConfig = (prompt: Prompt): PromptParserConfig => {
@@ -157,10 +133,9 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
         dispatch({ type: "START_PREVIEW" });
 
         const config = createPromptConfig(state.selectedPrompt);
-        const promptParser = createPromptParser();
 
         const [error, parsedPrompt] = await attemptPromise(async () =>
-            promptParser.parse(config)
+            parsePrompt(config)
         );
         if (error) {
             const errorMessage = is.error(error) ? error.message : String(error);
@@ -199,8 +174,6 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
                 throw new Error("Prompt or model not selected");
             }
 
-            clearDraftMessage();
-
             const userMessage: ChatMessage = {
                 id: crypto.randomUUID(),
                 role: "user",
@@ -213,7 +186,21 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
                 const newTitle =
                     userMessage.content.substring(0, 40) +
                     (userMessage.content.length > 40 ? "..." : "");
-                chatId = await addChat(storyId, newTitle, [userMessage]);
+
+                const newChat = {
+                    id: crypto.randomUUID(),
+                    storyId,
+                    title: newTitle,
+                    messages: [userMessage],
+                    updatedAt: new Date(),
+                };
+
+                createMutation.mutate(newChat, {
+                    onSuccess: (created) => {
+                        chatId = created.id;
+                        onChatUpdate(created);
+                    }
+                });
             }
 
             const config = createPromptConfig(state.selectedPrompt);
@@ -259,12 +246,18 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
                 },
                 () => {
                     dispatch({ type: "COMPLETE_GENERATION" });
-                    updateChat(chatId, {
-                        messages: [
-                            ...state.messages,
-                            userMessage,
-                            { ...assistantMessage, content: fullResponse },
-                        ],
+                    const updatedMessages = [
+                        ...state.messages,
+                        userMessage,
+                        { ...assistantMessage, content: fullResponse },
+                    ];
+                    updateMutation.mutate({
+                        id: chatId,
+                        data: { messages: updatedMessages }
+                    }, {
+                        onSuccess: (updatedChat) => {
+                            onChatUpdate(updatedChat);
+                        }
                     });
                 },
                 (error) => {
@@ -292,7 +285,6 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
 
     const handleInputChange = (value: string) => {
         dispatch({ type: "SET_INPUT", payload: value });
-        setDraftMessage(value);
     };
 
     const handleStopGeneration = () => {
@@ -324,34 +316,57 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
         }
 
         const [error] = await attemptPromise(async () => {
+            const existingMsg = selectedChat.messages?.find(m => m.id === messageId);
+            if (!existingMsg) {
+                throw new Error("Message not found");
+            }
+
+            const originalContent = existingMsg.originalContent ?? existingMsg.content;
+            const editedAt = new Date().toISOString();
+
+            const updatedMessages = selectedChat.messages?.map(msg =>
+                msg.id === messageId
+                    ? {
+                        ...msg,
+                        content: state.editingContent,
+                        originalContent,
+                        editedAt,
+                        editedBy: 'user' as const
+                    }
+                    : msg
+            );
+
             dispatch({
                 type: "UPDATE_EDITED_MESSAGE",
                 payload: {
                     id: messageId,
                     content: state.editingContent,
-                    editedAt: new Date().toISOString(),
+                    editedAt,
                 },
             });
 
-            if (!selectedChat) throw new Error("No chat selected");
-            await setMessageEdited(
-                selectedChat.id,
-                messageId,
-                state.editingContent
-            );
+            await new Promise<void>((resolve, reject) => {
+                updateMutation.mutate({
+                    id: selectedChat.id,
+                    data: { messages: updatedMessages }
+                }, {
+                    onSuccess: (updatedChat) => {
+                        onChatUpdate(updatedChat);
+                        resolve();
+                    },
+                    onError: reject
+                });
+            });
         });
         if (error) {
             logger.error("Failed to save edit", error);
             toast.error("Failed to save edit");
 
-            if (selectedChat) {
-                const fresh = await db.aiChats.get(selectedChat.id);
-                if (fresh)
-                    dispatch({
-                        type: "SET_MESSAGES",
-                        payload: fresh.messages || [],
-                    });
-            }
+            // Revert to original messages on error
+            dispatch({
+                type: "SET_MESSAGES",
+                payload: selectedChat.messages || [],
+            });
             return;
         }
 
@@ -368,9 +383,7 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
     };
 
     const handleItemSelect = (itemId: string) => {
-        const filteredEntries = useLorebookStore
-            .getState()
-            .getFilteredEntries();
+        const filteredEntries = LorebookFilterService.getFilteredEntries(lorebookEntries, false);
         const item = filteredEntries.find((entry) => entry.id === itemId);
         if (item) {
             dispatch({ type: "ADD_ITEM", payload: item });
@@ -414,7 +427,7 @@ export default function ChatInterface({ storyId }: ChatInterfaceProps) {
                     selectedSummaries={state.selectedSummaries}
                     selectedItems={state.selectedItems}
                     selectedChapterContent={state.selectedChapterContent}
-                    chapters={state.chapters}
+                    chapters={chapters}
                     lorebookEntries={lorebookEntries}
                     onToggleFullContext={() =>
                         dispatch({ type: "TOGGLE_FULL_CONTEXT" })

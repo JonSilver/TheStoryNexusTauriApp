@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNotesStore } from '../stores/useNotesStore';
+import { useState } from 'react';
+import { useNotesByStoryQuery, useCreateNoteMutation, useUpdateNoteMutation, useDeleteNoteMutation } from '../hooks/useNotesQuery';
 import { cn } from '@/lib/utils';
 import { Plus, Trash2, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,14 +13,19 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { attemptPromise } from '@jfdi/attempt';
 
 interface NoteListProps {
     storyId: string;
+    selectedNoteId: string | null;
+    onSelectNote: (note: Note | null) => void;
 }
 
-export default function NoteList({ storyId }: NoteListProps) {
-    const { notes, fetchNotes, selectedNote, selectNote, deleteNote, createNote, updateNote } = useNotesStore();
+export default function NoteList({ storyId, selectedNoteId, onSelectNote }: NoteListProps) {
+    const { data: notes = [] } = useNotesByStoryQuery(storyId);
+    const createNoteMutation = useCreateNoteMutation();
+    const updateNoteMutation = useUpdateNoteMutation();
+    const deleteNoteMutation = useDeleteNoteMutation();
+
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isNewNoteDialogOpen, setIsNewNoteDialogOpen] = useState(false);
@@ -28,15 +33,11 @@ export default function NoteList({ storyId }: NoteListProps) {
     const [newTitle, setNewTitle] = useState('');
     const [noteType, setNoteType] = useState<Note['type']>('idea');
 
-    useEffect(() => {
-        if (storyId) {
-            fetchNotes(storyId);
-        }
-    }, [fetchNotes, storyId]);
-
     const handleDeleteNote = async (noteId: string) => {
-        await attemptPromise(async () => deleteNote(noteId));
-        // Error is already handled in the store
+        await deleteNoteMutation.mutateAsync(noteId);
+        if (selectedNoteId === noteId) {
+            onSelectNote(null);
+        }
     };
 
     const handleEditClick = (note: Note, e: React.MouseEvent) => {
@@ -49,13 +50,12 @@ export default function NoteList({ storyId }: NoteListProps) {
 
     const handleCreateNote = async () => {
         if (newTitle.trim()) {
-            const [error] = await attemptPromise(async () =>
-                createNote(storyId, newTitle.trim(), '', noteType)
-            );
-            if (error) {
-                // Error is already handled in the store
-                return;
-            }
+            await createNoteMutation.mutateAsync({
+                storyId,
+                title: newTitle.trim(),
+                content: '',
+                type: noteType
+            });
             setIsNewNoteDialogOpen(false);
             setNewTitle('');
             setNoteType('idea');
@@ -64,16 +64,13 @@ export default function NoteList({ storyId }: NoteListProps) {
 
     const handleSaveEdit = async () => {
         if (editingNote && newTitle.trim()) {
-            const [error] = await attemptPromise(async () =>
-                updateNote(editingNote.id, {
+            await updateNoteMutation.mutateAsync({
+                id: editingNote.id,
+                data: {
                     title: newTitle.trim(),
                     type: noteType
-                })
-            );
-            if (error) {
-                // Error is already handled in the store
-                return;
-            }
+                }
+            });
             setIsEditDialogOpen(false);
             setEditingNote(null);
             setNewTitle('');
@@ -145,9 +142,9 @@ export default function NoteList({ storyId }: NoteListProps) {
                                 key={note.id}
                                 className={cn(
                                     "p-4 border-b border-input hover:bg-muted cursor-pointer relative group",
-                                    selectedNote?.id === note.id && "bg-muted/50"
+                                    selectedNoteId === note.id && "bg-muted/50"
                                 )}
-                                onClick={() => selectNote(note)}
+                                onClick={() => onSelectNote(note)}
                             >
                                 <div className="flex flex-col gap-2">
                                     <div className="flex items-center justify-between">

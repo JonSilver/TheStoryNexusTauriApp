@@ -1,20 +1,19 @@
-import { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { usePromptStore } from '../store/promptStore';
-import { useAIStore } from '@/features/ai/stores/useAIStore';
-import { aiService } from '@/services/ai/AIService';
-import type { Prompt, PromptMessage, AIModel, AllowedModel } from '@/types/story';
+import { useCreatePromptMutation, useUpdatePromptMutation } from '../hooks/usePromptsQuery';
+import { usePromptFormState } from '../hooks/usePromptFormState';
+import { useModelSelection } from '../hooks/useModelSelection';
+import { usePromptMessages } from '../hooks/usePromptMessages';
+import type { Prompt } from '@/types/story';
 import { Plus, ArrowUp, ArrowDown, Trash2, X, Wand2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
 
 type PromptType = Prompt['promptType'];
 
@@ -27,20 +26,6 @@ const PROMPT_TYPES: Array<{ value: PromptType; label: string }> = [
     { value: 'other', label: 'Other' },
 ] as const;
 
-const MOST_USED_MODELS = [
-    'Anthropic: Claude Sonnet 4',
-    'DeepSeek: DeepSeek V3.1',
-    'DeepSeek: DeepSeek V3 0324',
-    'Mistral: Mistral Small 3.2 24B',
-    'MoonshotAI: Kimi K2 0905',
-    'Z.AI: GLM 4.5 Air',
-    'Z.AI: GLM 4.5',
-];
-
-interface ModelsByProvider {
-    [key: string]: AIModel[]
-}
-
 interface PromptFormProps {
     prompt?: Prompt;
     onSave?: () => void;
@@ -48,256 +33,53 @@ interface PromptFormProps {
     fixedType?: PromptType;
 }
 
-type MessageWithId = PromptMessage & { _id: string };
-
-const createMessageWithId = (message: PromptMessage): MessageWithId => ({
-    ...message,
-    _id: crypto.randomUUID(),
-});
-
 export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormProps) {
-    const [name, setName] = useState(prompt?.name || '');
-    const [messages, setMessages] = useState<MessageWithId[]>(
-        prompt?.messages.map(createMessageWithId) || [createMessageWithId({ role: 'system', content: '' })]
-    );
-    const [promptType, setPromptType] = useState<PromptType>(fixedType || prompt?.promptType || 'scene_beat');
-    const [availableModels, setAvailableModels] = useState<AIModel[]>([]);
-    const [selectedModels, setSelectedModels] = useState<AllowedModel[]>(prompt?.allowedModels || []);
-    const { createPrompt, updatePrompt } = usePromptStore();
-    const [temperature, setTemperature] = useState(prompt?.temperature || 1.0);
-    const [maxTokens, setMaxTokens] = useState(prompt?.maxTokens || 2048);
-    const [topP, setTopP] = useState(prompt?.top_p !== undefined ? prompt.top_p : 1.0);
-    const [topK, setTopK] = useState(prompt?.top_k !== undefined ? prompt.top_k : 50);
-    const [repetitionPenalty, setRepetitionPenalty] = useState(
-        prompt?.repetition_penalty !== undefined ? prompt.repetition_penalty : 1.0
-    );
-    const [minP, setMinP] = useState(
-        prompt?.min_p !== undefined ? prompt.min_p : 0.0
-    );
+    const formState = usePromptFormState({ prompt, fixedType });
+    const modelSelection = useModelSelection({ initialModels: prompt?.allowedModels });
+    const messageHandlers = usePromptMessages({ initialMessages: prompt?.messages });
 
-    const {
-        initialize,
-        getAvailableModels,
-        isInitialized,
-        isLoading: _isAILoading
-    } = useAIStore();
-
-    useEffect(() => {
-        loadAvailableModels();
-    }, []);
-
-    const loadAvailableModels = async () => {
-        const [error, models] = await attemptPromise(async () => {
-            if (!isInitialized) {
-                await initialize();
-            }
-            return await getAvailableModels();
-        });
-        if (error) {
-            logger.error('Error loading AI models:', error);
-            toast.error('Failed to load AI models');
-            return;
-        }
-        setAvailableModels(models);
-    };
-
-    const modelGroups = useMemo(() => {
-        const groups: ModelsByProvider = {
-            'Most Used': [],
-            'Local': [],
-            'xAI': [],
-            'Anthropic': [],
-            'OpenAI': [],
-            'DeepSeek': [],
-            'Mistral': [],
-            'NVIDIA': [],
-            'Free': [],
-            'Other': []
-        };
-        availableModels.forEach(model => {
-            if (model.provider === 'local') {
-                groups['Local'].push(model);
-            } else if (MOST_USED_MODELS.some(name => model.name === name)) {
-                groups['Most Used'].push(model);
-            } else if (model.name.toLowerCase().includes('(free)')) {
-                groups['Free'].push(model);
-            } else if (model.provider === 'openai') {
-                groups['OpenAI'].push(model);
-            } else if (model.provider === 'openrouter') {
-                if (model.name.includes('Anthropic')) {
-                    groups['Anthropic'].push(model);
-                } else if (model.name.includes('DeepSeek')) {
-                    groups['DeepSeek'].push(model)
-                } else if (model.name.includes('Mistral')) {
-                    groups['Mistral'].push(model)
-                } else if (model.name.includes('NVIDIA')) {
-                    groups['NVIDIA'].push(model)
-                } else if (model.name.includes('xAI')) {
-                    groups['xAI'].push(model)
-                } else {
-                    groups['Other'].push(model);
-                }
-            }
-        });
-
-        return Object.fromEntries(
-            Object.entries(groups).filter(([_, models]) => models.length > 0)
-        );
-    }, [availableModels]);
-
-    // Simple search state for the popover-based selector (placed after modelGroups memo)
-    const [modelSearch, setModelSearch] = useState('');
-
-    const getFilteredModelGroups = () => {
-        if (!modelSearch.trim()) return modelGroups;
-        const q = modelSearch.toLowerCase();
-        const filtered: ModelsByProvider = {};
-        Object.entries(modelGroups).forEach(([provider, models]) => {
-            const matched = models.filter(m =>
-                m.name.toLowerCase().includes(q) || m.provider.toLowerCase().includes(q)
-            );
-            if (matched.length > 0) filtered[provider] = matched;
-        });
-        return filtered;
-    };
-
-    const filteredModelGroups = getFilteredModelGroups();
-
-    const handleModelSelect = (modelId: string) => {
-        const selectedModel = availableModels.find(m => m.id === modelId);
-        if (selectedModel && !selectedModels.some(m => m.id === modelId)) {
-            const allowedModel: AllowedModel = {
-                id: selectedModel.id,
-                provider: selectedModel.provider,
-                name: selectedModel.name
-            };
-            setSelectedModels([...selectedModels, allowedModel]);
-        }
-    };
-
-    const removeModel = (modelId: string) => {
-        setSelectedModels(selectedModels.filter(m => m.id !== modelId));
-    };
-
-    const handleAddMessage = (role: 'system' | 'user' | 'assistant') => {
-        setMessages([...messages, createMessageWithId({ role, content: '' })]);
-    };
-
-    const handleRemoveMessage = (index: number) => {
-        if (messages.length === 1) {
-            toast.error('Prompt must have at least one message');
-            return;
-        }
-        setMessages(messages.filter((_, i) => i !== index));
-    };
-
-    const handleMoveMessage = (index: number, direction: 'up' | 'down') => {
-        if (
-            (direction === 'up' && index === 0) ||
-            (direction === 'down' && index === messages.length - 1)
-        ) return;
-
-        const newMessages = [...messages];
-        const newIndex = direction === 'up' ? index - 1 : index + 1;
-        [newMessages[index], newMessages[newIndex]] = [newMessages[newIndex], newMessages[index]];
-        setMessages(newMessages);
-    };
-
-    const handleUseDefaultModels = async () => {
-        const [error] = await attemptPromise(async () => {
-            await aiService.initialize();
-            const defaultLocal = aiService.getDefaultLocalModel();
-            const defaultOpenAI = aiService.getDefaultOpenAIModel();
-            const defaultOpenRouter = aiService.getDefaultOpenRouterModel();
-
-            const defaultModels: AllowedModel[] = [];
-
-            if (defaultLocal) {
-                const localModel = availableModels.find(m => m.id === defaultLocal);
-                if (localModel) {
-                    defaultModels.push({
-                        id: localModel.id,
-                        name: localModel.name,
-                        provider: localModel.provider
-                    });
-                }
-            }
-
-            if (defaultOpenAI) {
-                const openaiModel = availableModels.find(m => m.id === defaultOpenAI);
-                if (openaiModel) {
-                    defaultModels.push({
-                        id: openaiModel.id,
-                        name: openaiModel.name,
-                        provider: openaiModel.provider
-                    });
-                }
-            }
-
-            if (defaultOpenRouter) {
-                const openrouterModel = availableModels.find(m => m.id === defaultOpenRouter);
-                if (openrouterModel) {
-                    defaultModels.push({
-                        id: openrouterModel.id,
-                        name: openrouterModel.name,
-                        provider: openrouterModel.provider
-                    });
-                }
-            }
-
-            if (defaultModels.length === 0) {
-                toast.error('No default models configured. Please set default models in AI Settings.');
-                return;
-            }
-
-            // Replace existing models with default models
-            setSelectedModels(defaultModels);
-            toast.success(`Added ${defaultModels.length} default model(s)`);
-        });
-        if (error) {
-            logger.error('Error loading default models:', error);
-            toast.error('Failed to load default models');
-        }
-    };
+    const createPromptMutation = useCreatePromptMutation();
+    const updatePromptMutation = useUpdatePromptMutation();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!name.trim()) {
+        if (!formState.name.trim()) {
             toast.error('Please enter a prompt name');
             return;
         }
 
-        if (messages.some(msg => !msg.content.trim())) {
+        if (messageHandlers.messages.some(msg => !msg.content.trim())) {
             toast.error('All messages must have content');
             return;
         }
 
-        if (selectedModels.length === 0) {
+        if (modelSelection.selectedModels.length === 0) {
             toast.error('Please select at least one AI model');
             return;
         }
 
         const promptData = {
-            name,
-            messages: messages.map(({ _id, ...msg }) => msg),
-            promptType,
-            allowedModels: selectedModels,
-            temperature,
-            maxTokens,
-            top_p: topP,
-            top_k: topK,
-            repetition_penalty: repetitionPenalty,
-            min_p: minP
+            name: formState.name,
+            messages: messageHandlers.getMessagesWithoutIds(),
+            promptType: formState.promptType,
+            allowedModels: modelSelection.selectedModels,
+            temperature: formState.temperature,
+            maxTokens: formState.maxTokens,
+            top_p: formState.topP,
+            top_k: formState.topK,
+            repetition_penalty: formState.repetitionPenalty,
+            min_p: formState.minP
         };
 
         const [error] = await attemptPromise(async () => {
             if (prompt?.id) {
-                await updatePrompt(prompt.id, promptData);
-                toast.success('Prompt updated successfully');
+                await updatePromptMutation.mutateAsync({
+                    id: prompt.id,
+                    data: promptData
+                });
             } else {
-                await createPrompt(promptData);
-                toast.success('Prompt created successfully');
+                await createPromptMutation.mutateAsync(promptData);
             }
             onSave?.();
         });
@@ -310,21 +92,18 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
         <form onSubmit={handleSubmit} className="space-y-6">
             <Input
                 placeholder="Prompt name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formState.name}
+                onChange={(e) => formState.setName(e.target.value)}
             />
 
             <div className="space-y-4">
-                {messages.map((message, index) => (
+                {messageHandlers.messages.map((message, index) => (
                     <div key={message._id} className="space-y-2 p-4 border rounded-lg">
                         <div className="flex items-center justify-between gap-2">
                             <Select
                                 value={message.role}
                                 onValueChange={(value: 'system' | 'user' | 'assistant') => {
-                                    const newMessages = messages.map((msg, i) =>
-                                        i === index ? { ...msg, role: value } : msg
-                                    );
-                                    setMessages(newMessages);
+                                    messageHandlers.updateMessage(index, { role: value });
                                 }}
                             >
                                 <SelectTrigger className="w-[150px]">
@@ -342,7 +121,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => handleMoveMessage(index, 'up')}
+                                    onClick={() => messageHandlers.moveMessage(index, 'up')}
                                     disabled={index === 0}
                                 >
                                     <ArrowUp className="h-4 w-4" />
@@ -351,8 +130,8 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => handleMoveMessage(index, 'down')}
-                                    disabled={index === messages.length - 1}
+                                    onClick={() => messageHandlers.moveMessage(index, 'down')}
+                                    disabled={index === messageHandlers.messages.length - 1}
                                 >
                                     <ArrowDown className="h-4 w-4" />
                                 </Button>
@@ -360,7 +139,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => handleRemoveMessage(index)}
+                                    onClick={() => messageHandlers.removeMessage(index)}
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -370,10 +149,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                         <Textarea
                             value={message.content}
                             onChange={(e) => {
-                                const newMessages = messages.map((msg, i) =>
-                                    i === index ? { ...msg, content: e.target.value } : msg
-                                );
-                                setMessages(newMessages);
+                                messageHandlers.updateMessage(index, { content: e.target.value });
                             }}
                             placeholder={`Enter ${message.role} message...`}
                             className="min-h-[200px] font-mono"
@@ -386,7 +162,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                 <Button
                     type="button"
                     variant="outline"
-                    onClick={() => handleAddMessage('system')}
+                    onClick={() => messageHandlers.addMessage('system')}
                     className="flex items-center gap-2"
                 >
                     <Plus className="h-4 w-4" />
@@ -395,7 +171,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                 <Button
                     type="button"
                     variant="outline"
-                    onClick={() => handleAddMessage('user')}
+                    onClick={() => messageHandlers.addMessage('user')}
                     className="flex items-center gap-2"
                 >
                     <Plus className="h-4 w-4" />
@@ -404,7 +180,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                 <Button
                     type="button"
                     variant="outline"
-                    onClick={() => handleAddMessage('assistant')}
+                    onClick={() => messageHandlers.addMessage('assistant')}
                     className="flex items-center gap-2"
                 >
                     <Plus className="h-4 w-4" />
@@ -419,7 +195,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={handleUseDefaultModels}
+                        onClick={modelSelection.handleUseDefaultModels}
                         className="flex items-center gap-2"
                     >
                         <Wand2 className="h-4 w-4" />
@@ -428,7 +204,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                    {selectedModels.map((model) => (
+                    {modelSelection.selectedModels.map((model) => (
                         <Badge
                             key={model.id}
                             variant="secondary"
@@ -437,7 +213,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                             {model.name}
                             <button
                                 type="button"
-                                onClick={() => removeModel(model.id)}
+                                onClick={() => modelSelection.removeModel(model.id)}
                                 className="ml-1 hover:text-destructive"
                             >
                                 <X className="h-3 w-3" />
@@ -448,23 +224,23 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
 
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full text-left">{selectedModels.length ? `${selectedModels.length} selected` : 'Select a model'}</Button>
+                        <Button variant="outline" className="w-full text-left">{modelSelection.selectedModels.length ? `${modelSelection.selectedModels.length} selected` : 'Select a model'}</Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-96">
                         <div className="flex flex-col">
                             <Input
                                 placeholder="Search models..."
-                                value={modelSearch}
-                                onChange={(e) => setModelSearch(e.target.value)}
+                                value={modelSelection.modelSearch}
+                                onChange={(e) => modelSelection.setModelSearch(e.target.value)}
                                 className="mb-2"
                                 autoFocus
                             />
 
                             <div className="max-h-64 overflow-auto">
-                                {Object.keys(filteredModelGroups).length === 0 && (
+                                {Object.keys(modelSelection.filteredModelGroups).length === 0 && (
                                     <div className="p-2 text-sm text-muted-foreground">No models found</div>
                                 )}
-                                {Object.entries(filteredModelGroups).map(([provider, models]) => (
+                                {Object.entries(modelSelection.filteredModelGroups).map(([provider, models]) => (
                                     <div key={provider} className="pb-2">
                                         <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground bg-muted">
                                             {provider}
@@ -472,8 +248,8 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                                         {models.map((model) => (
                                             <div
                                                 key={model.id}
-                                                className={`px-2 py-1 hover:bg-accent hover:text-accent-foreground cursor-pointer ${selectedModels.some(m => m.id === model.id) ? 'opacity-50 pointer-events-none' : ''}`}
-                                                onClick={() => { handleModelSelect(model.id); }}
+                                                className={`px-2 py-1 hover:bg-accent hover:text-accent-foreground cursor-pointer ${modelSelection.selectedModels.some(m => m.id === model.id) ? 'opacity-50 pointer-events-none' : ''}`}
+                                                onClick={() => { modelSelection.handleModelSelect(model.id); }}
                                             >
                                                 {model.name}
                                             </div>
@@ -489,8 +265,8 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
             <div className="border-t border-input pt-6">
                 <h3 className="font-medium mb-4">Prompt Type</h3>
                 <Select
-                    value={promptType}
-                    onValueChange={(value: PromptType) => setPromptType(value)}
+                    value={formState.promptType}
+                    onValueChange={(value: PromptType) => formState.setPromptType(value)}
                     disabled={!!fixedType}
                 >
                     <SelectTrigger>
@@ -519,8 +295,8 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                         <div className="flex-1 flex items-center gap-2">
                             <Slider
                                 id='temperature'
-                                value={[temperature]}
-                                onValueChange={(value) => setTemperature(value[0])}
+                                value={[formState.temperature]}
+                                onValueChange={(value) => formState.setTemperature(value[0])}
                                 min={0}
                                 max={2}
                                 step={0.1}
@@ -528,11 +304,11 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                             />
                             <Input
                                 type="text"
-                                value={temperature.toFixed(1)}
+                                value={formState.temperature.toFixed(1)}
                                 onChange={(e) => {
                                     const value = parseFloat(e.target.value);
                                     if (!isNaN(value) && value >= 0 && value <= 2) {
-                                        setTemperature(value);
+                                        formState.setTemperature(value);
                                     }
                                 }}
                                 className="w-20 text-center"
@@ -547,15 +323,15 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                         <div className="flex-1 flex items-center gap-2">
                             <Slider
                                 id="maxTokens"
-                                value={[maxTokens]}
-                                onValueChange={(value) => setMaxTokens(value[0])}
+                                value={[formState.maxTokens]}
+                                onValueChange={(value) => formState.setMaxTokens(value[0])}
                                 min={1}
                                 max={16384}
                                 className="flex-1"
                             />
                             <Input
                                 type="text"
-                                value={maxTokens.toString()}
+                                value={formState.maxTokens.toString()}
                                 onChange={(e) => {
                                     if (e.target.value === '') {
                                         return;
@@ -563,7 +339,7 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
 
                                     const value = parseInt(e.target.value);
                                     if (!isNaN(value) && value >= 1 && value <= 16384) {
-                                        setMaxTokens(value);
+                                        formState.setMaxTokens(value);
                                     }
                                 }}
                                 className="w-20 text-center"
@@ -579,17 +355,17 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                         <div className="flex-1 flex items-center gap-2">
                             <Slider
                                 id="topP"
-                                value={[topP]}
-                                onValueChange={(value) => setTopP(value[0])}
+                                value={[formState.topP]}
+                                onValueChange={(value) => formState.setTopP(value[0])}
                                 min={0}
                                 max={1}
                                 step={0.05}
                                 className="flex-1"
-                                disabled={topP === 0}
+                                disabled={formState.topP === 0}
                             />
                             <Input
                                 type="text"
-                                value={topP === 0 ? "Disabled" : topP.toFixed(2)}
+                                value={formState.topP === 0 ? "Disabled" : formState.topP.toFixed(2)}
                                 onChange={(e) => {
                                     if (e.target.value === '') {
                                         return;
@@ -597,18 +373,18 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
 
                                     const value = parseFloat(e.target.value);
                                     if (!isNaN(value) && value >= 0 && value <= 1) {
-                                        setTopP(value);
+                                        formState.setTopP(value);
                                     }
                                 }}
                                 className="w-20 text-center"
                             />
                             <Button
                                 type="button"
-                                variant={topP === 0 ? "default" : "outline"}
-                                onClick={() => setTopP(topP === 0 ? 1.0 : 0)}
+                                variant={formState.topP === 0 ? "default" : "outline"}
+                                onClick={() => formState.setTopP(formState.topP === 0 ? 1.0 : 0)}
                                 className="whitespace-nowrap"
                             >
-                                {topP === 0 ? "Enable" : "Disable"}
+                                {formState.topP === 0 ? "Enable" : "Disable"}
                             </Button>
                         </div>
                     </div>
@@ -621,17 +397,17 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                         <div className="flex-1 flex items-center gap-2">
                             <Slider
                                 id="topK"
-                                value={[topK]}
-                                onValueChange={(value) => setTopK(value[0])}
+                                value={[formState.topK]}
+                                onValueChange={(value) => formState.setTopK(value[0])}
                                 min={0}
                                 max={100}
                                 step={1}
                                 className="flex-1"
-                                disabled={topK === 0}
+                                disabled={formState.topK === 0}
                             />
                             <Input
                                 type="text"
-                                value={topK === 0 ? "Disabled" : topK.toString()}
+                                value={formState.topK === 0 ? "Disabled" : formState.topK.toString()}
                                 onChange={(e) => {
                                     if (e.target.value === '') {
                                         return;
@@ -639,18 +415,18 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
 
                                     const value = parseInt(e.target.value);
                                     if (!isNaN(value) && value >= 0 && value <= 100) {
-                                        setTopK(value);
+                                        formState.setTopK(value);
                                     }
                                 }}
                                 className="w-20 text-center"
                             />
                             <Button
                                 type="button"
-                                variant={topK === 0 ? "default" : "outline"}
-                                onClick={() => setTopK(topK === 0 ? 50 : 0)}
+                                variant={formState.topK === 0 ? "default" : "outline"}
+                                onClick={() => formState.setTopK(formState.topK === 0 ? 50 : 0)}
                                 className="whitespace-nowrap"
                             >
-                                {topK === 0 ? "Enable" : "Disable"}
+                                {formState.topK === 0 ? "Enable" : "Disable"}
                             </Button>
                         </div>
                     </div>
@@ -663,17 +439,17 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                         <div className="flex-1 flex items-center gap-2">
                             <Slider
                                 id="repetitionPenalty"
-                                value={[repetitionPenalty]}
-                                onValueChange={(value) => setRepetitionPenalty(value[0])}
+                                value={[formState.repetitionPenalty]}
+                                onValueChange={(value) => formState.setRepetitionPenalty(value[0])}
                                 min={0}
                                 max={2}
                                 step={0.05}
                                 className="flex-1"
-                                disabled={repetitionPenalty === 0}
+                                disabled={formState.repetitionPenalty === 0}
                             />
                             <Input
                                 type="text"
-                                value={repetitionPenalty === 0 ? "Disabled" : repetitionPenalty.toFixed(2)}
+                                value={formState.repetitionPenalty === 0 ? "Disabled" : formState.repetitionPenalty.toFixed(2)}
                                 onChange={(e) => {
                                     if (e.target.value === '') {
                                         return;
@@ -681,18 +457,18 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
 
                                     const value = parseFloat(e.target.value);
                                     if (!isNaN(value) && value >= 0 && value <= 2) {
-                                        setRepetitionPenalty(value);
+                                        formState.setRepetitionPenalty(value);
                                     }
                                 }}
                                 className="w-20 text-center"
                             />
                             <Button
                                 type="button"
-                                variant={repetitionPenalty === 0 ? "default" : "outline"}
-                                onClick={() => setRepetitionPenalty(repetitionPenalty === 0 ? 1.0 : 0)}
+                                variant={formState.repetitionPenalty === 0 ? "default" : "outline"}
+                                onClick={() => formState.setRepetitionPenalty(formState.repetitionPenalty === 0 ? 1.0 : 0)}
                                 className="whitespace-nowrap"
                             >
-                                {repetitionPenalty === 0 ? "Enable" : "Disable"}
+                                {formState.repetitionPenalty === 0 ? "Enable" : "Disable"}
                             </Button>
                         </div>
                     </div>
@@ -705,17 +481,17 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
                         <div className="flex-1 flex items-center gap-2">
                             <Slider
                                 id="minP"
-                                value={[minP]}
-                                onValueChange={(value) => setMinP(value[0])}
+                                value={[formState.minP]}
+                                onValueChange={(value) => formState.setMinP(value[0])}
                                 min={0}
                                 max={1}
                                 step={0.05}
                                 className="flex-1"
-                                disabled={minP === 0}
+                                disabled={formState.minP === 0}
                             />
                             <Input
                                 type="text"
-                                value={minP === 0 ? "Disabled" : minP.toFixed(2)}
+                                value={formState.minP === 0 ? "Disabled" : formState.minP.toFixed(2)}
                                 onChange={(e) => {
                                     if (e.target.value === '') {
                                         return;
@@ -723,18 +499,18 @@ export function PromptForm({ prompt, onSave, onCancel, fixedType }: PromptFormPr
 
                                     const value = parseFloat(e.target.value);
                                     if (!isNaN(value) && value >= 0 && value <= 1) {
-                                        setMinP(value);
+                                        formState.setMinP(value);
                                     }
                                 }}
                                 className="w-20 text-center"
                             />
                             <Button
                                 type="button"
-                                variant={minP === 0 ? "default" : "outline"}
-                                onClick={() => setMinP(minP === 0 ? 0.1 : 0)}
+                                variant={formState.minP === 0 ? "default" : "outline"}
+                                onClick={() => formState.setMinP(formState.minP === 0 ? 0.1 : 0)}
                                 className="whitespace-nowrap"
                             >
-                                {minP === 0 ? "Enable" : "Disable"}
+                                {formState.minP === 0 ? "Enable" : "Disable"}
                             </Button>
                         </div>
                     </div>
