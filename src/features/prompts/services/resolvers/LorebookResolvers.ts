@@ -99,109 +99,31 @@ export class CharacterResolver implements IVariableResolver {
     }
 }
 
-export class AllCharactersResolver implements IVariableResolver {
-    constructor(
-        private formatter: ILorebookFormatter,
-        private entries: LorebookEntry[]
-    ) {}
+// Factory function to create category-specific resolver classes
+const createCategoryResolver = (category: LorebookEntry['category']) => {
+    return class CategoryResolver implements IVariableResolver {
+        constructor(
+            private formatter: ILorebookFormatter,
+            private entries: LorebookEntry[]
+        ) {}
 
-    async resolve(context: PromptContext): Promise<string> {
-        const filtered = getEntriesByCategory(this.entries, 'character')
-            .filter(entry => entry.storyId === context.storyId);
-        return this.formatter.formatEntries(filtered);
-    }
-}
+        async resolve(context: PromptContext): Promise<string> {
+            const filtered = getEntriesByCategory(this.entries, category)
+                .filter(entry => entry.storyId === context.storyId);
+            return this.formatter.formatEntries(filtered);
+        }
+    };
+};
 
-export class AllLocationsResolver implements IVariableResolver {
-    constructor(
-        private formatter: ILorebookFormatter,
-        private entries: LorebookEntry[]
-    ) {}
-
-    async resolve(context: PromptContext): Promise<string> {
-        const filtered = getEntriesByCategory(this.entries, 'location')
-            .filter(entry => entry.storyId === context.storyId);
-        return this.formatter.formatEntries(filtered);
-    }
-}
-
-export class AllItemsResolver implements IVariableResolver {
-    constructor(
-        private formatter: ILorebookFormatter,
-        private entries: LorebookEntry[]
-    ) {}
-
-    async resolve(context: PromptContext): Promise<string> {
-        const filtered = getEntriesByCategory(this.entries, 'item')
-            .filter(entry => entry.storyId === context.storyId);
-        return this.formatter.formatEntries(filtered);
-    }
-}
-
-export class AllEventsResolver implements IVariableResolver {
-    constructor(
-        private formatter: ILorebookFormatter,
-        private entries: LorebookEntry[]
-    ) {}
-
-    async resolve(context: PromptContext): Promise<string> {
-        const filtered = getEntriesByCategory(this.entries, 'event')
-            .filter(entry => entry.storyId === context.storyId);
-        return this.formatter.formatEntries(filtered);
-    }
-}
-
-export class AllNotesResolver implements IVariableResolver {
-    constructor(
-        private formatter: ILorebookFormatter,
-        private entries: LorebookEntry[]
-    ) {}
-
-    async resolve(context: PromptContext): Promise<string> {
-        const filtered = getEntriesByCategory(this.entries, 'note')
-            .filter(entry => entry.storyId === context.storyId);
-        return this.formatter.formatEntries(filtered);
-    }
-}
-
-export class AllSynopsisResolver implements IVariableResolver {
-    constructor(
-        private formatter: ILorebookFormatter,
-        private entries: LorebookEntry[]
-    ) {}
-
-    async resolve(context: PromptContext): Promise<string> {
-        const filtered = getEntriesByCategory(this.entries, 'synopsis')
-            .filter(entry => entry.storyId === context.storyId);
-        return this.formatter.formatEntries(filtered);
-    }
-}
-
-export class AllStartingScenariosResolver implements IVariableResolver {
-    constructor(
-        private formatter: ILorebookFormatter,
-        private entries: LorebookEntry[]
-    ) {}
-
-    async resolve(context: PromptContext): Promise<string> {
-        const filtered = getEntriesByCategory(this.entries, 'starting scenario')
-            .filter(entry => entry.storyId === context.storyId);
-        return this.formatter.formatEntries(filtered);
-    }
-}
-
-export class AllTimelinesResolver implements IVariableResolver {
-    constructor(
-        private formatter: ILorebookFormatter,
-        private entries: LorebookEntry[]
-    ) {}
-
-    async resolve(context: PromptContext): Promise<string> {
-        const filtered = getEntriesByCategory(this.entries, 'timeline')
-            .filter(entry => entry.storyId === context.storyId);
-        return this.formatter.formatEntries(filtered);
-    }
-}
+// Export individual resolver classes for backwards compatibility
+export const AllCharactersResolver = createCategoryResolver('character');
+export const AllLocationsResolver = createCategoryResolver('location');
+export const AllItemsResolver = createCategoryResolver('item');
+export const AllEventsResolver = createCategoryResolver('event');
+export const AllNotesResolver = createCategoryResolver('note');
+export const AllSynopsisResolver = createCategoryResolver('synopsis');
+export const AllStartingScenariosResolver = createCategoryResolver('starting scenario');
+export const AllTimelinesResolver = createCategoryResolver('timeline');
 
 export class SceneBeatContextResolver implements IVariableResolver {
     constructor(

@@ -56,7 +56,7 @@ export class LorebookFilterService {
 
     static getEntriesByCustomField(entries: LorebookEntry[], field: string, value: unknown): LorebookEntry[] {
         return this.getFilteredEntries(entries).filter(entry => {
-            const metadata = entry.metadata as any;
+            const metadata = entry.metadata as Record<string, unknown> | undefined;
             return metadata?.[field] === value;
         });
     }

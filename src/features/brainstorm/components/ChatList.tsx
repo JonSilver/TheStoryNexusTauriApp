@@ -21,7 +21,7 @@ import {
 interface ChatListProps {
     storyId: string;
     selectedChat: AIChat | null;
-    onSelectChat: (chat: AIChat) => void;
+    onSelectChat: (chat: AIChat | null) => void;
 }
 
 export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatListProps) {
@@ -53,7 +53,7 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
         deleteMutation.mutate(chatId, {
             onSuccess: () => {
                 if (selectedChat?.id === chatId) {
-                    onSelectChat(null as any);
+                    onSelectChat(null);
                 }
             }
         });

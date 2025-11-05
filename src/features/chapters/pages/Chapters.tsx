@@ -46,10 +46,12 @@ import {
 import { Chapter } from "@/types/story";
 import { logger } from '@/utils/logger';
 
+type POVType = "First Person" | "Third Person Limited" | "Third Person Omniscient";
+
 interface CreateChapterForm {
   title: string;
   povCharacter?: string;
-  povType?: "First Person" | "Third Person Limited" | "Third Person Omniscient";
+  povType?: POVType;
 }
 
 export default function Chapters() {
@@ -214,7 +216,7 @@ export default function Chapters() {
                   <Select
                     defaultValue="Third Person Omniscient"
                     onValueChange={(value) =>
-                      form.setValue("povType", value as any)
+                      form.setValue("povType", value as POVType)
                     }
                   >
                     <SelectTrigger id="povType">

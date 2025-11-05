@@ -67,10 +67,12 @@ interface ChapterCardProps {
   storyId: string;
 }
 
+type POVType = "First Person" | "Third Person Limited" | "Third Person Omniscient";
+
 interface EditChapterForm {
   title: string;
   povCharacter?: string;
-  povType?: "First Person" | "Third Person Limited" | "Third Person Omniscient";
+  povType?: POVType;
 }
 
 export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
@@ -139,13 +141,6 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
   useEffect(() => {
     localStorage.setItem(expandedStateKey, JSON.stringify(isExpanded));
   }, [isExpanded, expandedStateKey]);
-
-  // Reset POV character when switching to omniscient
-  useEffect(() => {
-    if (povType === "Third Person Omniscient") {
-      form.setValue("povCharacter", undefined);
-    }
-  }, [povType, form]);
 
   const handleDelete = () => {
     deleteChapterMutation.mutate(chapter.id, {
@@ -381,9 +376,12 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
                 <Label htmlFor="povType">POV Type</Label>
                 <Select
                   defaultValue={chapter.povType || "Third Person Omniscient"}
-                  onValueChange={(value) =>
-                    form.setValue("povType", value as any)
-                  }
+                  onValueChange={(value) => {
+                    form.setValue("povType", value as POVType);
+                    if (value === "Third Person Omniscient") {
+                      form.setValue("povCharacter", undefined);
+                    }
+                  }}
                 >
                   <SelectTrigger id="povType">
                     <SelectValue placeholder="Select POV type" />

@@ -12,7 +12,7 @@ import {
     Prompt,
     PromptParserConfig,
 } from "@/types/story";
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { toast } from "react-toastify";
 import is from '@sindresorhus/is';
 import { chatReducer, initialChatState } from "../reducers/chatReducer";
@@ -31,12 +31,23 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: ChatInterfaceProps) {
-    const [draftMessage, setDraftMessage] = useState('');
     const [state, dispatch] = useReducer(chatReducer, {
         ...initialChatState,
-        input: draftMessage,
+        currentChatId: selectedChat.id || "",
+        messages: selectedChat.messages || [],
     });
     const editingTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+    const prevChatIdRef = useRef(selectedChat.id);
+
+    // Handle chat selection changes - reset state when switching chats
+    if (prevChatIdRef.current !== selectedChat.id) {
+        prevChatIdRef.current = selectedChat.id;
+        // Use a microtask to avoid dispatching during render
+        Promise.resolve().then(() => {
+            dispatch({ type: "SET_CURRENT_CHAT_ID", payload: selectedChat.id });
+            dispatch({ type: "SET_MESSAGES", payload: selectedChat.messages || [] });
+        });
+    }
 
     // Queries
     const { entries: lorebookEntries } = useLorebookContext();
@@ -81,33 +92,6 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
         dispatch({ type: "CLEAR_CONTEXT_SELECTIONS" });
         loadData();
     }, [initializeAI, getAvailableModels]);
-
-    // Update chapters in state when data changes
-    useEffect(() => {
-        if (chapters.length > 0) {
-            dispatch({ type: "SET_CHAPTERS", payload: chapters });
-        }
-    }, [chapters]);
-
-    useEffect(() => {
-        dispatch({ type: "SET_INPUT", payload: draftMessage });
-    }, [draftMessage]);
-
-    useEffect(() => {
-        if (selectedChat) {
-            dispatch({ type: "SET_CURRENT_CHAT_ID", payload: selectedChat.id });
-            dispatch({
-                type: "SET_MESSAGES",
-                payload: selectedChat.messages || [],
-            });
-        }
-    }, [selectedChat]);
-
-    useEffect(() => {
-        if (state.includeFullContext) {
-            dispatch({ type: "CLEAR_CONTEXT_SELECTIONS" });
-        }
-    }, [state.includeFullContext]);
 
     // Helper functions
     const getFilteredEntries = () => {
@@ -189,8 +173,6 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
             if (!state.selectedPrompt || !state.selectedModel) {
                 throw new Error("Prompt or model not selected");
             }
-
-            setDraftMessage('');
 
             const userMessage: ChatMessage = {
                 id: crypto.randomUUID(),
@@ -303,7 +285,6 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
 
     const handleInputChange = (value: string) => {
         dispatch({ type: "SET_INPUT", payload: value });
-        setDraftMessage(value);
     };
 
     const handleStopGeneration = () => {
@@ -446,7 +427,7 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
                     selectedSummaries={state.selectedSummaries}
                     selectedItems={state.selectedItems}
                     selectedChapterContent={state.selectedChapterContent}
-                    chapters={state.chapters}
+                    chapters={chapters}
                     lorebookEntries={lorebookEntries}
                     onToggleFullContext={() =>
                         dispatch({ type: "TOGGLE_FULL_CONTEXT" })
