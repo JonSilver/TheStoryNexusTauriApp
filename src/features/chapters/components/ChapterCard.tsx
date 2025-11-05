@@ -177,6 +177,10 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
       updateChapterMutation.mutate({
         id: chapter.id,
         data: { summary }
+      }, {
+        onSuccess: () => {
+          toast.success("Summary saved successfully");
+        }
       });
     }
   };
