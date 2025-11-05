@@ -242,4 +242,6 @@ export {
   MenubarItem,
   MenubarSeparator,
   MenubarSub,
+  MenubarSubContent,
+  MenubarSubTrigger,
 }
