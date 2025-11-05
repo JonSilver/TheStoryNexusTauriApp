@@ -1,6 +1,6 @@
 import express from 'express';
 import { attemptPromise } from '@jfdi/attempt';
-import { db, schema } from '../db/client';
+import { db, schema } from '../db/client.js';
 import { eq } from 'drizzle-orm';
 
 const router = express.Router();

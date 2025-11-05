@@ -1,7 +1,7 @@
-import { db, schema } from './client';
+import { db, schema } from './client.js';
 import { eq } from 'drizzle-orm';
-import systemPrompts from '../../src/data/systemPrompts';
-import type { Prompt } from '../../src/types/story';
+import systemPrompts from '../../src/data/systemPrompts.js';
+import type { Prompt } from '../../src/types/story.js';
 
 export const seedSystemPrompts = async () => {
     try {
@@ -9,7 +9,7 @@ export const seedSystemPrompts = async () => {
         const existingSystemPrompts = await db
             .select()
             .from(schema.prompts)
-            .where(eq(schema.prompts.isSystem, 1));
+            .where(eq(schema.prompts.isSystem, true));
 
         if (existingSystemPrompts.length > 0) {
             console.log(`System prompts already exist (${existingSystemPrompts.length} found), skipping seed`);
@@ -27,7 +27,7 @@ export const seedSystemPrompts = async () => {
             messages: prompt.messages!,
             allowedModels: prompt.allowedModels || [],
             storyId: null,
-            isSystem: 1,
+            isSystem: true,
             temperature: prompt.temperature || null,
             maxTokens: prompt.maxTokens || null,
             top_p: prompt.top_p || null,

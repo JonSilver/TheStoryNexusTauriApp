@@ -1,6 +1,6 @@
-import { schema } from '../db/client';
-import { createCrudRouter } from '../lib/crud';
-import { parseJson } from '../lib/json';
+import { schema } from '../db/client.js';
+import { createCrudRouter } from '../lib/crud.js';
+import { parseJson } from '../lib/json.js';
 
 export default createCrudRouter({
   table: schema.chapters,

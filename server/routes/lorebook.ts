@@ -1,6 +1,6 @@
-import { schema, db } from '../db/client';
-import { createCrudRouter } from '../lib/crud';
-import { parseJson } from '../lib/json';
+import { schema, db } from '../db/client.js';
+import { createCrudRouter } from '../lib/crud.js';
+import { parseJson } from '../lib/json.js';
 import { eq, and } from 'drizzle-orm';
 
 const transform = (entry: any) => ({

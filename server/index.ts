@@ -1,19 +1,19 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'node:path';
-import { runMigrations } from './db/migrate';
-import { seedSystemPrompts } from './db/seedSystemPrompts';
+import { runMigrations } from './db/migrate.js';
+import { seedSystemPrompts } from './db/seedSystemPrompts.js';
 
 // Import routes
-import storiesRouter from './routes/stories';
-import chaptersRouter from './routes/chapters';
-import lorebookRouter from './routes/lorebook';
-import promptsRouter from './routes/prompts';
-import aiRouter from './routes/ai';
-import brainstormRouter from './routes/brainstorm';
-import scenebeatsRouter from './routes/scenebeats';
-import notesRouter from './routes/notes';
-import adminRouter from './routes/admin';
+import storiesRouter from './routes/stories.js';
+import chaptersRouter from './routes/chapters.js';
+import lorebookRouter from './routes/lorebook.js';
+import promptsRouter from './routes/prompts.js';
+import aiRouter from './routes/ai.js';
+import brainstormRouter from './routes/brainstorm.js';
+import scenebeatsRouter from './routes/scenebeats.js';
+import notesRouter from './routes/notes.js';
+import adminRouter from './routes/admin.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -56,18 +56,18 @@ if (NODE_ENV === 'production') {
     app.use(express.static(staticPath));
 
     // Serve index.html for all non-API routes (SPA routing)
-    app.get('*', (req, res) => {
+    app.get('*', (_, res) => {
         res.sendFile(path.join(staticPath, 'index.html'));
     });
 }
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_, res) => {
     res.json({ status: 'ok' });
 });
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error('Server error:', err);
     res.status(500).json({ error: err.message || 'Internal server error' });
 });

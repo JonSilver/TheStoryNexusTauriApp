@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { eq } from 'drizzle-orm';
 import { attemptPromise } from '@jfdi/attempt';
-import { db } from '../db/client';
+import { db } from '../db/client.js';
 
 type CrudConfig = {
   table: any;
@@ -49,16 +49,19 @@ export const createCrudRouter = (config: CrudConfig): Router => {
       res.json(rows.map(applyTransform));
     }));
   } else {
-    router.get('/', asyncHandler(async (req, res) => {
+    router.get('/', asyncHandler(async (_, res) => {
       const rows = await db.select().from(table);
       res.json(rows.map(applyTransform));
     }));
   }
 
   // GET by id
-  router.get('/:id', asyncHandler(async (req, res) => {
-    const [row] = await db.select().from(table).where(eq(table.id, req.params.id));
-    if (!row) return res.status(404).json({ error: `${name} not found` });
+  router.get('/:id', asyncHandler(async (_, res) => {
+    const [row] = await db.select().from(table).where(eq(table.id, _.params.id));
+    if (!row) {
+      res.status(404).json({ error: `${name} not found` });
+      return;
+    }
     res.json(applyTransform(row));
   }));
 

@@ -1,5 +1,5 @@
-import { schema } from '../db/client';
-import { createCrudRouter } from '../lib/crud';
+import { schema } from '../db/client.js';
+import { createCrudRouter } from '../lib/crud.js';
 
 export default createCrudRouter({
   table: schema.notes,
