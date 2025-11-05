@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronRight, Loader2, Download, Upload, AlertTriangle, RefreshCw } from "lucide-react";
+import { ChevronRight, Loader2, Download, Upload, AlertTriangle } from "lucide-react";
 import { toast } from 'react-toastify';
 import { cn } from '@/lib/utils';
 import { API_URLS } from '@/constants/urls';
@@ -14,12 +14,10 @@ import { logger } from '@/utils/logger';
 import { downloadDatabaseExport } from '@/services/exportDexieDatabase';
 import { adminApi, promptsApi } from '@/services/api/client';
 import { useAIProviderState } from '@/features/ai/hooks/useAIProviderState';
-import { dbSeeder } from '@/services/dbSeed';
 import { toastCRUD } from '@/utils/toastUtils';
 import { promptsExportSchema, parseJSON } from '@/schemas/entities';
 import { useQueryClient } from '@tanstack/react-query';
 import { promptsKeys } from '@/features/prompts/hooks/usePromptsQuery';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function AISettingsPage() {
     const {
@@ -36,9 +34,7 @@ export default function AISettingsPage() {
 
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
     const [isMigrationLoading, setIsMigrationLoading] = useState(false);
-    const [isReseedingPrompts, setIsReseedingPrompts] = useState(false);
     const [isImportingPrompts, setIsImportingPrompts] = useState(false);
-    const [showReseedDialog, setShowReseedDialog] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const promptsFileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
@@ -177,24 +173,6 @@ export default function AISettingsPage() {
         }
     };
 
-    const handleReseedSystemPrompts = async () => {
-        setShowReseedDialog(false);
-        setIsReseedingPrompts(true);
-
-        const [error] = await attemptPromise(async () => {
-            await dbSeeder.forceReseedSystemPrompts();
-            queryClient.invalidateQueries({ queryKey: promptsKeys.lists() });
-        });
-
-        if (error) {
-            toastCRUD.generic.error('Failed to reseed system prompts', error);
-            logger.error('Error reseeding system prompts:', error);
-        } else {
-            toastCRUD.generic.success('System prompts reseeded successfully');
-        }
-
-        setIsReseedingPrompts(false);
-    };
 
     return (
         <div className="p-8">
@@ -422,66 +400,36 @@ export default function AISettingsPage() {
                     </Card>
 
                     {/* Prompt Management Section */}
-                    <Card className="border-red-200 dark:border-red-900">
+                    <Card>
                         <CardHeader>
-                            <CardTitle className="text-red-700 dark:text-red-400">Prompt Management</CardTitle>
+                            <CardTitle>Prompt Management</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="flex items-start gap-2 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-md">
-                                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-500 flex-shrink-0 mt-0.5" />
-                                <div className="text-sm text-red-800 dark:text-red-200">
-                                    <p className="font-semibold mb-1">Danger Zone</p>
-                                    <p>Reseeding will permanently overwrite all system prompts with factory defaults. Any customisations to system prompts will be lost.</p>
-                                </div>
-                            </div>
-
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label>Import Prompts</Label>
-                                    <input
-                                        ref={promptsFileInputRef}
-                                        type="file"
-                                        accept="application/json"
-                                        onChange={handlePromptsFileSelect}
-                                        className="hidden"
-                                    />
-                                    <Button
-                                        onClick={() => promptsFileInputRef.current?.click()}
-                                        disabled={isImportingPrompts}
-                                        className="w-full"
-                                        variant="outline"
-                                    >
-                                        {isImportingPrompts ? (
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        ) : (
-                                            <Download className="h-4 w-4 mr-2" />
-                                        )}
-                                        Import from JSON
-                                    </Button>
-                                    <p className="text-xs text-muted-foreground">
-                                        Import prompts from exported JSON file
-                                    </p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label className="text-red-700 dark:text-red-400">Reseed System Prompts</Label>
-                                    <Button
-                                        onClick={() => setShowReseedDialog(true)}
-                                        disabled={isReseedingPrompts}
-                                        className="w-full bg-red-600 hover:bg-red-700 text-white"
-                                        variant="destructive"
-                                    >
-                                        {isReseedingPrompts ? (
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        ) : (
-                                            <RefreshCw className="h-4 w-4 mr-2" />
-                                        )}
-                                        Reseed System Prompts
-                                    </Button>
-                                    <p className="text-xs text-red-600 dark:text-red-400">
-                                        Reset all system prompts to factory defaults
-                                    </p>
-                                </div>
+                            <div className="space-y-2">
+                                <Label>Import Prompts</Label>
+                                <input
+                                    ref={promptsFileInputRef}
+                                    type="file"
+                                    accept="application/json"
+                                    onChange={handlePromptsFileSelect}
+                                    className="hidden"
+                                />
+                                <Button
+                                    onClick={() => promptsFileInputRef.current?.click()}
+                                    disabled={isImportingPrompts}
+                                    className="w-full"
+                                    variant="outline"
+                                >
+                                    {isImportingPrompts ? (
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <Download className="h-4 w-4 mr-2" />
+                                    )}
+                                    Import from JSON
+                                </Button>
+                                <p className="text-xs text-muted-foreground">
+                                    Import prompts from exported JSON file
+                                </p>
                             </div>
                         </CardContent>
                     </Card>
@@ -552,28 +500,6 @@ export default function AISettingsPage() {
                     </Card>
                 </div>
             </div>
-
-            <AlertDialog open={showReseedDialog} onOpenChange={setShowReseedDialog}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="text-red-700 dark:text-red-400">Reseed System Prompts?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action will permanently overwrite all system prompts with factory defaults.
-                            Any customisations you have made to system prompts will be lost and cannot be recovered.
-                            Are you absolutely sure you want to proceed?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleReseedSystemPrompts}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                        >
-                            Reseed System Prompts
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 } 

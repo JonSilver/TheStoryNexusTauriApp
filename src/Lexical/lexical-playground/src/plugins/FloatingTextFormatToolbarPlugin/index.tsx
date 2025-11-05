@@ -39,7 +39,7 @@ import { getDOMRangeRect } from "../../utils/getDOMRangeRect";
 import { getSelectedNode } from "../../utils/getSelectedNode";
 import { setFloatingElemPosition } from "../../utils/setFloatingElemPosition";
 import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
-import { useAIStore } from "@/features/ai/stores/useAIStore";
+import { aiService } from "@/services/ai/AIService";
 import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
 import { usePromptParser } from "@/features/prompts/hooks/usePromptParser";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
@@ -75,7 +75,6 @@ function TextFormatFloatingToolbar({
   const popupCharStylesEditorRef = useRef<HTMLDivElement | null>(null);
   const { currentStoryId, currentChapterId } = useStoryContext();
   const { data: prompts = [], isLoading, error } = usePromptsQuery();
-  const { processStreamedResponse } = useAIStore();
   const { generateWithPrompt } = useGenerateWithPrompt();
   const { parsePrompt } = usePromptParser();
   const { data: currentStory } = useStoryQuery(currentStoryId || '');
@@ -326,10 +325,9 @@ function TextFormatFloatingToolbar({
 
       let fullText = "";
 
-      await processStreamedResponse(
+      await aiService.processStreamedResponse(
         response,
         (token) => {
-          // Accumulate tokens but don't show them in UI
           fullText += token;
         },
         () => {

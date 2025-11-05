@@ -32,7 +32,9 @@ import type {
 import { toast } from "react-toastify";
 import { Textarea } from "@/components/ui/textarea";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
-import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
+import { useChapterMatching } from "@/features/lorebook/hooks/useChapterMatching";
+import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
+import { buildTagMap } from "@/features/lorebook/utils/lorebookFilters";
 import { PromptPreviewDialog } from "@/components/ui/prompt-preview-dialog";
 import { SceneBeatMatchedEntries } from "./SceneBeatMatchedEntries";
 import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
@@ -72,7 +74,10 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
   const { currentStoryId, currentChapterId } = useStoryContext();
   const { data: currentChapter } = useChapterQuery(currentChapterId || '');
   const { data: prompts = [], isLoading, error } = usePromptsQuery();
-  const { tagMap, chapterMatchedEntries, entries } = useLorebookStore();
+  const { entries } = useLorebookContext();
+  const { chapterMatchedEntries } = useChapterMatching();
+
+  const tagMap = useMemo(() => buildTagMap(entries), [entries]);
 
   // UI state
   const [collapsed, setCollapsed] = useState(false);

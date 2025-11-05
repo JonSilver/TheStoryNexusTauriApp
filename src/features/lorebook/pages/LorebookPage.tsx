@@ -1,12 +1,10 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "react-router";
-import { useLorebookStore } from "../stores/useLorebookStore";
 import { useLorebookByStoryQuery } from "../hooks/useLorebookQuery";
 import { CreateEntryDialog } from "../components/CreateEntryDialog";
 import { LorebookEntryList } from "../components/LorebookEntryList";
 import { Button } from "@/components/ui/button";
 import { Plus, Download, Upload } from "lucide-react";
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "react-toastify";
@@ -18,17 +16,10 @@ import { lorebookKeys } from '../hooks/useLorebookQuery';
 
 export default function LorebookPage() {
     const { storyId } = useParams<{ storyId: string }>();
-    const { buildTagMap } = useLorebookStore();
     const queryClient = useQueryClient();
     const { data: entries = [], isLoading, error } = useLorebookByStoryQuery(storyId!);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("all");
-
-    useEffect(() => {
-        if (entries.length > 0) {
-            buildTagMap(entries);
-        }
-    }, [entries, buildTagMap]);
 
     // Calculate category counts from the current entries
     const categoryCounts = entries.reduce((acc, entry) => {
@@ -65,7 +56,6 @@ export default function LorebookPage() {
                 await LorebookImportExportService.importEntries(content, storyId, () => {
                     queryClient.invalidateQueries({ queryKey: lorebookKeys.byStory(storyId) });
                 });
-                buildTagMap(entries);
             });
             if (error) {
                 logger.error("Import failed:", error);

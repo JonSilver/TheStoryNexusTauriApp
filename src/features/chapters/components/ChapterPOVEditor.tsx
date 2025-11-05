@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useUpdateChapterMutation } from "@/features/chapters/hooks/useChaptersQuery";
-import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
+import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
 import { Button } from "@/components/ui/button";
 import {
     Form,
@@ -33,7 +33,7 @@ interface POVForm {
 
 export function ChapterPOVEditor({ chapter, onClose }: ChapterPOVEditorProps) {
     const updateChapterMutation = useUpdateChapterMutation();
-    const { entries } = useLorebookStore();
+    const { entries } = useLorebookContext();
 
     const characterEntries = useMemo(() => {
         return entries.filter(entry => entry.category === 'character');
