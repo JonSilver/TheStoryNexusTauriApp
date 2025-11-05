@@ -1,10 +1,13 @@
 {
     "name": "thestorynexus",
     "displayName": "The Story Nexus",
-    "description": "A story writing app",
+    "description": "A story writing app powered by AI.",
     "author": "Jon Silver",
+    "contributors": [
+        "Vijaykumar Bhattacharji"
+    ],
     "private": true,
-    "version": "0.3.0",
+    "version": "0.4.0",
     "type": "module",
     "scripts": {
         "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
