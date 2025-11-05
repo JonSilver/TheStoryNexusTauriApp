@@ -4,7 +4,7 @@ import type { Note } from '@/types/story';
 import { toast } from 'react-toastify';
 
 // Query keys
-export const notesKeys = {
+const notesKeys = {
     all: ['notes'] as const,
     byStory: (storyId: string) => ['notes', 'story', storyId] as const,
     detail: (id: string) => ['notes', id] as const,

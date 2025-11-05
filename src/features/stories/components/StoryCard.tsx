@@ -11,6 +11,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ROUTES } from "@/constants/urls";
 
 interface StoryCardProps {
     story: Story;
@@ -40,7 +41,7 @@ export function StoryCard({ story, onEdit, onExport }: StoryCardProps) {
     };
 
     const handleCardClick = () => {
-        navigate(`/dashboard/${story.id}/chapters`);
+        navigate(ROUTES.DASHBOARD.CHAPTERS(story.id));
     };
 
     return (

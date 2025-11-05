@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { useLocation } from "react-router";
 import { useChaptersByStoryQuery } from "@/features/chapters/hooks/useChaptersQuery";
 import { LorebookProvider } from "@/features/lorebook/context/LorebookContext";
+import { ROUTES } from "@/constants/urls";
 
 export default function StoryDashboard() {
     const { storyId } = useParams();
@@ -108,18 +109,18 @@ export default function StoryDashboard() {
                 )}>
                     {storyId && (
                         <>
-                            {navButton(<BookOpen className="h-5 w-5" />, `/dashboard/${storyId}/chapters`, "Chapters")}
+                            {navButton(<BookOpen className="h-5 w-5" />, ROUTES.DASHBOARD.CHAPTERS(storyId), "Chapters")}
                             {lastEditedChapterId && lastEditedChapterExists && (
                                 navButton(
                                     <PenLine className="h-5 w-5" />,
-                                    `/dashboard/${storyId}/chapters/${lastEditedChapterId}`,
+                                    ROUTES.DASHBOARD.CHAPTER_EDITOR(storyId, lastEditedChapterId),
                                     "Last Edited"
                                 )
                             )}
-                            {navButton(<Book className="h-5 w-5" />, `/dashboard/${storyId}/lorebook`, "Lorebook")}
-                            {navButton(<Sparkles className="h-5 w-5" />, `/dashboard/${storyId}/prompts`, "Prompts")}
-                            {navButton(<MessageSquare className="h-5 w-5" />, `/dashboard/${storyId}/brainstorm`, "Brainstorm")}
-                            {navButton(<StickyNote className="h-5 w-5" />, `/dashboard/${storyId}/notes`, "Notes")}
+                            {navButton(<Book className="h-5 w-5" />, ROUTES.DASHBOARD.LOREBOOK(storyId), "Lorebook")}
+                            {navButton(<Sparkles className="h-5 w-5" />, ROUTES.DASHBOARD.PROMPTS(storyId), "Prompts")}
+                            {navButton(<MessageSquare className="h-5 w-5" />, ROUTES.DASHBOARD.BRAINSTORM(storyId), "Brainstorm")}
+                            {navButton(<StickyNote className="h-5 w-5" />, ROUTES.DASHBOARD.NOTES(storyId), "Notes")}
                         </>
                     )}
                 </div>

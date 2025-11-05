@@ -21,24 +21,6 @@ export const useLorebookByStoryQuery = (storyId: string) => {
     });
 };
 
-// Fetch lorebook entries by category
-export const useLorebookByCategoryQuery = (storyId: string, category: string) => {
-    return useQuery({
-        queryKey: lorebookKeys.byCategory(storyId, category),
-        queryFn: () => lorebookApi.getByCategory(storyId, category),
-        enabled: !!storyId && !!category,
-    });
-};
-
-// Fetch single lorebook entry
-export const useLorebookEntryQuery = (id: string) => {
-    return useQuery({
-        queryKey: lorebookKeys.detail(id),
-        queryFn: () => lorebookApi.getById(id),
-        enabled: !!id,
-    });
-};
-
 // Create lorebook entry mutation
 export const useCreateLorebookMutation = () => {
     const queryClient = useQueryClient();

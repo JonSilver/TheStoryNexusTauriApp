@@ -4,7 +4,7 @@ import type { Story } from '@/types/story';
 import { toast } from 'react-toastify';
 
 // Query keys
-export const storiesKeys = {
+const storiesKeys = {
     all: ['stories'] as const,
     detail: (id: string) => ['stories', id] as const,
 };

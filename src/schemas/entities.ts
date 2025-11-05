@@ -45,8 +45,8 @@ const baseEntitySchema = z.object({
 // POV Type enum
 const povTypeSchema = z.enum(['First Person', 'Third Person Limited', 'Third Person Omniscient']);
 
-// Story schema
-export const storySchema = baseEntitySchema.extend({
+// Story schema (used internally for export validation)
+const storySchema = baseEntitySchema.extend({
   title: z.string().min(1, 'Title is required'),
   author: z.string().min(1, 'Author is required'),
   language: z.string().min(1, 'Language is required'),
@@ -64,7 +64,7 @@ const chapterNotesSchema = z.object({
   lastUpdated: z.coerce.date(),
 });
 
-export const chapterSchema = baseEntitySchema.extend({
+const chapterSchema = baseEntitySchema.extend({
   storyId: z.string().uuid(),
   title: z.string().min(1, 'Chapter title is required'),
   summary: z.string().optional(),
@@ -77,8 +77,8 @@ export const chapterSchema = baseEntitySchema.extend({
   notes: chapterNotesSchema.optional(),
 });
 
-// SceneBeat schema
-export const sceneBeatSchema = baseEntitySchema.extend({
+// SceneBeat schema (used internally for export validation)
+const sceneBeatSchema = baseEntitySchema.extend({
   storyId: z.string().uuid(),
   chapterId: z.string().uuid(),
   command: z.string(),
@@ -105,8 +105,8 @@ const chatMessageSchema = z.object({
   edited: z.boolean().optional(),
 });
 
-// AI Chat schema
-export const aiChatSchema = baseEntitySchema.extend({
+// AI Chat schema (used internally for export validation)
+const aiChatSchema = baseEntitySchema.extend({
   storyId: z.string().uuid(),
   title: z.string().min(1, 'Chat title is required'),
   messages: z.array(chatMessageSchema),
@@ -127,7 +127,7 @@ const allowedModelSchema = z.object({
   name: z.string(),
 });
 
-export const promptSchema = baseEntitySchema.extend({
+const promptSchema = baseEntitySchema.extend({
   name: z.string().min(1, 'Prompt name is required'),
   description: z.string().optional(),
   promptType: z.enum(['scene_beat', 'gen_summary', 'selection_specific', 'continue_writing', 'other', 'brainstorm']),
@@ -143,16 +143,7 @@ export const promptSchema = baseEntitySchema.extend({
   min_p: z.number().min(0).max(1).optional(),
 });
 
-// Note schema
-export const noteSchema = baseEntitySchema.extend({
-  storyId: z.string().uuid(),
-  title: z.string().min(1, 'Note title is required'),
-  content: z.string(),
-  type: z.enum(['idea', 'research', 'todo', 'other']),
-  updatedAt: z.coerce.date(),
-});
-
-// Lorebook entry schema
+// Lorebook entry schema (used internally for export validation)
 const lorebookCategorySchema = z.enum([
   'character',
   'location',
@@ -170,7 +161,7 @@ const relationshipSchema = z.object({
   description: z.string().optional(),
 });
 
-export const lorebookEntrySchema = baseEntitySchema.extend({
+const lorebookEntrySchema = baseEntitySchema.extend({
   storyId: z.string().uuid(),
   name: z.string().min(1, 'Entry name is required'),
   description: z.string(),

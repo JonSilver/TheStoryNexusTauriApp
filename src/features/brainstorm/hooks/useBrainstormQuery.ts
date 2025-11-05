@@ -4,23 +4,20 @@ import type { AIChat } from '@/types/story';
 import { toast } from 'react-toastify';
 
 // Query keys
-export const brainstormKeys = {
+const brainstormKeys = {
     all: ['brainstorm'] as const,
     byStory: (storyId: string) => ['brainstorm', 'story', storyId] as const,
     detail: (id: string) => ['brainstorm', id] as const,
 };
 
 // Fetch brainstorm chats by story
-export const useBrainstormChatsByStoryQuery = (storyId: string) => {
+export const useBrainstormByStoryQuery = (storyId: string) => {
     return useQuery({
         queryKey: brainstormKeys.byStory(storyId),
         queryFn: () => brainstormApi.getByStory(storyId),
         enabled: !!storyId,
     });
 };
-
-// Alias for backwards compatibility
-export const useBrainstormByStoryQuery = useBrainstormChatsByStoryQuery;
 
 // Fetch single brainstorm chat
 export const useBrainstormChatQuery = (id: string) => {
@@ -32,7 +29,7 @@ export const useBrainstormChatQuery = (id: string) => {
 };
 
 // Create brainstorm chat mutation
-export const useCreateBrainstormChatMutation = () => {
+export const useCreateBrainstormMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -48,7 +45,7 @@ export const useCreateBrainstormChatMutation = () => {
 };
 
 // Update brainstorm chat mutation
-export const useUpdateBrainstormChatMutation = () => {
+export const useUpdateBrainstormMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -68,7 +65,7 @@ export const useUpdateBrainstormChatMutation = () => {
 };
 
 // Delete brainstorm chat mutation
-export const useDeleteBrainstormChatMutation = () => {
+export const useDeleteBrainstormMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -82,8 +79,3 @@ export const useDeleteBrainstormChatMutation = () => {
         },
     });
 };
-
-// Backwards compatibility aliases
-export const useCreateBrainstormMutation = useCreateBrainstormChatMutation;
-export const useUpdateBrainstormMutation = useUpdateBrainstormChatMutation;
-export const useDeleteBrainstormMutation = useDeleteBrainstormChatMutation;

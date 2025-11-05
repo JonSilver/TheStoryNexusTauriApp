@@ -16,6 +16,7 @@ import { chaptersApi } from "@/services/api/client";
 import { extractPlainTextFromLexical } from "@/utils/lexicalUtils";
 import type { AllowedModel, Chapter, Prompt } from "../../../types/story";
 import { useNavigate } from "react-router";
+import { ROUTES } from "@/constants/urls";
 import { Textarea } from "../../../components/ui/textarea";
 import {
   AlertDialog,
@@ -238,7 +239,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
 
   const handleWriteClick = () => {
     setCurrentChapterId(chapter.id);
-    navigate(`/dashboard/${storyId}/chapters/${chapter.id}`);
+    navigate(ROUTES.DASHBOARD.CHAPTER_EDITOR(storyId, chapter.id));
   };
 
   return (
