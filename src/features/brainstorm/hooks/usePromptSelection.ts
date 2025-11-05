@@ -21,6 +21,10 @@ export const usePromptSelection = (
     const updateMutation = useUpdateBrainstormMutation();
 
     useEffect(() => {
+        setHasLoadedInitial(false);
+    }, [chatId]);
+
+    useEffect(() => {
         if (!hasLoadedInitial && lastUsedPromptId && prompts.length > 0) {
             const lastPrompt = prompts.find(p => p.id === lastUsedPromptId);
             if (lastPrompt && lastPrompt.allowedModels.length > 0) {
