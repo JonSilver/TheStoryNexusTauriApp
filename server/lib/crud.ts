@@ -7,6 +7,7 @@ type CrudConfig = {
   table: any;
   name: string;
   parentKey?: string;
+  parentRoute?: string;
   transforms?: {
     afterRead?: (row: any) => any;
   };
@@ -30,7 +31,7 @@ const asyncHandler = (fn: (req: Request, res: Response) => Promise<void>) =>
 
 export const createCrudRouter = (config: CrudConfig): Router => {
   const router = Router();
-  const { table, name, parentKey, transforms, customRoutes } = config;
+  const { table, name, parentKey, parentRoute, transforms, customRoutes } = config;
 
   const applyTransform = (data: any) =>
     transforms?.afterRead ? transforms.afterRead(data) : data;
@@ -44,8 +45,10 @@ export const createCrudRouter = (config: CrudConfig): Router => {
 
   // GET all (optionally filtered by parent)
   if (parentKey) {
-    router.get(`/${parentKey}/:parentId`, asyncHandler(async (req, res) => {
-      const rows = await db.select().from(table).where(eq(table[parentKey], req.params.parentId));
+    const routePath = parentRoute || parentKey.replace(/Id$/, '');
+    const paramName = parentRoute ? `${routePath}Id` : parentKey;
+    router.get(`/${routePath}/:${paramName}`, asyncHandler(async (req, res) => {
+      const rows = await db.select().from(table).where(eq(table[parentKey], req.params[paramName]));
       res.json(rows.map(applyTransform));
     }));
   } else {
