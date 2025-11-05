@@ -5,25 +5,34 @@ interface UseChatMessagesParams {
     selectedChat: AIChat;
     streamingMessageId: string | null;
     streamingContent: string;
+    pendingUserMessage: ChatMessage | null;
 }
 
 export const useChatMessages = ({
     selectedChat,
     streamingMessageId,
     streamingContent,
+    pendingUserMessage,
 }: UseChatMessagesParams): ChatMessage[] => {
     return useMemo(() => {
-        if (!streamingMessageId) {
-            return selectedChat.messages;
+        const baseMessages = selectedChat.messages;
+        const messagesToAdd: ChatMessage[] = [];
+
+        if (pendingUserMessage) {
+            messagesToAdd.push(pendingUserMessage);
         }
 
-        const streamingMessage: ChatMessage = {
-            id: streamingMessageId,
-            content: streamingContent,
-            role: 'assistant',
-            timestamp: new Date()
-        };
+        if (streamingMessageId) {
+            messagesToAdd.push({
+                id: streamingMessageId,
+                content: streamingContent,
+                role: 'assistant',
+                timestamp: new Date()
+            });
+        }
 
-        return [...selectedChat.messages, streamingMessage];
-    }, [selectedChat.messages, streamingMessageId, streamingContent]);
+        return messagesToAdd.length > 0
+            ? [...baseMessages, ...messagesToAdd]
+            : baseMessages;
+    }, [selectedChat.messages, streamingMessageId, streamingContent, pendingUserMessage]);
 };

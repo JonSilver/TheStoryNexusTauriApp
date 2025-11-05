@@ -22,6 +22,7 @@ interface UseMessageGenerationReturn {
     abort: () => void;
     streamingMessageId: string | null;
     streamingContent: string;
+    pendingUserMessage: ChatMessage | null;
 }
 
 export const useMessageGeneration = ({
@@ -35,6 +36,7 @@ export const useMessageGeneration = ({
     const [isGenerating, setIsGenerating] = useState(false);
     const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
     const [streamingContent, setStreamingContent] = useState("");
+    const [pendingUserMessage, setPendingUserMessage] = useState<ChatMessage | null>(null);
 
     const { generateWithPrompt } = useGenerateWithPrompt();
     const createMutation = useCreateBrainstormMutation();
@@ -44,6 +46,7 @@ export const useMessageGeneration = ({
         aiService.abortStream();
         setIsGenerating(false);
         setStreamingMessageId(null);
+        setPendingUserMessage(null);
     }, []);
 
     const generate = useCallback(async (input: string) => {
@@ -60,6 +63,8 @@ export const useMessageGeneration = ({
                 content: input.trim(),
                 timestamp: new Date(),
             };
+
+            setPendingUserMessage(userMessage);
 
             const chatIdToUse = selectedChat.id || await new Promise<string>((resolve) => {
                 const newTitle = userMessage.content.substring(0, 40) +
@@ -125,6 +130,7 @@ export const useMessageGeneration = ({
                     setIsGenerating(false);
                     setStreamingMessageId(null);
                     setStreamingContent("");
+                    setPendingUserMessage(null);
 
                     const updatedMessages = [
                         ...selectedChat.messages,
@@ -146,6 +152,7 @@ export const useMessageGeneration = ({
                     toast.error("Failed to stream response");
                     setIsGenerating(false);
                     setStreamingMessageId(null);
+                    setPendingUserMessage(null);
                 }
             );
         });
@@ -155,6 +162,7 @@ export const useMessageGeneration = ({
             toast.error("An error occurred during generation");
             setIsGenerating(false);
             setStreamingMessageId(null);
+            setPendingUserMessage(null);
         }
     }, [
         selectedChat,
@@ -175,5 +183,6 @@ export const useMessageGeneration = ({
         abort,
         streamingMessageId,
         streamingContent,
+        pendingUserMessage,
     };
 };
