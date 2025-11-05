@@ -44,6 +44,21 @@ export const storiesApi = {
     delete: (id: string) => fetchJSON<{ success: boolean }>(`/stories/${id}`, {
         method: 'DELETE',
     }),
+    exportStory: (id: string) => fetchJSON<any>(`/stories/${id}/export`),
+    importStory: (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return fetch(`${API_BASE}/stories/import`, {
+            method: 'POST',
+            body: formData,
+        }).then(async (response) => {
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ error: 'Import failed' }));
+                throw new Error(error.error || 'Import failed');
+            }
+            return response.json();
+        });
+    },
 };
 
 // Chapters API
@@ -169,6 +184,7 @@ export const notesApi = {
 
 // Admin/Migration API
 export const adminApi = {
+    exportDatabase: () => fetchJSON<any>('/admin/export'),
     importDatabase: (file: File) => {
         const formData = new FormData();
         formData.append('file', file);

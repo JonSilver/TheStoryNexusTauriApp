@@ -31,19 +31,9 @@ export const storyExportService = {
      * Import a complete story with all related data
      * Returns the ID of the newly imported story
      */
-    importStory: async (jsonData: string): Promise<string> => {
-        const [parseError, data] = await attemptPromise(() =>
-            Promise.resolve(FileDownloadUtil.parseImportFile(jsonData))
-        );
-
-        if (parseError) {
-            logger.error('Story import failed:', parseError);
-            toast.error(`Import failed: ${parseError.message}`);
-            throw parseError;
-        }
-
+    importStory: async (file: File): Promise<string> => {
         const [importError, newStoryId] = await attemptPromise(() =>
-            importService.importStory(data)
+            importService.importStory(file)
         );
 
         if (importError) {
@@ -52,7 +42,7 @@ export const storyExportService = {
             throw importError;
         }
 
-        toast.success(`Story "${data.story.title} (Imported)" imported successfully`);
+        toast.success('Story imported successfully');
         return newStoryId;
     }
 };

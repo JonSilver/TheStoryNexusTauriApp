@@ -41,22 +41,18 @@ export default function Home() {
         if (!event.target.files || event.target.files.length === 0) return;
 
         const file = event.target.files[0];
-        const reader = new FileReader();
 
-        reader.onload = async (e) => {
-            const [error] = await attemptPromise(async () => {
-                const content = e.target?.result as string;
-                await storyExportService.importStory(content);
+        const [error] = await attemptPromise(async () => {
+            await storyExportService.importStory(file);
 
-                // Just refresh the story list without navigating
-                await fetchStories();
-            });
-            if (error) {
-                logger.error("Import failed:", error);
-            }
-        };
+            // Just refresh the story list without navigating
+            await fetchStories();
+        });
 
-        reader.readAsText(file);
+        if (error) {
+            logger.error("Import failed:", error);
+        }
+
         // Reset the input
         event.target.value = '';
     };

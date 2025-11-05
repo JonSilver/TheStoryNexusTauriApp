@@ -1,4 +1,4 @@
-import { db } from './database';
+import { adminApi } from './api/client';
 
 export interface DatabaseExport {
     version: string;
@@ -16,35 +16,11 @@ export interface DatabaseExport {
 }
 
 /**
- * Exports all data from the Dexie/IndexedDB database as JSON
+ * Exports all data from the SQLite database as JSON via server API
  * @returns Promise resolving to a complete database export
  */
 export const exportDexieDatabase = async (): Promise<DatabaseExport> => {
-    const [stories, chapters, aiChats, prompts, aiSettings, lorebookEntries, sceneBeats, notes] = await Promise.all([
-        db.stories.toArray(),
-        db.chapters.toArray(),
-        db.aiChats.toArray(),
-        db.prompts.toArray(),
-        db.aiSettings.toArray(),
-        db.lorebookEntries.toArray(),
-        db.sceneBeats.toArray(),
-        db.notes.toArray(),
-    ]);
-
-    return {
-        version: '1.0',
-        exportedAt: new Date().toISOString(),
-        tables: {
-            stories,
-            chapters,
-            aiChats,
-            prompts,
-            aiSettings,
-            lorebookEntries,
-            sceneBeats,
-            notes,
-        },
-    };
+    return await adminApi.exportDatabase();
 };
 
 /**
