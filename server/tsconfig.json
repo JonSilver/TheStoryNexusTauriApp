@@ -2,11 +2,11 @@
     "extends": "../tsconfig.json",
     "compilerOptions": {
         "outDir": "../dist/server",
-        "rootDir": ".",
+        "rootDir": "..",
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
         "types": ["node"]
     },
-    "include": ["./**/*"],
+    "include": ["./**/*", "../src/data/systemPrompts.ts", "../src/types/story.ts"],
     "exclude": ["node_modules"]
 }

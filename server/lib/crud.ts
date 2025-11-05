@@ -72,14 +72,16 @@ export const createCrudRouter = (config: CrudConfig): Router => {
       ...req.body,
       createdAt: new Date(),
     };
-    const [created] = await db.insert(table).values(data).returning();
+    const result = await db.insert(table).values(data).returning();
+    const created = Array.isArray(result) ? result[0] : result;
     res.status(201).json(applyTransform(created));
   }));
 
   // PUT update
   router.put('/:id', asyncHandler(async (req, res) => {
     const { id, createdAt, ...updates } = req.body;
-    const [updated] = await db.update(table).set(updates).where(eq(table.id, req.params.id)).returning();
+    const result = await db.update(table).set(updates).where(eq(table.id, req.params.id)).returning();
+    const updated = Array.isArray(result) ? result[0] : result;
     if (!updated) {
       res.status(404).json({ error: `${name} not found` });
       return;

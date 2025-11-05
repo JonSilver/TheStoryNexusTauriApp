@@ -31,10 +31,11 @@ router.get('/settings', asyncHandler(async (_, res) => {
 
 router.put('/settings/:id', asyncHandler(async (req, res) => {
   const { id, createdAt, ...updates } = req.body;
-  const [updated] = await db.update(schema.aiSettings)
+  const result = await db.update(schema.aiSettings)
     .set(updates)
     .where(eq(schema.aiSettings.id, req.params.id))
     .returning();
+  const updated = Array.isArray(result) ? result[0] : result;
   res.json(updated);
 }));
 
