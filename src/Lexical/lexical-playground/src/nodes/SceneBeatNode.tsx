@@ -73,7 +73,8 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
   const [editor] = useLexicalComposerContext();
   const { currentStoryId, currentChapterId } = useStoryContext();
   const { data: currentChapter } = useChapterQuery(currentChapterId || '');
-  const { data: prompts = [], isLoading, error } = usePromptsQuery();
+  const { data: prompts = [], isLoading, error: promptsQueryError } = usePromptsQuery({ includeSystem: true });
+  const promptsError = promptsQueryError?.message ?? null;
   const { entries } = useLorebookContext();
   const { chapterMatchedEntries } = useChapterMatching();
 
@@ -390,7 +391,7 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
           {/* Generation Controls */}
           <GenerationControls
             isLoading={isLoading}
-            error={error?.message || null}
+            error={promptsError}
             prompts={prompts}
             selectedPrompt={selectedPrompt}
             selectedModel={selectedModel}
@@ -504,4 +505,9 @@ export function $isSceneBeatNode(
   node: LexicalNode | null | undefined
 ): node is SceneBeatNode {
   return node instanceof SceneBeatNode;
+}
+
+// Disable HMR for this module to prevent node registration conflicts
+if (import.meta.hot) {
+  import.meta.hot.decline();
 }
