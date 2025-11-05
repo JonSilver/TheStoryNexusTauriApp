@@ -143,15 +143,6 @@ const promptSchema = baseEntitySchema.extend({
   min_p: z.number().min(0).max(1).optional(),
 });
 
-// Note schema (used internally for validation)
-const noteSchema = baseEntitySchema.extend({
-  storyId: z.string().uuid(),
-  title: z.string().min(1, 'Note title is required'),
-  content: z.string(),
-  type: z.enum(['idea', 'research', 'todo', 'other']),
-  updatedAt: z.coerce.date(),
-});
-
 // Lorebook entry schema (used internally for export validation)
 const lorebookCategorySchema = z.enum([
   'character',
