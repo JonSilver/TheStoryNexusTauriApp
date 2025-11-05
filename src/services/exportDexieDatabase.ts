@@ -1,6 +1,6 @@
 import { adminApi } from './api/client';
 
-export interface DatabaseExport {
+interface DatabaseExport {
     version: string;
     exportedAt: string;
     tables: {
@@ -19,7 +19,7 @@ export interface DatabaseExport {
  * Exports all data from the SQLite database as JSON via server API
  * @returns Promise resolving to a complete database export
  */
-export const exportDexieDatabase = async (): Promise<DatabaseExport> => {
+const exportDexieDatabase = async (): Promise<DatabaseExport> => {
     return await adminApi.exportDatabase();
 };
 

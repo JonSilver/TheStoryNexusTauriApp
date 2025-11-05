@@ -20,15 +20,6 @@ export const usePromptsQuery = (params?: { storyId?: string; promptType?: string
     });
 };
 
-// Fetch single prompt
-export const usePromptQuery = (id: string) => {
-    return useQuery({
-        queryKey: promptsKeys.detail(id),
-        queryFn: () => promptsApi.getById(id),
-        enabled: !!id,
-    });
-};
-
 // Create prompt mutation
 export const useCreatePromptMutation = () => {
     const queryClient = useQueryClient();
