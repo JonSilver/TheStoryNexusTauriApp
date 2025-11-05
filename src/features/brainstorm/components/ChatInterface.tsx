@@ -51,7 +51,7 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
         selectedPrompt,
         selectedModel,
         selectPrompt,
-    } = usePromptSelection(selectedChat.id, selectedChat.lastUsedPromptId, prompts);
+    } = usePromptSelection(selectedChat.id, selectedChat.lastUsedPromptId, selectedChat.lastUsedModelId, prompts);
 
     const {
         showPreview,

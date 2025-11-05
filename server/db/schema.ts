@@ -43,6 +43,7 @@ export const aiChats = sqliteTable('aiChats', {
     createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updatedAt', { mode: 'timestamp' }),
     lastUsedPromptId: text('lastUsedPromptId'),
+    lastUsedModelId: text('lastUsedModelId'),
     isDemo: integer('isDemo', { mode: 'boolean' }),
 }, (table) => ({
     storyIdIdx: index('chat_story_id_idx').on(table.storyId),
