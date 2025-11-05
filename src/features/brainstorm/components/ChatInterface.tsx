@@ -1,29 +1,32 @@
-import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
 import { useAvailableModels } from "@/features/ai/hooks/useAvailableModels";
+import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
 import { useChaptersByStoryQuery } from "@/features/chapters/hooks/useChaptersQuery";
 import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
 import { LorebookFilterService } from "@/features/lorebook/stores/LorebookFilterService";
 import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
-import { usePromptSelection } from "../hooks/usePromptSelection";
-import { usePromptPreview } from "../hooks/usePromptPreview";
-import { useContextSelection } from "../hooks/useContextSelection";
-import {
+import { aiService } from "@/services/ai/AIService";
+import type {
     AIChat,
     AllowedModel,
     ChatMessage,
     Prompt,
     PromptParserConfig,
 } from "@/types/story";
+import { logger } from "@/utils/logger";
+import { attemptPromise } from "@jfdi/attempt";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { useCreateBrainstormMutation, useUpdateBrainstormMutation } from "../hooks/useBrainstormQuery";
+import {
+    useCreateBrainstormMutation,
+    useUpdateBrainstormMutation,
+} from "../hooks/useBrainstormQuery";
+import { useContextSelection } from "../hooks/useContextSelection";
+import { usePromptPreview } from "../hooks/usePromptPreview";
+import { usePromptSelection } from "../hooks/usePromptSelection";
 import { ChatMessageList } from "./ChatMessageList";
 import { ContextSelector } from "./ContextSelector";
 import { MessageInputArea } from "./MessageInputArea";
 import { PromptControls } from "./PromptControls";
-import { attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
-import { aiService } from '@/services/ai/AIService';
 
 interface ChatInterfaceProps {
     storyId: string;
@@ -31,27 +34,40 @@ interface ChatInterfaceProps {
     onChatUpdate: (chat: AIChat) => void;
 }
 
-export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: ChatInterfaceProps) {
+export default function ChatInterface({
+    storyId,
+    selectedChat,
+    onChatUpdate,
+}: ChatInterfaceProps) {
     const [input, setInput] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
-    const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+    const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
+        null
+    );
     const [streamingContent, setStreamingContent] = useState("");
-    const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+    const [editingMessageId, setEditingMessageId] = useState<string | null>(
+        null
+    );
     const [editingContent, setEditingContent] = useState("");
     const editingTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
     const { entries: lorebookEntries } = useLorebookContext();
-    const { data: prompts = [], isLoading: promptsLoading, error: promptsQueryError } = usePromptsQuery({ includeSystem: true });
+    const {
+        data: prompts = [],
+        isLoading: promptsLoading,
+        error: promptsQueryError,
+    } = usePromptsQuery({ includeSystem: true });
     const { data: chapters = [] } = useChaptersByStoryQuery(storyId);
     const promptsError = promptsQueryError?.message ?? null;
 
     const { data: availableModels = [] } = useAvailableModels();
 
-    const {
-        selectedPrompt,
-        selectedModel,
-        selectPrompt,
-    } = usePromptSelection(selectedChat.id, selectedChat.lastUsedPromptId, selectedChat.lastUsedModelId, prompts);
+    const { selectedPrompt, selectedModel, selectPrompt } = usePromptSelection(
+        selectedChat.id,
+        selectedChat.lastUsedPromptId,
+        selectedChat.lastUsedModelId,
+        prompts
+    );
 
     const {
         showPreview,
@@ -103,8 +119,12 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
                 })),
                 includeFullContext,
                 selectedSummaries: includeFullContext ? [] : selectedSummaries,
-                selectedItems: includeFullContext ? [] : selectedItems.map((item) => item.id),
-                selectedChapterContent: includeFullContext ? [] : selectedChapterContent,
+                selectedItems: includeFullContext
+                    ? []
+                    : selectedItems.map((item) => item.id),
+                selectedChapterContent: includeFullContext
+                    ? []
+                    : selectedChapterContent,
             },
         };
     };
@@ -120,7 +140,8 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
     };
 
     const handleSubmit = async () => {
-        if (!input.trim() || !selectedPrompt || !selectedModel || isGenerating) return;
+        if (!input.trim() || !selectedPrompt || !selectedModel || isGenerating)
+            return;
 
         const [error] = await attemptPromise(async () => {
             if (!selectedPrompt || !selectedModel) {
@@ -152,7 +173,7 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
                     onSuccess: (created) => {
                         chatId = created.id;
                         onChatUpdate(created);
-                    }
+                    },
                 });
             }
 
@@ -198,14 +219,17 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
                         { ...assistantMessage, content: fullResponse },
                     ];
 
-                    updateMutation.mutate({
-                        id: chatId,
-                        data: { messages: updatedMessages }
-                    }, {
-                        onSuccess: (updatedChat) => {
-                            onChatUpdate(updatedChat);
+                    updateMutation.mutate(
+                        {
+                            id: chatId,
+                            data: { messages: updatedMessages },
+                        },
+                        {
+                            onSuccess: (updatedChat) => {
+                                onChatUpdate(updatedChat);
+                            },
                         }
-                    });
+                    );
                 },
                 (streamError) => {
                     logger.error("Streaming error:", streamError);
@@ -232,7 +256,11 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
 
     const handleStartEdit = (message: ChatMessage) => {
         if (streamingMessageId === message.id) {
-            if (!confirm("This message is still being generated. Stop generation and edit?")) {
+            if (
+                !confirm(
+                    "This message is still being generated. Stop generation and edit?"
+                )
+            ) {
                 return;
             }
             aiService.abortStream();
@@ -249,37 +277,43 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
         }
 
         const [error] = await attemptPromise(async () => {
-            const existingMsg = selectedChat.messages?.find(m => m.id === messageId);
+            const existingMsg = selectedChat.messages?.find(
+                (m) => m.id === messageId
+            );
             if (!existingMsg) {
                 throw new Error("Message not found");
             }
 
-            const originalContent = existingMsg.originalContent ?? existingMsg.content;
+            const originalContent =
+                existingMsg.originalContent ?? existingMsg.content;
             const editedAt = new Date().toISOString();
 
-            const updatedMessages = selectedChat.messages?.map(msg =>
+            const updatedMessages = selectedChat.messages?.map((msg) =>
                 msg.id === messageId
                     ? {
-                        ...msg,
-                        content: editingContent,
-                        originalContent,
-                        editedAt,
-                        editedBy: 'user' as const
-                    }
+                          ...msg,
+                          content: editingContent,
+                          originalContent,
+                          editedAt,
+                          editedBy: "user" as const,
+                      }
                     : msg
             );
 
             await new Promise<void>((resolve, reject) => {
-                updateMutation.mutate({
-                    id: selectedChat.id,
-                    data: { messages: updatedMessages }
-                }, {
-                    onSuccess: (updatedChat) => {
-                        onChatUpdate(updatedChat);
-                        resolve();
+                updateMutation.mutate(
+                    {
+                        id: selectedChat.id,
+                        data: { messages: updatedMessages },
                     },
-                    onError: reject
-                });
+                    {
+                        onSuccess: (updatedChat) => {
+                            onChatUpdate(updatedChat);
+                            resolve();
+                        },
+                        onError: reject,
+                    }
+                );
             });
         });
 
@@ -300,7 +334,10 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
     };
 
     const handleItemSelect = (itemId: string) => {
-        const filteredEntries = LorebookFilterService.getFilteredEntries(lorebookEntries, false);
+        const filteredEntries = LorebookFilterService.getFilteredEntries(
+            lorebookEntries,
+            false
+        );
         const item = filteredEntries.find((entry) => entry.id === itemId);
         if (item) {
             addItem(item);
@@ -308,7 +345,15 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
     };
 
     const displayMessages = streamingMessageId
-        ? [...selectedChat.messages, { id: streamingMessageId, content: streamingContent, role: 'assistant' as const, timestamp: new Date() }]
+        ? [
+              ...selectedChat.messages,
+              {
+                  id: streamingMessageId,
+                  content: streamingContent,
+                  role: "assistant" as const,
+                  timestamp: new Date(),
+              },
+          ]
         : selectedChat.messages;
 
     return (
