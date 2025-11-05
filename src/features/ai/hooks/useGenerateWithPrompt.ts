@@ -1,27 +1,19 @@
 import { useCallback } from 'react';
 import { usePromptParser } from '@/features/prompts/hooks/usePromptParser';
-import { useAIStore } from '../stores/useAIStore';
+import { aiService } from '@/services/ai/AIService';
 import { attemptPromise } from '@jfdi/attempt';
 import { promptsApi } from '@/services/api/client';
 import { generateWithProvider } from '../services/aiGenerationHelper';
 import type { PromptParserConfig, AllowedModel } from '@/types/story';
 
-/**
- * Hook that provides AI generation with automatic prompt parsing and context injection.
- * Replaces the Zustand store method to enable proper React Context access.
- */
 export function useGenerateWithPrompt() {
     const { parsePrompt } = usePromptParser();
-    const isInitialized = useAIStore(state => state.isInitialized);
-    const initialize = useAIStore(state => state.initialize);
 
     const generateWithPrompt = useCallback(async (
         config: PromptParserConfig,
         selectedModel: AllowedModel
     ): Promise<Response> => {
-        if (!isInitialized) {
-            await initialize();
-        }
+        await aiService.initialize();
 
         const { messages, error } = await parsePrompt(config);
 
@@ -29,7 +21,6 @@ export function useGenerateWithPrompt() {
             throw new Error(error || 'Failed to parse prompt');
         }
 
-        // Get the prompt to access generation parameters
         const [fetchError, prompt] = await attemptPromise(() => promptsApi.getById(config.promptId));
 
         if (fetchError) {
@@ -44,7 +35,7 @@ export function useGenerateWithPrompt() {
             repetition_penalty: prompt?.repetition_penalty,
             min_p: prompt?.min_p
         });
-    }, [parsePrompt, isInitialized, initialize]);
+    }, [parsePrompt]);
 
     return { generateWithPrompt };
 }

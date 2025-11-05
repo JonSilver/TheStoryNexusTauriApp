@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { attemptPromise } from '@jfdi/attempt';
-import { useAIStore } from '@/features/ai/stores/useAIStore';
 import { aiService } from '@/services/ai/AIService';
 import { logger } from '@/utils/logger';
 import type { AIModel, AllowedModel } from '@/types/story';
@@ -29,18 +28,14 @@ export const useModelSelection = ({ initialModels = [] }: UseModelSelectionProps
     const [selectedModels, setSelectedModels] = useState<AllowedModel[]>(initialModels);
     const [modelSearch, setModelSearch] = useState('');
 
-    const { initialize, getAvailableModels, isInitialized } = useAIStore();
-
     useEffect(() => {
         loadAvailableModels();
     }, []);
 
     const loadAvailableModels = async () => {
         const [error, models] = await attemptPromise(async () => {
-            if (!isInitialized) {
-                await initialize();
-            }
-            return await getAvailableModels();
+            await aiService.initialize();
+            return await aiService.getAvailableModels();
         });
         if (error) {
             logger.error('Error loading AI models:', error);

@@ -1,72 +1,77 @@
-import { create } from 'zustand';
-import { useChapterContentStore } from './useChapterContentStore';
 import { chaptersApi } from '@/services/api/client';
+import { extractPlainTextFromLexical } from '@/utils/lexicalUtils';
 import { attemptPromise } from '@jfdi/attempt';
 import { logger } from '@/utils/logger';
+import type { Chapter, ChapterOutline } from '@/types/story';
 
 /**
- * Chapter facade store - provides utility methods for content extraction and summary aggregation.
+ * Chapter utility functions - provides methods for content extraction.
  * For CRUD operations, use TanStack Query hooks (useChaptersByStoryQuery, useUpdateChapterMutation, etc.)
+ * For summary aggregation, use hooks from useChapterSummariesQuery.
  */
-interface ChapterState {
-    // Content extraction utilities
-    getChapterPlainText: (id: string) => Promise<string>;
-    extractPlainTextFromLexicalState: (editorStateJSON: string) => string;
 
-    // Summary aggregation utilities
-    getChapterSummaries: (storyId: string, currentOrder: number, includeLatest?: boolean) => Promise<string>;
-    getAllChapterSummaries: (storyId: string) => Promise<string>;
-    getChapterSummary: (id: string) => Promise<string>;
-}
+export const getChapterPlainText = async (id: string): Promise<string> => {
+    const [error, chapter] = await attemptPromise(() => chaptersApi.getById(id));
 
-export const useChapterStore = create<ChapterState>(() => ({
-    // Delegate to content store for plain text extraction
-    getChapterPlainText: (id) => useChapterContentStore.getState().getChapterPlainText(id),
-    extractPlainTextFromLexicalState: (editorStateJSON) => useChapterContentStore.getState().extractPlainTextFromLexicalState(editorStateJSON),
+    if (error) {
+        logger.error('Error getting chapter plain text:', error);
+        return '';
+    }
 
-    // Summary utilities using API
-    getChapterSummaries: async (storyId, currentOrder, includeLatest = false) => {
-        const [error, chapters] = await attemptPromise(() => chaptersApi.getByStory(storyId));
+    if (!chapter || !chapter.content) {
+        logger.info('Chapter not found or has no content');
+        return '';
+    }
 
-        if (error) {
-            logger.error('Error fetching chapters for summaries:', error);
-            return '';
-        }
+    return extractPlainTextFromLexical(chapter.content);
+};
 
-        const relevantChapters = includeLatest
-            ? chapters.filter(ch => ch.order <= currentOrder)
-            : chapters.filter(ch => ch.order < currentOrder);
+export const extractPlainTextFromLexicalState = (editorStateJSON: string): string => {
+    return extractPlainTextFromLexical(editorStateJSON);
+};
 
-        return relevantChapters
-            .sort((a, b) => a.order - b.order)
-            .map(ch => ch.summary || '')
-            .filter(summary => summary.length > 0)
-            .join('\n\n');
-    },
+export const getPreviousChapter = async (currentChapterId: string): Promise<Chapter | null> => {
+    const [error, currentChapter] = await attemptPromise(() => chaptersApi.getById(currentChapterId));
 
-    getAllChapterSummaries: async (storyId) => {
-        const [error, chapters] = await attemptPromise(() => chaptersApi.getByStory(storyId));
+    if (error) {
+        logger.error('Error getting current chapter:', error);
+        return null;
+    }
 
-        if (error) {
-            logger.error('Error fetching chapters for summaries:', error);
-            return '';
-        }
+    if (!currentChapter) {
+        logger.info('Current chapter not found');
+        return null;
+    }
 
-        return chapters
-            .sort((a, b) => a.order - b.order)
-            .map(ch => ch.summary || '')
-            .filter(summary => summary.length > 0)
-            .join('\n\n');
-    },
+    const [chaptersError, chapters] = await attemptPromise(() =>
+        chaptersApi.getByStory(currentChapter.storyId)
+    );
 
-    getChapterSummary: async (id) => {
-        const [error, chapter] = await attemptPromise(() => chaptersApi.getById(id));
+    if (chaptersError) {
+        logger.error('Error getting chapters for story:', chaptersError);
+        return null;
+    }
 
-        if (error) {
-            logger.error('Error fetching chapter summary:', error);
-            return '';
-        }
+    if (!chapters) {
+        return null;
+    }
 
-        return chapter?.summary || '';
-    },
-}));
+    // Find the chapter with order = currentChapter.order - 1
+    const previousChapter = chapters.find(ch => ch.order === currentChapter.order - 1);
+    return previousChapter || null;
+};
+
+export const getChapterOutline = async (chapterId: string | undefined): Promise<ChapterOutline | null> => {
+    if (!chapterId) {
+        return null;
+    }
+
+    const [error, chapter] = await attemptPromise(() => chaptersApi.getById(chapterId));
+
+    if (error) {
+        logger.error('Error getting chapter outline:', error);
+        return null;
+    }
+
+    return chapter?.outline || null;
+};

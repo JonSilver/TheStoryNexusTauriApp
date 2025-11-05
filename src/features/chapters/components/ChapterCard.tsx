@@ -12,7 +12,8 @@ import {
   GripVertical,
 } from "lucide-react";
 import { useUpdateChapterMutation, useDeleteChapterMutation } from "@/features/chapters/hooks/useChaptersQuery";
-import { useChapterStore } from "../stores/useChapterStore";
+import { chaptersApi } from "@/services/api/client";
+import { extractPlainTextFromLexical } from "@/utils/lexicalUtils";
 import type { AllowedModel, Chapter, Prompt } from "../../../types/story";
 import { useNavigate } from "react-router";
 import { Textarea } from "../../../components/ui/textarea";
@@ -51,7 +52,7 @@ import {
 } from "../../../components/ui/card";
 import { toast } from "react-toastify";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
-import { useAIStore } from "@/features/ai/stores/useAIStore";
+import { aiService } from "@/services/ai/AIService";
 import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
 import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
 import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
@@ -85,9 +86,6 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
   const [summary, setSummary] = useState(chapter.summary || "");
   const deleteChapterMutation = useDeleteChapterMutation();
   const updateChapterMutation = useUpdateChapterMutation();
-  const getChapterPlainText = useChapterStore(
-    (state) => state.getChapterPlainText
-  );
   const form = useForm<EditChapterForm>({
     defaultValues: {
       title: chapter.title,
@@ -98,7 +96,6 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
   const povType = form.watch("povType");
   const { setCurrentChapterId } = useStoryContext();
   const navigate = useNavigate();
-  const { processStreamedResponse } = useAIStore();
   const { generateWithPrompt } = useGenerateWithPrompt();
   const { entries } = useLorebookContext();
   const { data: prompts = [], isLoading, error: queryError } = usePromptsQuery({ includeSystem: true });
@@ -189,7 +186,10 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     setIsGenerating(true);
 
     const [error] = await attemptPromise(async () => {
-      const plainTextContent = await getChapterPlainText(chapter.id);
+      const chapterData = await chaptersApi.getById(chapter.id);
+      const plainTextContent = chapterData?.content
+        ? extractPlainTextFromLexical(chapterData.content)
+        : '';
 
       const config: PromptParserConfig = {
         promptId: prompt.id,
@@ -204,7 +204,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
       let text = "";
 
       await new Promise<void>((resolve, reject) => {
-        processStreamedResponse(
+        aiService.processStreamedResponse(
           response,
           (token) => {
             text += token;

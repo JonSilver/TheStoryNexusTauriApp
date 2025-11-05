@@ -1,13 +1,18 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import debounce from 'lodash/debounce';
 import { $getRoot } from 'lexical';
-import { useLorebookStore } from '@/features/lorebook/stores/useLorebookStore';
+import { useChapterMatching } from '@/features/lorebook/hooks/useChapterMatching';
+import { useLorebookContext } from '@/features/lorebook/context/LorebookContext';
+import { buildTagMap } from '@/features/lorebook/utils/lorebookFilters';
 import { LorebookEntry } from '@/types/story';
 
 export default function LorebookTagPlugin(): null {
     const [editor] = useLexicalComposerContext();
-    const { tagMap, setChapterMatchedEntries } = useLorebookStore();
+    const { entries } = useLorebookContext();
+    const { setChapterMatchedEntries } = useChapterMatching();
+
+    const tagMap = useMemo(() => buildTagMap(entries), [entries]);
 
     useEffect(() => {
         // Clear matched entries when plugin mounts with new editor
@@ -26,7 +31,7 @@ export default function LorebookTagPlugin(): null {
                     }
                 });
 
-                // Update the store with matched entries only
+                // Update the context with matched entries only
                 setChapterMatchedEntries(matchedEntries);
             });
         }, 500);

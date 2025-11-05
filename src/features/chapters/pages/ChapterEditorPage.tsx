@@ -3,16 +3,13 @@ import { useParams } from "react-router";
 import { useStoryQuery } from "@/features/stories/hooks/useStoriesQuery";
 import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
-import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
-import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
 import { StoryEditor } from "@/features/chapters/components/StoryEditor";
+import { ChapterMatchingProvider } from "@/features/lorebook/hooks/useChapterMatching";
 
 export default function ChapterEditorPage() {
     const { storyId, chapterId } = useParams<{ storyId: string; chapterId: string }>();
     const { data: story, isLoading: storyLoading } = useStoryQuery(storyId || "");
     const { data: chapter, isLoading: chapterLoading } = useChapterQuery(chapterId || "");
-    const { entries } = useLorebookContext();
-    const { buildTagMap } = useLorebookStore();
     const { setCurrentStoryId, setCurrentChapterId } = useStoryContext();
 
     useEffect(() => {
@@ -22,15 +19,11 @@ export default function ChapterEditorPage() {
         if (chapterId) {
             setCurrentChapterId(chapterId);
         }
-        // Build tag map when entries are available
-        if (entries.length > 0) {
-            buildTagMap(entries);
-        }
 
         return () => {
             setCurrentChapterId(null);
         };
-    }, [storyId, chapterId, entries, setCurrentStoryId, setCurrentChapterId, buildTagMap]);
+    }, [storyId, chapterId, setCurrentStoryId, setCurrentChapterId]);
 
     if (storyLoading) {
         return (
@@ -65,8 +58,10 @@ export default function ChapterEditorPage() {
     }
 
     return (
-        <div className="h-full">
-            <StoryEditor />
-        </div>
+        <ChapterMatchingProvider>
+            <div className="h-full">
+                <StoryEditor />
+            </div>
+        </ChapterMatchingProvider>
     );
 } 
