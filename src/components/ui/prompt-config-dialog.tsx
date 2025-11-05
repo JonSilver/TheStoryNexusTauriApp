@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./dialog";
 import { Button } from "./button";
 import { Plus } from "lucide-react";
 import { PromptsList } from "@/features/prompts/components/PromptList";
@@ -62,6 +62,9 @@ export const PromptConfigDialog = ({ open, onOpenChange, promptType }: PromptCon
                             New Prompt
                         </Button>
                     </div>
+                    <DialogDescription>
+                        Create, edit, and manage prompts for AI generation
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex-1 flex overflow-hidden">

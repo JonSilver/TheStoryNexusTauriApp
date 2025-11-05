@@ -38,10 +38,12 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
     });
     const editingTextareaRef = useRef<HTMLTextAreaElement | null>(null);
     const prevChatIdRef = useRef(selectedChat.id);
+    const loadedPromptForChatRef = useRef<string | null>(null);
 
     // Handle chat selection changes - reset state when switching chats
     if (prevChatIdRef.current !== selectedChat.id) {
         prevChatIdRef.current = selectedChat.id;
+        loadedPromptForChatRef.current = null; // Reset prompt loading flag
         // Use a microtask to avoid dispatching during render
         Promise.resolve().then(() => {
             dispatch({ type: "SET_CURRENT_CHAT_ID", payload: selectedChat.id });
@@ -93,6 +95,24 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
         loadData();
     }, [initializeAI, getAvailableModels]);
 
+    // Load last used prompt when chat changes or prompts load (only once per chat)
+    useEffect(() => {
+        if (
+            selectedChat.lastUsedPromptId &&
+            prompts.length > 0 &&
+            loadedPromptForChatRef.current !== selectedChat.id
+        ) {
+            const lastPrompt = prompts.find(p => p.id === selectedChat.lastUsedPromptId);
+            if (lastPrompt && lastPrompt.allowedModels.length > 0) {
+                dispatch({
+                    type: "SET_PROMPT_AND_MODEL",
+                    payload: { prompt: lastPrompt, model: lastPrompt.allowedModels[0] }
+                });
+                loadedPromptForChatRef.current = selectedChat.id;
+            }
+        }
+    }, [selectedChat.id, selectedChat.lastUsedPromptId, prompts.length]);
+
     // Helper functions
     const getFilteredEntries = () => {
         return LorebookFilterService.getFilteredEntries(lorebookEntries, false);
@@ -125,6 +145,12 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
     // Event handlers
     const handlePromptSelect = (prompt: Prompt, model: AllowedModel) => {
         dispatch({ type: "SET_PROMPT_AND_MODEL", payload: { prompt, model } });
+
+        // Save the selected prompt ID to the chat
+        updateMutation.mutate({
+            id: selectedChat.id,
+            data: { lastUsedPromptId: prompt.id }
+        });
     };
 
     const handlePreviewPrompt = async () => {
