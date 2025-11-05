@@ -1,15 +1,7 @@
 import { schema, db } from '../db/client';
 import { createCrudRouter } from '../lib/crud';
+import { parseJson } from '../lib/json';
 import { eq, and } from 'drizzle-orm';
-
-const parseJson = (value: unknown) => {
-  if (typeof value !== 'string') return value;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-};
 
 const transform = (entry: any) => ({
   ...entry,

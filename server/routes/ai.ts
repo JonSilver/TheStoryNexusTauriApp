@@ -1,15 +1,18 @@
 import express from 'express';
+import { attemptPromise } from '@jfdi/attempt';
 import { db, schema } from '../db/client';
 import { eq } from 'drizzle-orm';
 
 const router = express.Router();
 
 const asyncHandler = (fn: (req: express.Request, res: express.Response) => Promise<void>) =>
-  (req: express.Request, res: express.Response) =>
-    fn(req, res).catch(error => {
+  async (req: express.Request, res: express.Response) => {
+    const [error] = await attemptPromise(() => fn(req, res));
+    if (error) {
       console.error('Error:', error);
       res.status(500).json({ error: error.message || 'Server error' });
-    });
+    }
+  };
 
 router.get('/settings', asyncHandler(async (req, res) => {
   const [settings] = await db.select().from(schema.aiSettings);

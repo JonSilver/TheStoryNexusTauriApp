@@ -1,15 +1,7 @@
 import { schema, db } from '../db/client';
 import { createCrudRouter } from '../lib/crud';
+import { parseJson } from '../lib/json';
 import { eq, or, isNull } from 'drizzle-orm';
-
-const parseJson = (value: unknown) => {
-  if (typeof value !== 'string') return value;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-};
 
 const transform = (p: any) => ({
   ...p,
@@ -26,23 +18,17 @@ export default createCrudRouter({
     router.get('/', asyncHandler(async (req, res) => {
       const { storyId, promptType, includeSystem } = req.query;
 
-      let query = db.select().from(table);
+      const query = storyId
+        ? db.select().from(table).where(or(eq(table.storyId, storyId as string), isNull(table.storyId)))
+        : db.select().from(table);
 
-      if (storyId) {
-        query = query.where(or(eq(table.storyId, storyId as string), isNull(table.storyId))) as typeof query;
-      }
+      const allRows = await query;
 
-      let rows = await query;
+      const filtered = allRows
+        .filter(p => !promptType || p.promptType === promptType)
+        .filter(p => includeSystem === 'true' || !p.isSystem);
 
-      if (promptType) {
-        rows = rows.filter(p => p.promptType === promptType);
-      }
-
-      if (includeSystem !== 'true') {
-        rows = rows.filter(p => !p.isSystem);
-      }
-
-      res.json(rows.map(transform));
+      res.json(filtered.map(transform));
     }));
 
     // Custom DELETE - prevent deleting system prompts

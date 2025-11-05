@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { eq } from 'drizzle-orm';
+import { attemptPromise } from '@jfdi/attempt';
 import { db } from '../db/client';
 
 type CrudConfig = {
@@ -19,11 +20,13 @@ type RouteHelpers = {
 };
 
 const asyncHandler = (fn: (req: Request, res: Response) => Promise<void>) =>
-  (req: Request, res: Response) =>
-    fn(req, res).catch(error => {
-      console.error(`Error:`, error);
+  async (req: Request, res: Response) => {
+    const [error] = await attemptPromise(() => fn(req, res));
+    if (error) {
+      console.error('Error:', error);
       res.status(500).json({ error: error.message || 'Server error' });
-    });
+    }
+  };
 
 export const createCrudRouter = (config: CrudConfig): Router => {
   const router = Router();

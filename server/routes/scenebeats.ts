@@ -1,14 +1,6 @@
 import { schema } from '../db/client';
 import { createCrudRouter } from '../lib/crud';
-
-const parseJson = (value: unknown) => {
-  if (typeof value !== 'string') return value;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-};
+import { parseJson } from '../lib/json';
 
 export default createCrudRouter({
   table: schema.sceneBeats,
