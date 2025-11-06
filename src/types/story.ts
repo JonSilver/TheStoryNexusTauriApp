@@ -57,7 +57,7 @@ export interface SceneBeat extends BaseEntity {
         useMatchedChapter?: boolean;
         useMatchedSceneBeat?: boolean;
         useCustomContext?: boolean;
-        [key: string]: any; // Allow for additional metadata properties
+        [key: string]: unknown;
     };
 }
 

@@ -1,16 +1,21 @@
 import { attemptPromise } from "@jfdi/attempt";
 import { and, eq } from "drizzle-orm";
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 import multer from "multer";
 import { nanoid } from "nanoid";
 import { db } from "../db/client.js";
 import { aiChats, chapters, lorebookEntries, sceneBeats, series, stories } from "../db/schema.js";
 
+type ImportedChapter = typeof chapters.$inferSelect;
+type ImportedLorebookEntry = typeof lorebookEntries.$inferSelect;
+type ImportedSceneBeat = typeof sceneBeats.$inferSelect;
+type ImportedAiChat = typeof aiChats.$inferSelect;
+
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
 const seriesRouter = Router();
 
-const asyncHandler = (fn: (req: any, res: any) => Promise<void>) => async (req: any, res: any) => {
+const asyncHandler = (fn: (req: Request, res: Response) => Promise<void>) => async (req: Request, res: Response) => {
     const [error] = await attemptPromise(() => fn(req, res));
     if (error) {
         console.error("Error:", error);
@@ -220,7 +225,7 @@ seriesRouter.post(
         // Import series-level lorebook entries
         if (seriesData.lorebookEntries?.length) {
             const newEntries = seriesData.lorebookEntries
-                .map((entry: any) => {
+                .map((entry: ImportedLorebookEntry) => {
                     // Validate entry
                     if (entry.level && entry.level !== "series") {
                         console.warn(`Skipping non-series entry ${entry.name}`);
@@ -236,7 +241,7 @@ seriesRouter.post(
                         createdAt: new Date()
                     };
                 })
-                .filter((entry: any) => entry !== null);
+                .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
             if (newEntries.length > 0) await db.insert(lorebookEntries).values(newEntries);
         }
@@ -257,7 +262,7 @@ seriesRouter.post(
 
             // Import chapters
             if (storyExport.chapters?.length) {
-                const newChapters = storyExport.chapters.map((chapter: any) => ({
+                const newChapters = storyExport.chapters.map((chapter: ImportedChapter) => ({
                     ...chapter,
                     id: nanoid(),
                     storyId: newStoryId,
@@ -269,7 +274,7 @@ seriesRouter.post(
             // Import story-level lorebook entries
             if (storyExport.lorebookEntries?.length) {
                 const newEntries = storyExport.lorebookEntries
-                    .map((entry: any) => ({
+                    .map((entry: ImportedLorebookEntry) => ({
                         ...entry,
                         id: nanoid(),
                         level: "story",
@@ -277,14 +282,14 @@ seriesRouter.post(
                         storyId: newStoryId, // Temporary for Phase 1
                         createdAt: new Date()
                     }))
-                    .filter((entry: any) => entry !== null);
+                    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
                 if (newEntries.length > 0) await db.insert(lorebookEntries).values(newEntries);
             }
 
             // Import scene beats
             if (storyExport.sceneBeats?.length) {
-                const newSceneBeats = storyExport.sceneBeats.map((sceneBeat: any) => ({
+                const newSceneBeats = storyExport.sceneBeats.map((sceneBeat: ImportedSceneBeat) => ({
                     ...sceneBeat,
                     id: nanoid(),
                     storyId: newStoryId,
@@ -295,7 +300,7 @@ seriesRouter.post(
 
             // Import AI chats
             if (storyExport.aiChats?.length) {
-                const newChats = storyExport.aiChats.map((chat: any) => ({
+                const newChats = storyExport.aiChats.map((chat: ImportedAiChat) => ({
                     ...chat,
                     id: nanoid(),
                     storyId: newStoryId,

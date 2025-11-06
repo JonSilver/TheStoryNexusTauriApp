@@ -3,10 +3,17 @@ import { db, schema } from "../db/client.js";
 import { createCrudRouter } from "../lib/crud.js";
 import { parseJson } from "../lib/json.js";
 
-const transform = (p: any) => ({
+type PromptRow = typeof schema.prompts.$inferSelect;
+
+interface TransformedPrompt extends Omit<PromptRow, 'messages' | 'allowedModels'> {
+    messages: unknown;
+    allowedModels: unknown;
+}
+
+const transform = (p: PromptRow): TransformedPrompt => ({
     ...p,
-    messages: parseJson(p.messages),
-    allowedModels: parseJson(p.allowedModels)
+    messages: parseJson(p.messages as string),
+    allowedModels: parseJson(p.allowedModels as string)
 });
 
 export default createCrudRouter({
