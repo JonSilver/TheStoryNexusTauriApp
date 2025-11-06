@@ -29,11 +29,12 @@ interface LorebookEntryListProps {
     editable?: boolean;
     showLevel?: boolean;
     editableFilter?: (entry: LorebookEntry) => boolean;
+    contextStoryId?: string;
 }
 
 type SortOption = 'name' | 'category' | 'importance' | 'created';
 
-export function LorebookEntryList({ entries: allEntries, editable = true, showLevel = false, editableFilter }: LorebookEntryListProps) {
+export function LorebookEntryList({ entries: allEntries, editable = true, showLevel = false, editableFilter, contextStoryId }: LorebookEntryListProps) {
     const deleteMutation = useDeleteLorebookMutation();
     const updateMutation = useUpdateLorebookMutation();
     const [searchTerm, setSearchTerm] = useState("");
@@ -227,7 +228,7 @@ export function LorebookEntryList({ entries: allEntries, editable = true, showLe
                 <CreateEntryDialog
                     open={!!editingEntry}
                     onOpenChange={() => setEditingEntry(null)}
-                    storyId={editingEntry.storyId}
+                    storyId={contextStoryId}
                     entry={editingEntry}
                 />
             )}

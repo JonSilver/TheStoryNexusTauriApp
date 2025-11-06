@@ -55,8 +55,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                   {/* Series section */}
                   <Route path="/series" element={<SeriesListPage />} />
                   <Route path="/series/:seriesId" element={<SeriesDashboard />} />
-                  {/* Lorebook Manager */}
-                  <Route path="/lorebook" element={<LorebookPage />} />
                   {/* AI Settings */}
                   <Route path="/ai-settings" element={<AISettingsPage />} />
                   {/* Guide */}
