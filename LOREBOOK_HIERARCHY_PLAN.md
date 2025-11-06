@@ -258,15 +258,23 @@ Prompt parsing happens server-side during AI generation. Server routes should fe
 
 **Series management:**
 - `/series` - Series list page
-- `/series/:seriesId` - Series dashboard (stories + lorebook tabs)
+- `/series/:seriesId` - Series dashboard (stories tab, metadata edit)
 
-**Global lorebook:**
-- `/lorebook-global` - Global lorebook management
+**Unified lorebook:**
+- `/lorebook` - Main lorebook manager with level/scope selector at top
+  - Level dropdown: Global | Series | Story
+  - When Series selected: series dropdown appears
+  - When Story selected: story dropdown appears
+  - List shows filtered entries based on selection
+  - Create/edit forms respect selected context
 
 ### Modified Routes
 
 **Story routes:**
-- `/dashboard/:storyId/lorebook` - Now shows inherited entries (read-only) + story entries (editable)
+- `/dashboard/:storyId/lorebook` - Convenience shortcut to lorebook filtered by story
+  - Pre-selects story in lorebook manager
+  - Shows hierarchical view (inherited + story entries)
+  - Create button defaults to story level
 
 ---
 
@@ -276,33 +284,39 @@ Prompt parsing happens server-side during AI generation. Server routes should fe
 
 **Series:**
 - `SeriesListPage` - Series list with create/delete (reuse `StoryListPage` patterns)
-- `SeriesDashboard` - Tabs: Stories, Lorebook (reuse `StoryDashboard` layout)
-- `SeriesForm` - Name, description fields
+- `SeriesDashboard` - View/edit series metadata, list stories in series
+- `SeriesForm` - Name, description fields (AI context)
 
-**Global:**
-- `GlobalLorebookPage` - Manage global entries (wrapper around existing lorebook UI)
+**Unified Lorebook Manager (`/lorebook`):**
+- Top section: Level/scope selector
+  - Level dropdown: Global | Series | Story
+  - Conditional scope selector (series/story dropdown when level requires it)
+  - Fetches appropriate entries based on selection
+- Bottom section: Entry list + CRUD
+  - Reuses existing `LorebookEntryList` component
+  - Entry forms pre-populate level/scopeId from context
+  - Single unified UI for all lorebook operations
 
 **Shared:**
-- `LevelSelector` - Radio buttons: Global / Series / Story
 - `LevelBadge` - Visual indicator of entry level (colour-coded pill)
-- `InheritedEntriesSection` - Read-only list of global/series entries
 
 ### Modified Components
 
-**`LorebookPage`:**
-- Add level context (global/series/story)
-- Show inherited entries in separate read-only section
-- OR: single list with level badges, disable edit for non-matching level
+**`LorebookPage` (story context shortcut):**
+- Pre-select story from route param
+- Fetch hierarchical entries (global + series + story)
+- Show inherited entries with read-only badges
+- Create button defaults to story level but changeable
+- Essentially unified lorebook manager with pre-filtering
 
 **`LorebookEntryForm`:**
-- Add `level` prop
-- Conditionally show series/story selector based on level
-- Validation: require scopeId when level='series' or level='story'
+- Add `level` dropdown (Global | Series | Story)
+- Add conditional `scopeId` selector (series/story dropdown)
+- Validation: scopeId required when level='series' or level='story'
 
 **`LorebookEntryCard`:**
 - Add `LevelBadge` display
-- Add `readOnly` prop (disable edit button for inherited entries)
-- Add promotion/demotion action buttons
+- When viewing inherited entries (non-editable context), show read-only state
 
 **`StoryForm`:**
 - Add series dropdown (optional)
@@ -317,51 +331,29 @@ Prompt parsing happens server-side during AI generation. Server routes should fe
 - All category-specific forms/cards
 - Tag autocomplete logic
 - Matching/filtering logic
-- Import/export UI (just passes level/scopeId data)
+- Entry list/card components
+- Import/export UI
 
-**Reusable with props:**
-- `LorebookList` - accept `level` filter, `readOnly` flag
-- `LorebookEntryCard` - accept `readOnly`, show level badge, promotion/demotion buttons
-- `LorebookEntryForm` - accept `level`, conditional selectors
-
-**New thin wrappers:**
-```typescript
-// Global
-<LorebookList level="global" editable={true} />
-
-// Series
-<LorebookList level="series" scopeId={seriesId} editable={true} />
-
-// Story (with inheritance)
-<>
-  <InheritedEntriesSection entries={globalEntries} level="global" />
-  <InheritedEntriesSection entries={seriesEntries} level="series" />
-  <LorebookList level="story" scopeId={storyId} editable={true} />
-</>
-```
+**Single lorebook UI with context:**
+- `/lorebook` - Main manager, user selects context
+- `/dashboard/:storyId/lorebook` - Same UI, pre-filtered to story
+- Both routes render same `LorebookPage` component with different initial context
 
 ---
 
-## Inheritance & Editing Rules
+## Lorebook UI Behaviour
 
-### Display in Story Lorebook View
+### Unified Manager (`/lorebook`)
 
-**Option A: Sectioned layout**
-```
-┌─────────────────────────────────┐
-│ Global Entries (read-only)      │
-│ [badge] Character: John         │
-│ [badge] Location: London        │
-├─────────────────────────────────┤
-│ Series Entries (read-only)      │
-│ [badge] Character: Detective X  │
-├─────────────────────────────────┤
-│ Story Entries (editable)        │
-│ Character: Villain Y  [Edit]    │
-└─────────────────────────────────┘
-```
+User selects context via dropdowns:
+- Level: Global | Series | Story
+- Scope: (conditional dropdown for series/story selection)
 
-**Option B: Unified list with badges**
+List shows entries for selected context only. All entries editable in their own context.
+
+### Story Context Shortcut (`/dashboard/:storyId/lorebook`)
+
+Shows hierarchical view (inherited + story entries):
 ```
 ┌─────────────────────────────────┐
 │ All Lorebook Entries            │
@@ -371,24 +363,17 @@ Prompt parsing happens server-side during AI generation. Server routes should fe
 └─────────────────────────────────┘
 ```
 
-### Editing Permissions
+**Editing rules:**
+- Entries show level badges
+- Click entry to edit: form opens with level/scopeId pre-filled
+- Can edit any entry regardless of level (form redirects to appropriate context if needed)
+- Or: disable edit button for non-story entries with tooltip "Edit in main lorebook manager"
 
-**Global entries:**
-- Editable **only** from `/lorebook-global`
-- Read-only everywhere else
-
-**Series entries:**
-- Editable **only** from `/series/:seriesId`
-- Read-only in story views
-
-**Story entries:**
-- Editable from `/dashboard/:storyId/lorebook`
+**Simpler approach:** All entries editable from any view. Level/scope just determines which entries show by default.
 
 ### Tag Matching Behaviour
 
-- When matching `@tags` in chapter or scene beat, search across **all** inherited entries
-- Global entries matched first, then series, then story (order doesn't matter functionally)
-- Disabled entries excluded regardless of level
+When matching `@tags` in chapter or scene beat, search across **all** inherited entries (global + series + story). Disabled entries excluded regardless of level.
 
 ---
 
@@ -586,16 +571,14 @@ Features:
 │
 ├── lorebook/
 │   ├── pages/
-│   │   ├── LorebookPage.tsx (MODIFIED: level-aware)
-│   │   └── GlobalLorebookPage.tsx (NEW)
+│   │   └── LorebookPage.tsx (MODIFIED: unified manager with level/scope selector)
 │   ├── components/
-│   │   ├── LorebookEntryCard.tsx (MODIFIED: level badge, readOnly, promote/demote)
-│   │   ├── LorebookEntryForm.tsx (MODIFIED: level selector)
-│   │   ├── LevelSelector.tsx (NEW)
-│   │   ├── LevelBadge.tsx (NEW)
-│   │   └── InheritedEntriesSection.tsx (NEW)
+│   │   ├── LorebookEntryCard.tsx (MODIFIED: level badge)
+│   │   ├── LorebookEntryForm.tsx (MODIFIED: level + scope selectors)
+│   │   ├── LevelScopeSelector.tsx (NEW: combined level/scope dropdown UI)
+│   │   └── LevelBadge.tsx (NEW)
 │   ├── hooks/
-│   │   └── useLorebookQuery.ts (MODIFIED: level-based queries, promote/demote)
+│   │   └── useLorebookQuery.ts (MODIFIED: level-based queries)
 │   └── utils/
 │       └── lorebookFilters.ts (MODIFIED: level filtering)
 │
