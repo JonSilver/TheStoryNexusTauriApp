@@ -85,9 +85,8 @@ export const useCreateLorebookMutation = () => {
                 queryClient.invalidateQueries({ queryKey: lorebookKeys.hierarchical(newEntry.scopeId) });
             }
 
-            // Also invalidate old list query and legacy byStory for backward compatibility
+            // Also invalidate list query
             queryClient.invalidateQueries({ queryKey: lorebookKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: lorebookKeys.byStory(newEntry.storyId) });
 
             toast.success('Lorebook entry created successfully');
         },
@@ -104,11 +103,30 @@ export const useUpdateLorebookMutation = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<LorebookEntry> }) =>
             lorebookApi.update(id, data),
-        onSuccess: (updatedEntry) => {
+        onMutate: async ({ id }) => {
+            // Get entry before update to know old level/scopeId
+            const oldEntry = queryClient.getQueryData<LorebookEntry>(lorebookKeys.detail(id));
+            return { oldEntry };
+        },
+        onSuccess: (updatedEntry, _, context) => {
+            const oldEntry = context?.oldEntry;
+
             // Invalidate specific entry
             queryClient.invalidateQueries({ queryKey: lorebookKeys.detail(updatedEntry.id) });
 
-            // Invalidate level-based queries
+            // Invalidate OLD level queries (where it was before)
+            if (oldEntry) {
+                if (oldEntry.level === 'global') {
+                    queryClient.invalidateQueries({ queryKey: lorebookKeys.global() });
+                } else if (oldEntry.level === 'series' && oldEntry.scopeId) {
+                    queryClient.invalidateQueries({ queryKey: lorebookKeys.series(oldEntry.scopeId) });
+                } else if (oldEntry.level === 'story' && oldEntry.scopeId) {
+                    queryClient.invalidateQueries({ queryKey: lorebookKeys.story(oldEntry.scopeId) });
+                    queryClient.invalidateQueries({ queryKey: lorebookKeys.hierarchical(oldEntry.scopeId) });
+                }
+            }
+
+            // Invalidate NEW level queries (where it is now)
             if (updatedEntry.level === 'global') {
                 queryClient.invalidateQueries({ queryKey: lorebookKeys.global() });
             } else if (updatedEntry.level === 'series' && updatedEntry.scopeId) {
@@ -118,9 +136,8 @@ export const useUpdateLorebookMutation = () => {
                 queryClient.invalidateQueries({ queryKey: lorebookKeys.hierarchical(updatedEntry.scopeId) });
             }
 
-            // Invalidate legacy queries for backward compatibility
+            // Invalidate all hierarchical queries (safer - catches any story viewing this entry)
             queryClient.invalidateQueries({ queryKey: lorebookKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: lorebookKeys.byStory(updatedEntry.storyId) });
 
             toast.success('Lorebook entry updated successfully');
         },
@@ -154,12 +171,9 @@ export const useDeleteLorebookMutation = () => {
                     queryClient.invalidateQueries({ queryKey: lorebookKeys.story(entry.scopeId) });
                     queryClient.invalidateQueries({ queryKey: lorebookKeys.hierarchical(entry.scopeId) });
                 }
-
-                // Invalidate legacy queries for backward compatibility
-                queryClient.invalidateQueries({ queryKey: lorebookKeys.byStory(entry.storyId) });
             }
 
-            // Always invalidate lists and all queries as fallback
+            // Always invalidate lists as fallback
             queryClient.invalidateQueries({ queryKey: lorebookKeys.lists() });
 
             toast.success('Lorebook entry deleted successfully');
