@@ -167,14 +167,10 @@ Add custom routes for level-based queries:
 - `GET /lorebook/series/:seriesId` - Where `level='series'` and `scopeId = seriesId`
 - `GET /lorebook/story/:storyId` - Where `level='story'` and `scopeId = storyId`
 - `GET /lorebook/story/:storyId/hierarchical` - Fetch story, check `seriesId`, return global + series (if applicable) + story entries using `or()` conditions
-- `PUT /lorebook/:id/promote` - Update `level` and `scopeId` fields
 
-**CRITICAL:** Default `GET /lorebook` returns ALL entries (massive dump). Either override or document not to use.
+**Note:** Default `GET /lorebook` returns ALL entries (massive dump). Either override or document not to use.
 
-**CRITICAL:** Promote endpoint must validate `targetScopeId` references exist:
-- If `targetLevel='series'`, verify series exists
-- If `targetLevel='story'`, verify story exists
-- Otherwise creates orphaned entries
+**Note:** Changing entry level (e.g., story → series) uses standard `PUT /lorebook/:id` with updated `level` and `scopeId` fields.
 
 ### Modified Story Routes (`server/routes/stories.ts`)
 
@@ -200,17 +196,17 @@ Follow existing pattern from `useStoriesQuery.ts`:
 Add level-based queries following existing pattern:
 - New query keys: `global`, `series(id)`, `story(id)`, `hierarchical(id)`
 - New queries: `useGlobalLorebookQuery`, `useSeriesLorebookQuery`, `useStoryLorebookQuery`, `useHierarchicalLorebookQuery`
-- New mutation: `usePromoteLorebookMutation` (invalidates all lorebook queries on success)
 
 **CRITICAL:** `useHierarchicalLorebookQuery` is what prompt context should use - gets global + series + story in one call.
+
+**Note:** Level changes (story → series → global) handled by standard `useUpdateLorebookMutation` - just update `level` and `scopeId` fields.
 
 ### API Client Updates (`src/services/api/client.ts`)
 
 Add `seriesApi` object (pattern: `getAll`, `getById`, `getStories`, `getLorebook`, `create`, `update`, `delete`)
 
-Extend `lorebookApi` with:
+Extend `lorebookApi` with level-based queries:
 - `getGlobal()`, `getBySeries(seriesId)`, `getByStory(storyId)`, `getHierarchical(storyId)`
-- `promote(id, targetLevel, targetScopeId?)`
 
 ---
 
@@ -543,12 +539,6 @@ npm run db:migrate
 
 No database FK cascade constraints on lorebook entries. Deletion handled in custom DELETE routes (see Server Routes section above).
 
-### Promotion/Demotion
-
-Single endpoint `PUT /lorebook/:id/promote` updates `level` and `scopeId` in one operation.
-- TanStack Query mutation invalidates all lorebook caches on success
-- UI shows buttons: "Promote to Series", "Promote to Global", "Demote to Story"
-
 ### Import/Export
 
 **Story export:**
@@ -620,25 +610,19 @@ Features:
 
 ## Critical Implementation Issues
 
-### 1. Zod Validation Schemas Missing
+### 1. Prompt Parsing Must Use Hierarchical Queries
 
-Plan doesn't define validation schemas for:
-- `Series` type (name, description validation)
-- Modified `LorebookEntry` (level/scopeId constraint validation)
-- Promote request body (`targetLevel`, `targetScopeId`)
+PromptParser runs server-side during AI generation. Must update to use hierarchical lorebook entries (global + series + story).
 
-Current codebase uses Zod extensively (`src/schemas/entities.ts`). Add schemas following existing patterns.
+**Affected AI generation endpoints:**
+- Scene beat generation
+- Continue writing
+- Brainstorm chat
+- Selection-specific prompts
 
-### 2. Prompt Parsing Integration Unclear
+All must query hierarchical entries or call `/lorebook/story/:storyId/hierarchical` endpoint.
 
-PromptParser currently runs server-side during AI generation. Plan says "use hierarchical endpoint" but doesn't clarify integration point.
-
-**Resolution needed:**
-- Which server route fetches hierarchical entries for prompt context?
-- Does generation endpoint call hierarchical API or query DB directly?
-- Scene beat generation, continue writing, brainstorm - all need updating
-
-### 3. Existing Lorebook Code Assumes `storyId`
+### 2. Existing Lorebook Code Assumes `storyId`
 
 Multiple features assume required `storyId` field on lorebook entries:
 - Lexical LorebookTagPlugin (tag autocomplete)
@@ -648,11 +632,13 @@ Multiple features assume required `storyId` field on lorebook entries:
 
 Plan changes `storyId` to optional `scopeId`. **Must comprehensively update all lorebook references.**
 
-### 4. Race Conditions & Transactions
+### 3. Zod Schemas
 
-Promotion endpoint has no transaction wrapping. Possible race: promote to series → series deleted mid-operation → orphaned entry.
+Add validation schemas to `src/schemas/entities.ts`:
+- `Series` type
+- Modified `LorebookEntry` (level/scopeId constraints)
 
-Consider wrapping multi-step operations (series deletion, promotion) in transactions.
+Keep validation simple - UI enforces constraints, backend just needs basic checks.
 
 ---
 
