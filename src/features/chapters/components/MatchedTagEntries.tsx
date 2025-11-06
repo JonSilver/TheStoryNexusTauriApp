@@ -14,10 +14,13 @@ export function MatchedTagEntries() {
 
     // Derive open states from matched entries, preserving user interactions
     const [userOpenStates, setUserOpenStates] = useState<Record<string, boolean>>({});
-    const openStates = Array.from(chapterMatchedEntries.values()).reduce((acc, entry) => {
-        acc[entry.id] = userOpenStates[entry.id] ?? false;
-        return acc;
-    }, {} as Record<string, boolean>);
+    const openStates = Array.from(chapterMatchedEntries.values()).reduce(
+        (acc, entry) => {
+            acc[entry.id] = userOpenStates[entry.id] ?? false;
+            return acc;
+        },
+        {} as Record<string, boolean>
+    );
 
     if (chapterMatchedEntries.size === 0) return null;
     if (!currentStoryId) return null;
@@ -30,8 +33,8 @@ export function MatchedTagEntries() {
         // Ensure we pass the complete entry object
         setEditingEntry({
             ...entry,
-            level: entry.level || 'story',
-            scopeId: entry.level === 'story' ? currentStoryId : entry.scopeId,
+            level: entry.level || "story",
+            scopeId: entry.level === "story" ? currentStoryId : entry.scopeId,
             metadata: {
                 importance: entry.metadata?.importance || "minor",
                 status: entry.metadata?.status || "active",

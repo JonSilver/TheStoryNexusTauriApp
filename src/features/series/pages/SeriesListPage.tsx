@@ -100,5 +100,4 @@ const SeriesListPage = () => {
     );
 };
 
-export { SeriesListPage };
 export default SeriesListPage;
