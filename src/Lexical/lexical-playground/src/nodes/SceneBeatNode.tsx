@@ -148,10 +148,9 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
 
     // Save toggle changes (debounced via useSceneBeatSync)
     useEffect(() => {
-        if (sceneBeatId && isLoaded) 
-      saveToggles(useMatchedChapter, useMatchedSceneBeat, useCustomContext);
-    
-  }, [
+        if (sceneBeatId && isLoaded) {
+            saveToggles(useMatchedChapter, useMatchedSceneBeat, useCustomContext);
+        }
     }, [useMatchedChapter, useMatchedSceneBeat, useCustomContext, sceneBeatId, isLoaded, saveToggles]);
 
     // Event handlers

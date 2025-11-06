@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Story } from "@/types/story";
 import { useUpdateStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
+import { useSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -28,7 +29,9 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
     const [author, setAuthor] = useState("");
     const [language, setLanguage] = useState("English");
     const [synopsis, setSynopsis] = useState("");
+    const [seriesId, setSeriesId] = useState<string | undefined>(undefined);
     const updateStoryMutation = useUpdateStoryMutation();
+    const { data: seriesList = [] } = useSeriesQuery();
 
     useEffect(() => {
         if (story) {
@@ -36,6 +39,7 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
             setAuthor(story.author);
             setLanguage(story.language);
             setSynopsis(story.synopsis || "");
+            setSeriesId(story.seriesId);
         }
     }, [story]);
 
@@ -50,6 +54,7 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
                 author,
                 language,
                 synopsis,
+                seriesId,
             }
         }, {
             onSuccess: () => {
@@ -104,6 +109,28 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
                                     <SelectItem value="Japanese">Japanese</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-series">Series (optional)</Label>
+                            <Select
+                                value={seriesId || 'none'}
+                                onValueChange={(value) => setSeriesId(value === 'none' ? undefined : value)}
+                            >
+                                <SelectTrigger id="edit-series">
+                                    <SelectValue placeholder="Select series" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {seriesList.map((series) => (
+                                        <SelectItem key={series.id} value={series.id}>
+                                            {series.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-sm text-muted-foreground">
+                                Assign this story to a series to share lorebook entries
+                            </p>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="edit-synopsis">Synopsis</Label>

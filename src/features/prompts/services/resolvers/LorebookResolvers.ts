@@ -67,9 +67,9 @@ export class AllEntriesResolver implements IVariableResolver {
         private entries: LorebookEntry[]
     ) {}
 
-    async resolve(context: PromptContext, category?: string): Promise<string> {
+    async resolve(_context: PromptContext, category?: string): Promise<string> {
         let filtered = getFilteredEntries(this.entries);
-        filtered = filtered.filter(entry => entry.storyId === context.storyId);
+        // Note: No storyId filter needed - hierarchical query already returns correct entries
 
         if (category) {
             filtered = filtered.filter(entry => entry.category === category);
@@ -85,10 +85,10 @@ export class CharacterResolver implements IVariableResolver {
         private entries: LorebookEntry[]
     ) {}
 
-    async resolve(context: PromptContext, name: string): Promise<string> {
+    async resolve(_context: PromptContext, name: string): Promise<string> {
+        // Note: No storyId filter needed - hierarchical query already returns correct entries
         const filtered = getFilteredEntries(this.entries)
             .filter(entry =>
-                entry.storyId === context.storyId &&
                 entry.category === 'character' &&
                 entry.name.toLowerCase() === name.toLowerCase()
             );
@@ -107,9 +107,9 @@ const createCategoryResolver = (category: LorebookEntry['category']) => {
             private entries: LorebookEntry[]
         ) {}
 
-        async resolve(context: PromptContext): Promise<string> {
-            const filtered = getEntriesByCategory(this.entries, category)
-                .filter(entry => entry.storyId === context.storyId);
+        async resolve(_context: PromptContext): Promise<string> {
+            // Note: No storyId filter needed - hierarchical query already returns correct entries
+            const filtered = getEntriesByCategory(this.entries, category);
             return this.formatter.formatEntries(filtered);
         }
     };

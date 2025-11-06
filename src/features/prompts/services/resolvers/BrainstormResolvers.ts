@@ -40,7 +40,8 @@ export class BrainstormContextResolver implements IVariableResolver {
 
         if (context.additionalContext?.includeFullContext === true) {
             const chapterSummary = await fetchAllChapterSummaries(context.storyId);
-            const filteredEntries = this.entries.filter(e => !e.isDisabled && e.storyId === context.storyId);
+            // Note: No storyId filter needed - hierarchical query already returns correct entries
+            const filteredEntries = this.entries.filter(e => !e.isDisabled);
 
             const parts = [
                 chapterSummary ? `Story Chapter Summaries:\n${chapterSummary}` : '',

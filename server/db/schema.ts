@@ -1,5 +1,17 @@
 import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
 
+// Series table
+export const series = sqliteTable('series', {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    description: text('description'),
+    createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+    isDemo: integer('isDemo', { mode: 'boolean' }),
+}, (table) => ({
+    nameIdx: index('series_name_idx').on(table.name),
+    createdAtIdx: index('series_created_at_idx').on(table.createdAt),
+}));
+
 // Stories table
 export const stories = sqliteTable('stories', {
     id: text('id').primaryKey(),
@@ -7,11 +19,13 @@ export const stories = sqliteTable('stories', {
     author: text('author').notNull(),
     language: text('language').notNull(),
     synopsis: text('synopsis'),
+    seriesId: text('seriesId').references(() => series.id, { onDelete: 'set null' }),
     createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
     isDemo: integer('isDemo', { mode: 'boolean' }),
 }, (table) => ({
     titleIdx: index('title_idx').on(table.title),
     createdAtIdx: index('created_at_idx').on(table.createdAt),
+    seriesIdIdx: index('story_series_id_idx').on(table.seriesId),
 }));
 
 // Chapters table
@@ -90,6 +104,8 @@ export const aiSettings = sqliteTable('aiSettings', {
 export const lorebookEntries = sqliteTable('lorebookEntries', {
     id: text('id').primaryKey(),
     storyId: text('storyId').notNull().references(() => stories.id, { onDelete: 'cascade' }),
+    level: text('level').notNull().default('story'),
+    scopeId: text('scopeId'),
     name: text('name').notNull(),
     description: text('description').notNull(),
     category: text('category').notNull(), // 'character' | 'location' | 'item' | 'event' | 'note' | 'synopsis' | 'starting scenario' | 'timeline'
@@ -100,6 +116,9 @@ export const lorebookEntries = sqliteTable('lorebookEntries', {
     isDemo: integer('isDemo', { mode: 'boolean' }),
 }, (table) => ({
     storyIdIdx: index('lorebook_story_id_idx').on(table.storyId),
+    levelIdx: index('lorebook_level_idx').on(table.level),
+    scopeIdIdx: index('lorebook_scope_id_idx').on(table.scopeId),
+    levelScopeIdx: index('lorebook_level_scope_idx').on(table.level, table.scopeId),
     categoryIdx: index('lorebook_category_idx').on(table.category),
     nameIdx: index('lorebook_name_idx').on(table.name),
 }));

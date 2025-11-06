@@ -51,6 +51,13 @@ const storySchema = baseEntitySchema.extend({
   author: z.string().min(1, 'Author is required'),
   language: z.string().min(1, 'Language is required'),
   synopsis: z.string().optional(),
+  seriesId: z.string().uuid().optional(),
+});
+
+// Series schema
+const seriesSchema = baseEntitySchema.extend({
+  name: z.string().min(1, 'Name required'),
+  description: z.string().optional(),
 });
 
 // Chapter schemas
@@ -144,6 +151,8 @@ const promptSchema = baseEntitySchema.extend({
 });
 
 // Lorebook entry schema (used internally for export validation)
+const lorebookLevelSchema = z.enum(['global', 'series', 'story']);
+
 const lorebookCategorySchema = z.enum([
   'character',
   'location',
@@ -162,7 +171,9 @@ const relationshipSchema = z.object({
 });
 
 const lorebookEntrySchema = baseEntitySchema.extend({
-  storyId: z.string().uuid(),
+  storyId: z.string().uuid(), // Keep temporarily (Phase 1)
+  level: lorebookLevelSchema,
+  scopeId: z.string().uuid().optional(),
   name: z.string().min(1, 'Entry name is required'),
   description: z.string(),
   category: lorebookCategorySchema,
@@ -175,7 +186,13 @@ const lorebookEntrySchema = baseEntitySchema.extend({
     customFields: z.record(z.unknown()).optional(),
   }).optional(),
   isDisabled: z.boolean().optional(),
-});
+}).refine(
+  (data) => {
+    if (data.level === 'global') return !data.scopeId;
+    return !!data.scopeId;
+  },
+  { message: 'scopeId required for series/story level, forbidden for global level' }
+);
 
 // Export schemas for import/export validation
 export const promptsExportSchema = z.object({
@@ -196,6 +213,7 @@ export const storyExportSchema = z.object({
   type: z.literal('story'),
   exportDate: z.string(),
   story: storySchema,
+  series: seriesSchema.optional(),
   chapters: z.array(chapterSchema),
   lorebookEntries: z.array(lorebookEntrySchema),
   sceneBeats: z.array(sceneBeatSchema),

@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode } from 'react';
-import { useLorebookByStoryQuery } from '../hooks/useLorebookQuery';
+import { useHierarchicalLorebookQuery } from '../hooks/useLorebookQuery';
 import type { LorebookEntry } from '@/types/story';
 
 interface LorebookContextValue {
@@ -17,10 +17,11 @@ interface LorebookProviderProps {
 
 /**
  * Provider that fetches and provides lorebook entries for a story.
+ * Uses hierarchical query to include global + series + story entries.
  * Uses TanStack Query internally for caching and updates.
  */
 export const LorebookProvider = ({ storyId, children }: LorebookProviderProps) => {
-    const { data: entries = [], isLoading, error } = useLorebookByStoryQuery(storyId);
+    const { data: entries = [], isLoading, error } = useHierarchicalLorebookQuery(storyId);
 
     return (
         <LorebookContext.Provider value={{ entries, isLoading, error }}>

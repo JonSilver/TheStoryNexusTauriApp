@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { attemptPromise } from '@jfdi/attempt';
 import multer from 'multer';
 import { db, schema } from '../db/client.js';
@@ -20,9 +20,25 @@ export default createCrudRouter({
           throw new Error('Story not found');
         }
 
-        const [chapters, lorebookEntries, sceneBeats, aiChats] = await Promise.all([
+        // Fetch series if story belongs to one
+        let seriesData = undefined;
+        if (story.seriesId) {
+          const [seriesResult] = await db.select().from(schema.series).where(eq(schema.series.id, story.seriesId));
+          if (seriesResult) {
+            seriesData = seriesResult;
+          }
+        }
+
+        // Fetch story-level lorebook entries only (not inherited ones)
+        const lorebookEntries = await db.select()
+          .from(schema.lorebookEntries)
+          .where(and(
+            eq(schema.lorebookEntries.level, 'story'),
+            eq(schema.lorebookEntries.scopeId, storyId)
+          ));
+
+        const [chapters, sceneBeats, aiChats] = await Promise.all([
           db.select().from(schema.chapters).where(eq(schema.chapters.storyId, storyId)),
-          db.select().from(schema.lorebookEntries).where(eq(schema.lorebookEntries.storyId, storyId)),
           db.select().from(schema.sceneBeats).where(eq(schema.sceneBeats.storyId, storyId)),
           db.select().from(schema.aiChats).where(eq(schema.aiChats.storyId, storyId)),
         ]);
@@ -32,6 +48,7 @@ export default createCrudRouter({
           type: 'story',
           exportDate: new Date().toISOString(),
           story,
+          series: seriesData,
           chapters,
           lorebookEntries,
           sceneBeats,
@@ -82,7 +99,8 @@ export default createCrudRouter({
           ...storyData.story,
           id: newStoryId,
           createdAt: new Date(),
-          title: `${storyData.story.title} (Imported)`
+          title: `${storyData.story.title} (Imported)`,
+          seriesId: undefined // Don't import series relationship - user must manually assign
         };
 
         await db.insert(schema.stories).values(newStory);
@@ -102,17 +120,38 @@ export default createCrudRouter({
         }
 
         if (storyData.lorebookEntries?.length) {
-          const newEntries = storyData.lorebookEntries.map((entry: any) => {
-            const newEntryId = crypto.randomUUID();
-            idMap.set(entry.id, newEntryId);
-            return {
-              ...entry,
-              id: newEntryId,
-              storyId: newStoryId,
-              createdAt: new Date()
-            };
-          });
-          await db.insert(schema.lorebookEntries).values(newEntries);
+          const newEntries = storyData.lorebookEntries
+            .map((entry: any) => {
+              // Validate level/scopeId constraints
+              if (entry.level === 'global' && entry.scopeId) {
+                console.warn(`Skipping invalid entry ${entry.name}: global entries cannot have scopeId`);
+                return null;
+              }
+              if ((entry.level === 'series' || entry.level === 'story') && !entry.scopeId) {
+                console.warn(`Skipping invalid entry ${entry.name}: ${entry.level} entries require scopeId`);
+                return null;
+              }
+              if (entry.level && !['global', 'series', 'story'].includes(entry.level)) {
+                console.warn(`Skipping invalid entry ${entry.name}: invalid level ${entry.level}`);
+                return null;
+              }
+
+              const newEntryId = crypto.randomUUID();
+              idMap.set(entry.id, newEntryId);
+              return {
+                ...entry,
+                id: newEntryId,
+                level: 'story', // Force to story level on import
+                scopeId: newStoryId, // Assign to new story
+                storyId: newStoryId, // Temporary for Phase 1
+                createdAt: new Date()
+              };
+            })
+            .filter((entry: any) => entry !== null);
+
+          if (newEntries.length > 0) {
+            await db.insert(schema.lorebookEntries).values(newEntries);
+          }
         }
 
         if (storyData.sceneBeats?.length) {
@@ -162,6 +201,26 @@ export default createCrudRouter({
           aiChats: storyData.aiChats?.length || 0,
         }
       });
+    }));
+
+    // Delete story with lorebook cascade
+    router.delete('/:id', asyncHandler(async (req, res) => {
+      const storyId = req.params.id;
+
+      await db.transaction(async (tx) => {
+        // 1. Delete story-level lorebook entries
+        await tx.delete(schema.lorebookEntries).where(
+          and(
+            eq(schema.lorebookEntries.level, 'story'),
+            eq(schema.lorebookEntries.scopeId, storyId)
+          )
+        );
+
+        // 2. Delete story (FK cascades handle chapters, aiChats, notes, etc.)
+        await tx.delete(schema.stories).where(eq(schema.stories.id, storyId));
+      });
+
+      res.status(204).send();
     }));
   }
 });

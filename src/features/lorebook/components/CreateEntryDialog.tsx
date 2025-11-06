@@ -31,9 +31,14 @@ import { attemptPromise } from '@jfdi/attempt';
 interface CreateEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  storyId: string;
+  storyId?: string;
   entry?: LorebookEntry;
+  level?: LorebookLevel;
+  scopeId?: string;
+  defaultCategory?: LorebookCategory;
 }
+
+type LorebookLevel = LorebookEntry["level"];
 
 // Use the category type directly from the LorebookEntry interface
 type LorebookCategory = LorebookEntry["category"];
@@ -58,6 +63,9 @@ export function CreateEntryDialog({
   onOpenChange,
   storyId,
   entry,
+  level = 'story',
+  scopeId,
+  defaultCategory,
 }: CreateEntryDialogProps) {
   const createMutation = useCreateLorebookMutation();
   const updateMutation = useUpdateLorebookMutation();
@@ -67,7 +75,7 @@ export function CreateEntryDialog({
   const initialFormState = {
     name: "",
     description: "",
-    category: "character" as const,
+    category: (defaultCategory || "character"),
     tags: [],
     isDisabled: false,
     metadata: {
@@ -121,10 +129,13 @@ export function CreateEntryDialog({
           data: dataToSubmit,
         });
       } else {
+        const actualStoryId = storyId || scopeId || '';
         await createMutation.mutateAsync({
           id: crypto.randomUUID(),
           ...dataToSubmit,
-          storyId,
+          storyId: actualStoryId,
+          level,
+          scopeId: level === 'global' ? undefined : scopeId,
         } as Omit<LorebookEntry, "createdAt">);
         resetForm();
       }
