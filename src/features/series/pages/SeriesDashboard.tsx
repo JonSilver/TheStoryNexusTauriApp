@@ -112,10 +112,14 @@ const SeriesDashboard = () => {
                 </DialogContent>
             </Dialog>
 
-            <EditStoryDialog story={editingStory} open={storyEditDialogOpen} onOpenChange={setStoryEditDialogOpen} />
+            <EditStoryDialog
+                key={editingStory?.id}
+                story={editingStory}
+                open={storyEditDialogOpen}
+                onOpenChange={setStoryEditDialogOpen}
+            />
         </div>
     );
 };
 
-export { SeriesDashboard };
 export default SeriesDashboard;

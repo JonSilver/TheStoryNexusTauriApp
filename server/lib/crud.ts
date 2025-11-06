@@ -2,22 +2,23 @@ import { attemptPromise } from "@jfdi/attempt";
 import { eq } from "drizzle-orm";
 import { Request, Response, Router } from "express";
 import { db } from "../db/client.js";
+import type { Table } from "drizzle-orm";
 
-type CrudConfig = {
-    table: any;
+type CrudConfig<TTable extends Table = Table, TRow = unknown, TTransformed = TRow> = {
+    table: TTable;
     name: string;
     parentKey?: string;
     parentRoute?: string;
     transforms?: {
-        afterRead?: (row: any) => any;
+        afterRead?: (row: TRow) => TTransformed;
     };
-    customRoutes?: (router: Router, helpers: RouteHelpers) => void;
+    customRoutes?: (router: Router, helpers: RouteHelpers<TTable, TRow, TTransformed>) => void;
 };
 
-type RouteHelpers = {
+type RouteHelpers<TTable extends Table = Table, TRow = unknown, TTransformed = TRow> = {
     asyncHandler: (fn: (req: Request, res: Response) => Promise<void>) => (req: Request, res: Response) => void;
-    applyTransform: (data: any) => any;
-    table: any;
+    applyTransform: (data: TRow) => TTransformed;
+    table: TTable;
 };
 
 const asyncHandler = (fn: (req: Request, res: Response) => Promise<void>) => async (req: Request, res: Response) => {
@@ -28,13 +29,15 @@ const asyncHandler = (fn: (req: Request, res: Response) => Promise<void>) => asy
     }
 };
 
-export const createCrudRouter = (config: CrudConfig): Router => {
+export const createCrudRouter = <TTable extends Table = Table, TRow = unknown, TTransformed = TRow>(
+    config: CrudConfig<TTable, TRow, TTransformed>
+): Router => {
     const router = Router();
     const { table, name, parentKey, parentRoute, transforms, customRoutes } = config;
 
-    const applyTransform = (data: any) => (transforms?.afterRead ? transforms.afterRead(data) : data);
+    const applyTransform = (data: TRow): TTransformed => (transforms?.afterRead ? transforms.afterRead(data) : data as unknown as TTransformed);
 
-    const helpers: RouteHelpers = { asyncHandler, applyTransform, table };
+    const helpers: RouteHelpers<TTable, TRow, TTransformed> = { asyncHandler, applyTransform, table };
 
     // Custom routes first (so they match before generic patterns)
     if (customRoutes) customRoutes(router, helpers);

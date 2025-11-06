@@ -5,7 +5,16 @@ import { logger } from '@/utils/logger';
 /**
  * Lexical editor state structure
  */
-const lexicalNodeSchema: z.ZodType<any> = z.lazy(() =>
+interface LexicalNode {
+  type: string;
+  text?: string;
+  children?: LexicalNode[];
+  tag?: string;
+  version?: number;
+  [key: string]: unknown;
+}
+
+const lexicalNodeSchema: z.ZodType<LexicalNode> = z.lazy(() =>
   z.object({
     type: z.string(),
     text: z.string().optional(),
@@ -80,7 +89,7 @@ export const extractPlainTextFromLexical = (
     return '';
   }
 
-  const extractText = (node: any): string => {
+  const extractText = (node: LexicalNode): string => {
     if (!node) return '';
 
     // Check if this node type should be excluded

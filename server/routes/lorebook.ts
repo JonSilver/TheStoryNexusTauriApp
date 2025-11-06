@@ -8,10 +8,17 @@ import { parseJson } from "../lib/json.js";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-const transform = (entry: any) => ({
+type LorebookRow = typeof schema.lorebookEntries.$inferSelect;
+
+interface TransformedLorebookEntry extends Omit<LorebookRow, 'tags' | 'metadata'> {
+    tags: unknown;
+    metadata: unknown;
+}
+
+const transform = (entry: LorebookRow): TransformedLorebookEntry => ({
     ...entry,
-    tags: parseJson(entry.tags),
-    metadata: parseJson(entry.metadata)
+    tags: parseJson(entry.tags as string),
+    metadata: parseJson(entry.metadata as string | null | undefined)
 });
 
 export default createCrudRouter({
@@ -117,7 +124,7 @@ export default createCrudRouter({
                     .where(and(eq(table.level, "story"), eq(table.scopeId, req.params.storyId)));
                 const filtered = rows
                     .map(transform)
-                    .filter((entry: any) => (entry.tags as string[]).includes(req.params.tag));
+                    .filter((entry) => Array.isArray(entry.tags) && entry.tags.includes(req.params.tag));
                 res.json(filtered);
             })
         );

@@ -3,6 +3,15 @@ import express from "express";
 import multer from "multer";
 import { db, schema } from "../db/client.js";
 
+type ImportedStory = typeof schema.stories.$inferSelect;
+type ImportedChapter = typeof schema.chapters.$inferSelect;
+type ImportedPrompt = typeof schema.prompts.$inferSelect;
+type ImportedLorebookEntry = typeof schema.lorebookEntries.$inferSelect;
+type ImportedAiChat = typeof schema.aiChats.$inferSelect;
+type ImportedSceneBeat = typeof schema.sceneBeats.$inferSelect;
+type ImportedNote = typeof schema.notes.$inferSelect;
+type ImportedAiSetting = typeof schema.aiSettings.$inferSelect;
+
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
@@ -68,7 +77,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
 
         if (tables.stories?.length) {
             await Promise.all(
-                tables.stories.map((story: any) =>
+                tables.stories.map((story: ImportedStory) =>
                     db.insert(schema.stories).values({ ...story, createdAt: new Date(story.createdAt) })
                 )
             );
@@ -76,7 +85,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
 
         if (tables.chapters?.length) {
             await Promise.all(
-                tables.chapters.map((chapter: any) =>
+                tables.chapters.map((chapter: ImportedChapter) =>
                     db.insert(schema.chapters).values({ ...chapter, createdAt: new Date(chapter.createdAt) })
                 )
             );
@@ -84,7 +93,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
 
         if (tables.prompts?.length) {
             await Promise.all(
-                tables.prompts.map((prompt: any) =>
+                tables.prompts.map((prompt: ImportedPrompt) =>
                     db.insert(schema.prompts).values({ ...prompt, createdAt: new Date(prompt.createdAt) })
                 )
             );
@@ -92,7 +101,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
 
         if (tables.lorebookEntries?.length) {
             await Promise.all(
-                tables.lorebookEntries.map((entry: any) =>
+                tables.lorebookEntries.map((entry: ImportedLorebookEntry) =>
                     db.insert(schema.lorebookEntries).values({ ...entry, createdAt: new Date(entry.createdAt) })
                 )
             );
@@ -100,7 +109,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
 
         if (tables.aiChats?.length) {
             await Promise.all(
-                tables.aiChats.map((chat: any) =>
+                tables.aiChats.map((chat: ImportedAiChat) =>
                     db.insert(schema.aiChats).values({
                         ...chat,
                         createdAt: new Date(chat.createdAt),
@@ -112,7 +121,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
 
         if (tables.sceneBeats?.length) {
             await Promise.all(
-                tables.sceneBeats.map((sceneBeat: any) =>
+                tables.sceneBeats.map((sceneBeat: ImportedSceneBeat) =>
                     db.insert(schema.sceneBeats).values({ ...sceneBeat, createdAt: new Date(sceneBeat.createdAt) })
                 )
             );
@@ -120,7 +129,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
 
         if (tables.notes?.length) {
             await Promise.all(
-                tables.notes.map((note: any) =>
+                tables.notes.map((note: ImportedNote) =>
                     db.insert(schema.notes).values({
                         ...note,
                         createdAt: new Date(note.createdAt),
@@ -132,7 +141,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
 
         if (tables.aiSettings?.length) {
             await Promise.all(
-                tables.aiSettings.map((setting: any) =>
+                tables.aiSettings.map((setting: ImportedAiSetting) =>
                     db.insert(schema.aiSettings).values({
                         ...setting,
                         createdAt: new Date(setting.createdAt),

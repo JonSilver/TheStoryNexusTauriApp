@@ -30,7 +30,7 @@ export interface Chapter extends BaseEntity {
     outline?: ChapterOutline;
     wordCount: number;
     povCharacter?: string;
-    povType?: 'First Person' | 'Third Person Limited' | 'Third Person Omniscient';
+    povType?: "First Person" | "Third Person Limited" | "Third Person Omniscient";
     notes?: ChapterNotes;
 }
 
@@ -49,7 +49,7 @@ export interface SceneBeat extends BaseEntity {
     storyId: string;
     chapterId: string;
     command: string;
-    povType?: 'First Person' | 'Third Person Limited' | 'Third Person Omniscient';
+    povType?: "First Person" | "Third Person Limited" | "Third Person Omniscient";
     povCharacter?: string;
     generatedContent?: string; // To store the last generated content
     accepted?: boolean; // Whether the generated content was accepted
@@ -57,7 +57,7 @@ export interface SceneBeat extends BaseEntity {
         useMatchedChapter?: boolean;
         useMatchedSceneBeat?: boolean;
         useCustomContext?: boolean;
-        [key: string]: any; // Allow for additional metadata properties
+        [key: string]: unknown;
     };
 }
 
@@ -73,7 +73,7 @@ export interface AIChat extends BaseEntity {
 
 export interface ChatMessage {
     id: string;
-    role: 'user' | 'assistant';
+    role: "user" | "assistant";
     content: string;
     timestamp: Date;
     // Optional edit metadata
@@ -85,7 +85,7 @@ export interface ChatMessage {
 
 // Prompt related types
 export interface PromptMessage {
-    role: 'system' | 'user' | 'assistant';
+    role: "system" | "user" | "assistant";
     content: string;
 }
 
@@ -98,7 +98,7 @@ export interface AllowedModel {
 export interface Prompt extends BaseEntity {
     name: string;
     description?: string;
-    promptType: 'scene_beat' | 'gen_summary' | 'selection_specific' | 'continue_writing' | 'other' | 'brainstorm';
+    promptType: "scene_beat" | "gen_summary" | "selection_specific" | "continue_writing" | "other" | "brainstorm";
     messages: PromptMessage[];
     allowedModels: AllowedModel[];
     storyId?: string;
@@ -112,7 +112,7 @@ export interface Prompt extends BaseEntity {
 }
 
 // AI Provider and Model types
-export type AIProvider = 'openai' | 'openrouter' | 'local';
+export type AIProvider = "openai" | "openrouter" | "local";
 
 export interface AIModel {
     id: string;
@@ -138,25 +138,25 @@ export interface Note extends BaseEntity {
     storyId: string;
     title: string;
     content: string;
-    type: 'idea' | 'research' | 'todo' | 'other';
+    type: "idea" | "research" | "todo" | "other";
     updatedAt: Date;
 }
 
 // Lorebook types
-export type LorebookLevel = 'global' | 'series' | 'story';
+export type LorebookLevel = "global" | "series" | "story";
 
 export interface LorebookEntry extends BaseEntity {
     level: LorebookLevel;
     scopeId?: string; // seriesId when level='series', storyId when level='story'
     name: string;
     description: string;
-    category: 'character' | 'location' | 'item' | 'event' | 'note' | 'synopsis' | 'starting scenario' | 'timeline';
+    category: "character" | "location" | "item" | "event" | "note" | "synopsis" | "starting scenario" | "timeline";
     // Tags are stored as an array of strings, can contain spaces and special characters
     tags: string[];
     metadata?: {
         type?: string;
-        importance?: 'major' | 'minor' | 'background';
-        status?: 'active' | 'inactive' | 'historical';
+        importance?: "major" | "minor" | "background";
+        status?: "active" | "inactive" | "historical";
         relationships?: Array<{
             targetId: string;
             type: string;
@@ -169,9 +169,9 @@ export interface LorebookEntry extends BaseEntity {
 
 // Validation helper for lorebook entry level/scopeId constraints
 export const validateLorebookEntry = (entry: LorebookEntry): boolean => {
-    if (entry.level === 'global' && entry.scopeId) return false;
-    if (entry.level === 'series' && !entry.scopeId) return false;
-    if (entry.level === 'story' && !entry.scopeId) return false;
+    if (entry.level === "global" && entry.scopeId) return false;
+    if (entry.level === "series" && !entry.scopeId) return false;
+    if (entry.level === "story" && !entry.scopeId) return false;
     return true;
 };
 
@@ -188,7 +188,7 @@ export interface PromptParserConfig {
     chapterMatchedEntries?: Set<LorebookEntry>;
     sceneBeatMatchedEntries?: Set<LorebookEntry>;
     povCharacter?: string;
-    povType?: 'First Person' | 'Third Person Limited' | 'Third Person Omniscient';
+    povType?: "First Person" | "Third Person Limited" | "Third Person Omniscient";
     storyLanguage?: string;
     sceneBeatContext?: {
         useMatchedChapter: boolean;
@@ -211,7 +211,7 @@ export interface PromptContext {
     chapterMatchedEntries?: Set<LorebookEntry>;
     sceneBeatMatchedEntries?: Set<LorebookEntry>;
     povCharacter?: string;
-    povType?: 'First Person' | 'Third Person Limited' | 'Third Person Omniscient';
+    povType?: "First Person" | "Third Person Limited" | "Third Person Omniscient";
     storyLanguage?: string;
     sceneBeatContext?: {
         useMatchedChapter: boolean;
@@ -231,7 +231,7 @@ export type VariableResolver = (context: PromptContext, ...args: string[]) => Pr
 // Story Export/Import types
 export interface StoryExport {
     version: string;
-    type: 'story';
+    type: "story";
     exportDate: string;
     story: Story;
     series?: Series;
@@ -243,7 +243,7 @@ export interface StoryExport {
 
 export interface SeriesExport {
     version: string;
-    type: 'series';
+    type: "series";
     exportDate: string;
     series: Series;
     lorebookEntries: LorebookEntry[];
@@ -252,7 +252,7 @@ export interface SeriesExport {
 
 export interface GlobalLorebookExport {
     version: string;
-    type: 'global-lorebook';
+    type: "global-lorebook";
     exportDate: string;
     lorebookEntries: LorebookEntry[];
 }

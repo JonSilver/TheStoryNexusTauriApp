@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Prompt } from "@/types/story";
 import { ChevronDown, ChevronRight, Copy, Trash2 } from "lucide-react";
-import { useEffect, useState, type MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 import { useClonePromptMutation, useDeletePromptMutation, usePromptsQuery } from "../hooks/usePromptsQuery";
 
 interface PromptsListProps {
@@ -24,6 +24,16 @@ const getPromptTypeLabel = (type: Prompt["promptType"]) => {
     return labels[type];
 };
 
+// Define order for prompt types to display
+const promptTypeOrder: Prompt["promptType"][] = [
+    "scene_beat",
+    "continue_writing",
+    "selection_specific",
+    "gen_summary",
+    "brainstorm",
+    "other"
+];
+
 export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, filterByType }: PromptsListProps) {
     const { data: prompts = [], isLoading } = usePromptsQuery({ includeSystem: true });
     const deletePromptMutation = useDeletePromptMutation();
@@ -32,18 +42,13 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
     // Filter prompts by type if specified
     const filteredPrompts = filterByType ? prompts.filter(p => p.promptType === filterByType) : prompts;
     // Track which groups are expanded (default all expanded)
-    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
-
-    // Initialize all groups as expanded when prompts are loaded
-    useEffect(() => {
-        if (prompts.length > 0) {
-            const initialExpandState: Record<string, boolean> = {};
-            promptTypeOrder.forEach(type => {
-                initialExpandState[type] = true;
-            });
-            setExpandedGroups(initialExpandState);
-        }
-    }, [prompts.length]);
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
+        const initialExpandState: Record<string, boolean> = {};
+        promptTypeOrder.forEach(type => {
+            initialExpandState[type] = true;
+        });
+        return initialExpandState;
+    });
 
     const toggleGroup = (promptType: string) => {
         setExpandedGroups(prev => ({
@@ -86,16 +91,6 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
         },
         {} as Record<Prompt["promptType"], Prompt[]>
     );
-
-    // Define order for prompt types to display
-    const promptTypeOrder: Prompt["promptType"][] = [
-        "scene_beat",
-        "continue_writing",
-        "selection_specific",
-        "gen_summary",
-        "brainstorm",
-        "other"
-    ];
 
     return (
         <div className="h-full overflow-auto">

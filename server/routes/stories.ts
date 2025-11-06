@@ -4,6 +4,11 @@ import multer from "multer";
 import { db, schema } from "../db/client.js";
 import { createCrudRouter } from "../lib/crud.js";
 
+type ImportedChapter = typeof schema.chapters.$inferSelect;
+type ImportedLorebookEntry = typeof schema.lorebookEntries.$inferSelect;
+type ImportedSceneBeat = typeof schema.sceneBeats.$inferSelect;
+type ImportedAiChat = typeof schema.aiChats.$inferSelect;
+
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
 export default createCrudRouter({
@@ -109,7 +114,7 @@ export default createCrudRouter({
                     await db.insert(schema.stories).values(newStory);
 
                     if (storyData.chapters?.length) {
-                        const newChapters = storyData.chapters.map((chapter: any) => {
+                        const newChapters = storyData.chapters.map((chapter: ImportedChapter) => {
                             const newChapterId = crypto.randomUUID();
                             idMap.set(chapter.id, newChapterId);
                             return {
@@ -124,7 +129,7 @@ export default createCrudRouter({
 
                     if (storyData.lorebookEntries?.length) {
                         const newEntries = storyData.lorebookEntries
-                            .map((entry: any) => {
+                            .map((entry: ImportedLorebookEntry) => {
                                 // Validate level/scopeId constraints
                                 if (entry.level === "global" && entry.scopeId) {
                                     console.warn(
@@ -154,13 +159,13 @@ export default createCrudRouter({
                                     createdAt: new Date()
                                 };
                             })
-                            .filter((entry: any) => entry !== null);
+                            .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
                         if (newEntries.length > 0) await db.insert(schema.lorebookEntries).values(newEntries);
                     }
 
                     if (storyData.sceneBeats?.length) {
-                        const newSceneBeats = storyData.sceneBeats.map((sceneBeat: any) => {
+                        const newSceneBeats = storyData.sceneBeats.map((sceneBeat: ImportedSceneBeat) => {
                             const newSceneBeatId = crypto.randomUUID();
                             return {
                                 ...sceneBeat,
@@ -174,7 +179,7 @@ export default createCrudRouter({
                     }
 
                     if (storyData.aiChats?.length) {
-                        const newChats = storyData.aiChats.map((chat: any) => {
+                        const newChats = storyData.aiChats.map((chat: ImportedAiChat) => {
                             const newChatId = crypto.randomUUID();
                             return {
                                 ...chat,

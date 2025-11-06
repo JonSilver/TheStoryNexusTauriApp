@@ -64,9 +64,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
     const expandedStateKey = `chapter-${chapter.id}-expanded`;
-    const [isExpanded, setIsExpanded] = useState(() => {
-        return parseLocalStorage(z.boolean(), expandedStateKey, false);
-    });
+    const [isExpanded, setIsExpanded] = useState(() => parseLocalStorage(z.boolean(), expandedStateKey, false));
     const [summary, setSummary] = useState(chapter.summary || "");
     const deleteChapterMutation = useDeleteChapterMutation();
     const updateChapterMutation = useUpdateChapterMutation();

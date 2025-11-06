@@ -7,7 +7,7 @@ export interface ExportData {
   version: string;
   type: string;
   exportedAt?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

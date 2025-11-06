@@ -40,7 +40,8 @@ export function SceneBeatMatchedEntries({
     const handleEdit = (entry: LorebookEntry) => {
         setEditingEntry({
             ...entry,
-            storyId: currentStoryId,
+            level: entry.level || 'story',
+            scopeId: entry.level === 'story' ? currentStoryId : entry.scopeId,
             metadata: {
                 importance: entry.metadata?.importance || 'minor',
                 status: entry.metadata?.status || 'active',

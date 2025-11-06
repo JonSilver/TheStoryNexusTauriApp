@@ -5,37 +5,36 @@ import { useChapterMatching } from "@/features/lorebook/hooks/useChapterMatching
 import { useStoryContext } from "@/features/stories/context/StoryContext";
 import { LorebookEntry } from "@/types/story";
 import { ChevronRight, Edit } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export function MatchedTagEntries() {
     const { chapterMatchedEntries } = useChapterMatching();
     const { currentStoryId } = useStoryContext();
-    const [openStates, setOpenStates] = useState<Record<string, boolean>>({});
     const [editingEntry, setEditingEntry] = useState<LorebookEntry | null>(null);
 
-    // Initialize open states for new entries, preserving existing ones
-    useEffect(() => {
-        setOpenStates(prev => {
-            const newState = { ...prev };
-            Array.from(chapterMatchedEntries.values()).forEach(entry => {
-                if (!(entry.id in newState)) newState[entry.id] = false;
-            });
-            return newState;
-        });
-    }, [chapterMatchedEntries]);
+    // Derive open states from matched entries, preserving user interactions
+    const [userOpenStates, setUserOpenStates] = useState<Record<string, boolean>>({});
+    const openStates = Array.from(chapterMatchedEntries.values()).reduce(
+        (acc, entry) => {
+            acc[entry.id] = userOpenStates[entry.id] ?? false;
+            return acc;
+        },
+        {} as Record<string, boolean>
+    );
 
     if (chapterMatchedEntries.size === 0) return null;
     if (!currentStoryId) return null;
 
     const handleOpenChange = (id: string, isOpen: boolean) => {
-        setOpenStates(prev => ({ ...prev, [id]: isOpen }));
+        setUserOpenStates(prev => ({ ...prev, [id]: isOpen }));
     };
 
     const handleEdit = (entry: LorebookEntry) => {
         // Ensure we pass the complete entry object
         setEditingEntry({
             ...entry,
-            storyId: currentStoryId, // Make sure storyId is included
+            level: entry.level || "story",
+            scopeId: entry.level === "story" ? currentStoryId : entry.scopeId,
             metadata: {
                 importance: entry.metadata?.importance || "minor",
                 status: entry.metadata?.status || "active",

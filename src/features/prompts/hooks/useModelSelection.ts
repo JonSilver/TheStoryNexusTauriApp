@@ -29,21 +29,21 @@ export const useModelSelection = ({ initialModels = [] }: UseModelSelectionProps
     const [modelSearch, setModelSearch] = useState("");
 
     useEffect(() => {
+        const loadAvailableModels = async () => {
+            const [error, models] = await attemptPromise(async () => {
+                await aiService.initialize();
+                return await aiService.getAvailableModels();
+            });
+            if (error) {
+                logger.error("Error loading AI models:", error);
+                toast.error("Failed to load AI models");
+                return;
+            }
+            setAvailableModels(models);
+        };
+
         loadAvailableModels();
     }, []);
-
-    const loadAvailableModels = async () => {
-        const [error, models] = await attemptPromise(async () => {
-            await aiService.initialize();
-            return await aiService.getAvailableModels();
-        });
-        if (error) {
-            logger.error("Error loading AI models:", error);
-            toast.error("Failed to load AI models");
-            return;
-        }
-        setAvailableModels(models);
-    };
 
     const modelGroups = useMemo(() => {
         const groups: ModelsByProvider = {
