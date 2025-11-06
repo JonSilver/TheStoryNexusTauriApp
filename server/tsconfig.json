@@ -1,0 +1,12 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../dist/server",
+        "rootDir": "..",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "types": ["node"]
+    },
+    "include": ["./**/*", "../src/data/systemPrompts.ts", "../src/types/story.ts"],
+    "exclude": ["node_modules"]
+}

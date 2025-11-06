@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
-import { usePromptStore } from "@/features/prompts/store/promptStore";
+import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
 import type {
   Prompt,
   AllowedModel,
@@ -32,10 +32,12 @@ import type {
 import { toast } from "react-toastify";
 import { Textarea } from "@/components/ui/textarea";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
-import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
+import { useChapterMatching } from "@/features/lorebook/hooks/useChapterMatching";
+import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
+import { buildTagMap } from "@/features/lorebook/utils/lorebookFilters";
 import { PromptPreviewDialog } from "@/components/ui/prompt-preview-dialog";
 import { SceneBeatMatchedEntries } from "./SceneBeatMatchedEntries";
-import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
+import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
 import { sceneBeatService } from "@/features/scenebeats/services/sceneBeatService";
 
 // Extracted components
@@ -56,6 +58,7 @@ import { useSceneBeatGeneration } from "./scene-beat/hooks/useSceneBeatGeneratio
 // Extracted services
 import { createPromptConfig } from "./scene-beat/services/sceneBeatPromptService";
 import { insertTextAfterNode } from "./scene-beat/services/lexicalEditorUtils";
+import { logger } from '@/utils/logger';
 
 export type SerializedSceneBeatNode = Spread<
   {
@@ -69,9 +72,13 @@ export type SerializedSceneBeatNode = Spread<
 function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
   const [editor] = useLexicalComposerContext();
   const { currentStoryId, currentChapterId } = useStoryContext();
-  const { currentChapter } = useChapterStore();
-  const { prompts, fetchPrompts, isLoading, error } = usePromptStore();
-  const { tagMap, chapterMatchedEntries, entries } = useLorebookStore();
+  const { data: currentChapter } = useChapterQuery(currentChapterId || '');
+  const { data: prompts = [], isLoading, error: promptsQueryError } = usePromptsQuery({ includeSystem: true });
+  const promptsError = promptsQueryError?.message ?? null;
+  const { entries } = useLorebookContext();
+  const { chapterMatchedEntries } = useChapterMatching();
+
+  const tagMap = useMemo(() => buildTagMap(entries), [entries]);
 
   // UI state
   const [collapsed, setCollapsed] = useState(false);
@@ -155,14 +162,6 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
     [entries]
   );
 
-  // Load prompts on mount
-  useEffect(() => {
-    fetchPrompts().catch((error) => {
-      toast.error("Failed to load prompts");
-      console.error("Error loading prompts:", error);
-    });
-  }, [fetchPrompts]);
-
   // Save command changes (debounced via useSceneBeatSync)
   useEffect(() => {
     if (sceneBeatId && isLoaded) {
@@ -192,7 +191,7 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
         sceneBeatService.deleteSceneBeat(sceneBeatId)
       );
       if (error) {
-        console.error("Error deleting SceneBeat from database:", error);
+        logger.error("Error deleting SceneBeat from database:", error);
         toast.error("Failed to delete scene beat from database");
       }
     }
@@ -392,7 +391,7 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
           {/* Generation Controls */}
           <GenerationControls
             isLoading={isLoading}
-            error={error}
+            error={promptsError}
             prompts={prompts}
             selectedPrompt={selectedPrompt}
             selectedModel={selectedModel}
@@ -506,4 +505,9 @@ export function $isSceneBeatNode(
   node: LexicalNode | null | undefined
 ): node is SceneBeatNode {
   return node instanceof SceneBeatNode;
+}
+
+// Disable HMR for this module to prevent node registration conflicts
+if (import.meta.hot) {
+  import.meta.hot.decline();
 }

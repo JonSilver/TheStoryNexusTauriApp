@@ -29,6 +29,7 @@ import {
 } from 'lexical';
 import {useEffect} from 'react';
 
+import { countWords } from '@/utils/textUtils';
 import {
   $createLayoutContainerNode,
   $isLayoutContainerNode,
@@ -234,5 +235,5 @@ export function LayoutPlugin(): null {
 }
 
 function getItemsCountFromTemplate(template: string): number {
-  return template.trim().split(/\s+/).length;
+  return countWords(template);
 }

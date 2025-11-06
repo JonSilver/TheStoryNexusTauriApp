@@ -11,35 +11,30 @@ import {
     StickyNote,
     PenLine
 } from "lucide-react";
+import { z } from "zod";
+import { parseLocalStorage } from "@/schemas/entities";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useStoryStore } from "@/features/stories/stores/useStoryStore";
+import { useStoryQuery } from "@/features/stories/hooks/useStoriesQuery";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router";
-import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
+import { useChaptersByStoryQuery } from "@/features/chapters/hooks/useChaptersQuery";
+import { LorebookProvider } from "@/features/lorebook/context/LorebookContext";
+import { ROUTES } from "@/constants/urls";
 
 export default function StoryDashboard() {
     const { storyId } = useParams();
-    const { getStory } = useStoryStore();
+    useStoryQuery(storyId || '');
+    const { data: chapters = [] } = useChaptersByStoryQuery(storyId || '');
     const location = useLocation();
     const [isExpanded, setIsExpanded] = useState(() => {
-        // Initialize from localStorage if available
-        const savedState = localStorage.getItem('nav-expanded');
-        return savedState ? JSON.parse(savedState) : false;
+        return parseLocalStorage(z.boolean(), 'nav-expanded', false);
     });
 
-    const { getLastEditedChapterId, chapters } = useChapterStore();
-
-    // Check if the last edited chapter still exists
-    const lastEditedChapterId = storyId ? getLastEditedChapterId(storyId) : null;
+    // Get last edited chapter ID from localStorage
+    const lastEditedChapterId = storyId ? localStorage.getItem(`lastEditedChapter_${storyId}`) : null;
     const lastEditedChapterExists = lastEditedChapterId && chapters.some(chapter => chapter.id === lastEditedChapterId);
-
-    useEffect(() => {
-        if (storyId) {
-            getStory(storyId);
-        }
-    }, [storyId, getStory]);
 
     // Save navigation state to localStorage when it changes
     useEffect(() => {
@@ -114,18 +109,18 @@ export default function StoryDashboard() {
                 )}>
                     {storyId && (
                         <>
-                            {navButton(<BookOpen className="h-5 w-5" />, `/dashboard/${storyId}/chapters`, "Chapters")}
+                            {navButton(<BookOpen className="h-5 w-5" />, ROUTES.DASHBOARD.CHAPTERS(storyId), "Chapters")}
                             {lastEditedChapterId && lastEditedChapterExists && (
                                 navButton(
                                     <PenLine className="h-5 w-5" />,
-                                    `/dashboard/${storyId}/chapters/${lastEditedChapterId}`,
+                                    ROUTES.DASHBOARD.CHAPTER_EDITOR(storyId, lastEditedChapterId),
                                     "Last Edited"
                                 )
                             )}
-                            {navButton(<Book className="h-5 w-5" />, `/dashboard/${storyId}/lorebook`, "Lorebook")}
-                            {navButton(<Sparkles className="h-5 w-5" />, `/dashboard/${storyId}/prompts`, "Prompts")}
-                            {navButton(<MessageSquare className="h-5 w-5" />, `/dashboard/${storyId}/brainstorm`, "Brainstorm")}
-                            {navButton(<StickyNote className="h-5 w-5" />, `/dashboard/${storyId}/notes`, "Notes")}
+                            {navButton(<Book className="h-5 w-5" />, ROUTES.DASHBOARD.LOREBOOK(storyId), "Lorebook")}
+                            {navButton(<Sparkles className="h-5 w-5" />, ROUTES.DASHBOARD.PROMPTS(storyId), "Prompts")}
+                            {navButton(<MessageSquare className="h-5 w-5" />, ROUTES.DASHBOARD.BRAINSTORM(storyId), "Brainstorm")}
+                            {navButton(<StickyNote className="h-5 w-5" />, ROUTES.DASHBOARD.NOTES(storyId), "Notes")}
                         </>
                     )}
                 </div>
@@ -146,7 +141,9 @@ export default function StoryDashboard() {
                 "flex-1 transition-all duration-300 ease-in-out",
                 isExpanded ? "ml-[150px]" : "ml-12"
             )}>
-                <Outlet />
+                <LorebookProvider storyId={storyId || ''}>
+                    <Outlet />
+                </LorebookProvider>
             </div>
         </div>
     );

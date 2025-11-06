@@ -10,26 +10,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Omit meaningless time & effort estimates from all plans.
 - Apart from useful examples or data/type structures, plans shouldn't include code.
 
-
 ## Project Overview
 
-The Story Nexus is a local-first desktop application for AI-assisted creative writing, built with Tauri v2, React, TypeScript, and IndexedDB. The app provides a comprehensive environment for writers to create stories with AI-powered tools while maintaining full local data control.
+The Story Nexus is a local-first web application for AI-assisted creative writing, built with Express.js, React, TypeScript, and SQLite. The app provides a comprehensive environment for writers to create stories with AI-powered tools while maintaining full local data control. Run it on your local machine or deploy it via Docker to access from any device on your network.
 
 ## Development Commands
 
 ### Development
 ```bash
-npm run dev          # Start Vite dev server (port 1420)
-npm run build        # TypeScript compile + Vite build
-npm run preview      # Preview production build
+npm run dev          # Start both backend (port 3001) and frontend (port 5173) servers
+npm run dev:server   # Backend only (Express + SQLite)
+npm run dev:client   # Frontend only (Vite)
 ```
 
-### Tauri Commands
+### Production
 ```bash
-npm run tauri        # Run any Tauri CLI command
-npm run tauri dev    # Start Tauri development environment
-npm run tauri build -- --debug    # Create debug release
-npm run tauri build               # Create production release
+npm run build        # Build both backend and frontend
+npm start            # Start production server (port 3000, configurable via PORT env)
+```
+
+### Database Management
+```bash
+npm run db:generate  # Generate migration from schema changes
+npm run db:migrate   # Apply migrations to database
+```
+
+### Docker
+```bash
+docker-compose up --build  # Run app in container, access on port 3000
 ```
 
 ### Code Quality
@@ -55,6 +63,8 @@ if (error) return handleError(error);
 
 #### Style
 
+- Code volume is not a success metric. Concision and reuse are. Lines of code need maintaining. Ease the burden of ownership by using battle-hardened third-party dependency libraries wherever possible.
+- Use comments extremely sparingly, to explain a complex process or why something is purposely done in a seemingly problematic way. Prefer self-documenting names and small descriptively named functions for complex expressions or function chains.
 - Prefer functional programming patterns.
 - Use `const`, not `let`. `let` and mutation is a code smell.
 - Use arrow functions.
@@ -63,32 +73,60 @@ if (error) return handleError(error);
 - Avoid all React antipatterns, particularly around abuse of `useEffect` to handle derived or computed state. Fix these wherever found.
 - Prefer custom React hooks over complex, multi-hook, in-component logic.
 - Modules should be small and focused on a single responsibility.
+- Prefer the iterative data-driven type-inference pattern over switch statements and if/else chains. Make a data structure, derive types from it, index into or iterate over the structure.
 
 #### Architectural Exceptions to Functional Programming
 
 The following classes are justified exceptions to the functional programming preference:
 
-1. **StoryDatabase (Dexie)** - Required by Dexie.js library architecture for IndexedDB wrapper
-2. **AIService (Singleton)** - Manages stateful API client instances and initialization for multiple AI providers
-3. **AIProviderFactory** - Factory pattern for provider-specific client creation (OpenAI, OpenRouter, Local)
-4. **PromptParser** - Complex parsing system with registry pattern for variable resolution and context building
-5. **ContextBuilder** - Manages database-dependent context construction for prompt parsing
-6. **VariableResolverRegistry** - Registry pattern for managing and resolving dynamic prompt variables
-7. **AI Provider Classes** (OpenAIProvider, OpenRouterProvider, LocalProvider) - Encapsulate provider-specific client state and initialization logic
+1. **AIService (Singleton)** - Manages stateful API client instances and initialization for multiple AI providers
+2. **AIProviderFactory** - Factory pattern for provider-specific client creation (OpenAI, OpenRouter, Local)
+3. **PromptParser** - Complex parsing system with registry pattern for variable resolution and context building
+4. **ContextBuilder** - Manages database-dependent context construction for prompt parsing
+5. **VariableResolverRegistry** - Registry pattern for managing and resolving dynamic prompt variables
+6. **AI Provider Classes** (OpenAIProvider, OpenRouterProvider, LocalProvider) - Encapsulate provider-specific client state and initialization logic
 
 All other services should use functional patterns if practical.
 
 ## Architecture
 
 ### Technology Stack
-- **Desktop Framework**: Tauri v2 (Rust backend, minimal Rust code)
-- **Frontend**: React 18 + TypeScript + Vite
-- **Routing**: React Router v7
-- **State Management**: Zustand (feature-based stores)
-- **Database**: Dexie.js (IndexedDB wrapper) - all data is local-first. TODO: replace this with a better, portable solution.
-- **Text Editor**: Lexical v0.24.0 (custom implementation in `src/Lexical/`)
-- **UI**: Tailwind CSS + Shadcn UI components
-- **AI Integration**: OpenAI SDK for OpenAI, OpenRouter, and local model providers
+
+**Backend**:
+- Express.js v5 - API server
+- SQLite + better-sqlite3 - Database
+- Drizzle ORM v0.44 - Type-safe database queries
+- Multer - File upload handling
+- CORS - Cross-origin resource sharing
+- Zod - Schema validation
+
+**Frontend**:
+- React 18 - UI framework
+- TypeScript 5.6 - Type safety
+- Vite 6 - Build tool with HMR
+- React Router v7 - Client-side routing
+- TanStack Query v5 - Server state management
+- React Hook Form - Form handling
+- Lexical v0.24.0 - Rich text editor (custom implementation in `src/Lexical/`)
+
+**UI Libraries**:
+- Tailwind CSS - Utility-first styling
+- Shadcn UI (Radix UI primitives) - Accessible components
+- Lucide React - Icons
+- React Toastify - Notifications
+- Vaul - Drawer component
+- @dnd-kit - Drag and drop
+
+**AI & Content**:
+- OpenAI SDK v4 - AI provider integration (OpenAI, OpenRouter, local models)
+- gpt-tokenizer - Token counting
+- React Markdown + remark-gfm + rehype - Markdown rendering
+
+**Development**:
+- tsx + concurrently - Backend watch mode + parallel dev servers
+- Biome - Linting and formatting
+- Drizzle Kit - Database migrations
+- cross-env - Environment variable management
 
 ### Path Aliases
 The project uses TypeScript path aliases configured in both `tsconfig.json` and `vite.config.ts`:
@@ -107,30 +145,29 @@ Never add these to package.json. They install automatically.
 
 ### Core Architecture Patterns
 
-#### Database Schema (Dexie)
-The database (`src/services/database.ts`) uses a single `StoryDatabase` class extending Dexie with these tables:
+#### Database Schema (SQLite)
+The server-side database (`server/db/schema.ts`) uses Drizzle ORM with SQLite. Tables:
 - `stories` - Story metadata and synopsis
 - `chapters` - Chapter content, outlines, POV settings, word count
-- `aiChats` - Brainstorm chat messages
+- `aiChats` - Brainstorm chat messages with `lastUsedPromptId`
 - `prompts` - System and user-defined prompts for AI generation
 - `aiSettings` - API keys, available models, local API URL
 - `lorebookEntries` - Characters, locations, items, events, notes, synopsis, timelines (searchable by tags)
 - `sceneBeats` - Scene beat commands with generated content
 - `notes` - Story notes (ideas, research, todos)
 
-All entities have `id`, `createdAt`, and optional `isDemo` fields. The database automatically populates system prompts on first initialization.
+All entities have `id`, `createdAt`, and optional `isDemo` fields. Database migrations managed via Drizzle Kit. System prompts seeded on first run via `server/db/seedSystemPrompts.ts`.
 
 #### State Management
-Each feature has a Zustand store in `src/features/*/stores/`:
-- `useStoryStore` - Story CRUD operations
-- `useChapterStore` - Chapter content and metadata
-- `useLorebookStore` - Lorebook entries and tag matching
-- `useSceneBeatStore` - Scene beat management
-- `promptStore` - Prompt management
-- `useBrainstormStore` - AI chat sessions
-- `useNotesStore` - Note management
+Features use TanStack Query hooks in `src/features/*/hooks/`:
+- `useStoriesQuery` / `useStoryQuery` - Story queries
+- `useChaptersQuery` / `useChapterQuery` - Chapter queries
+- `usePromptsQuery` / `usePromptQuery` - Prompt queries
+- `useLorebookQuery` - Lorebook queries
+- `useBrainstormQuery` - AI chat queries
+- `useNotesQuery` - Notes queries
 
-Stores directly interact with the Dexie database instance and manage their own state synchronization.
+All data fetched from Express API endpoints. Mutations use TanStack Query mutations with automatic cache invalidation.
 
 #### AI Service Architecture
 `AIService` (`src/services/ai/AIService.ts`) is a singleton managing:
@@ -167,7 +204,15 @@ The Lexical editor is embedded from `src/Lexical/lexical-playground/` with custo
 
 The editor uses a modified version of the Lexical playground and includes custom nodes for scene beats, special text, and page breaks.
 
-### Feature Organization
+### Project Structure
+
+#### Backend
+- `server/` - Express.js API server
+  - `db/` - Database schema, client, migrations, and seeding
+  - `routes/` - API route handlers (stories, chapters, prompts, lorebook, etc.)
+  - `index.ts` - Server entry point
+
+#### Frontend
 Features are organized in `src/features/` by domain:
 - `stories/` - Story creation, listing, dashboard
 - `chapters/` - Chapter editing, outlining, POV management
@@ -180,10 +225,17 @@ Features are organized in `src/features/` by domain:
 - `guide/` - In-app user guide
 
 Each feature typically contains:
+- `hooks/` - TanStack Query hooks for data fetching
 - `pages/` - Route components
 - `components/` - Feature-specific UI components
-- `stores/` - Zustand state management
 - `services/` - Business logic (if needed)
+
+Other frontend directories:
+- `src/components/` - Reusable UI components
+- `src/Lexical/` - Text editor implementation (custom Lexical editor)
+- `src/services/` - Services (AI, API client, export utilities)
+- `src/types/` - TypeScript type definitions
+- `src/lib/` - Utility functions and helpers
 
 ### Routing Structure
 ```
@@ -237,8 +289,8 @@ Prompts can be exported/imported as JSON from the Prompts Manager UI:
 
 ## Key Implementation Notes
 
-### Database Transactions
-Use `db.transaction('rw', [tables], async () => {...})` for multi-table operations. The `deleteStoryWithRelated` method shows the pattern for cascading deletes across related tables.
+### Database Operations
+All database operations handled server-side via Drizzle ORM. Cascading deletes configured in schema via foreign key constraints (`onDelete: 'cascade'`). Frontend uses API client (`src/services/api/client.ts`) with TanStack Query for all data operations.
 
 ### AI Streaming
 All AI generation uses streaming responses. The `AIService` provides:
@@ -247,7 +299,7 @@ All AI generation uses streaming responses. The `AIService` provides:
 - `abortStream()` - Abort ongoing generation
 
 ### Lexical Editor State
-Chapter content is stored as Lexical editor state JSON in the `chapters.content` field. The `SaveChapterContent` plugin debounces saves, while `LoadChapterContent` initializes editor state on mount.
+Chapter content is stored as Lexical editor state JSON in the `chapters.content` field. The `SaveChapterContent` plugin debounces saves to server API, while `LoadChapterContent` initializes editor state on mount from server data.
 
 ### Demo Content
 Entities can be marked with `isDemo: true` to identify demonstration content. This allows selective deletion or filtering of demo vs. user-created data.
@@ -258,8 +310,8 @@ Models are stored with provider prefix (e.g., `local/model-name`, `gpt-4`). Prom
 ### TypeScript Configuration
 The project uses `strict: false` with disabled linting rules (`noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch` all set to false). When making changes, prefer runtime safety checks over relying on strict TypeScript checking. TODO: This must change soon - strict adherence is vital.
 
-### Tauri Configuration
-The Rust backend is minimal - only a basic `greet` command exists. The frontend runs on port 1420 with HMR on port 1421. The `src-tauri` directory should not be watched by Vite.
+### Development Server Configuration
+Backend runs on port 3001 in development, frontend on port 5173 with Vite proxy to backend. Production runs on single port 3000 (configurable via PORT env var). Frontend built into `dist/` and served as static files by Express in production.
 
 ## Known Issues & Temporary Workarounds
 

@@ -1,10 +1,12 @@
 # The Story Nexus
 
-A powerful AI-driven story writing desktop application built with Tauri, React, and TypeScript.
+A powerful AI-driven story writing web application built with Express, React, and TypeScript.
+
+Based on work started by Vijaykumar Bhattacharji; now extensively rewritten, reworked and reimagined.
 
 ## Overview
 
-The Story Nexus is a local-first desktop application designed for writers who want to leverage AI to enhance their creative writing process. It provides a comprehensive environment for creating, organizing, and developing stories with the assistance of AI-powered tools.
+The Story Nexus is a local-first web application designed for writers who want to leverage AI to enhance their creative writing process. It provides a comprehensive environment for creating, organizing, and developing stories with the assistance of AI-powered tools. Run it on your local machine or deploy it via Docker to access from any device on your network.
 
 ## Key Features
 
@@ -14,64 +16,84 @@ The Story Nexus is a local-first desktop application designed for writers who wa
 - **Custom Prompts**: Create and manage custom prompts to guide AI generation
 - **Scene Beats Addon to Editor**: Press alt (option for mac) + s in editor to open Scene Beat AI command
 - **Lorebook**: Maintain a database of characters, locations, items, events, and notes for your story
-- **Local-First**: All your data is stored locally using IndexedDB with DexieJS
+- **Local-First**: All your data is stored locally in a SQLite database
+- **Data Migration**: Import data from previous IndexedDB-based versions or export your current database
 
 ## Technology Stack
 
-- **Frontend**: React, TypeScript, Tailwind CSS, Shadcn UI
-- **State Management**: Zustand
+- **Backend**: Express.js, SQLite, Drizzle ORM, better-sqlite3
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, Shadcn UI
+- **State Management**: TanStack Query v5
 - **Routing**: React Router v7
-- **Storage**: IndexedDB with DexieJS
-- **Text Editor**: Lexical
-- **Desktop Framework**: Tauri v2
+- **Database**: SQLite with Drizzle ORM
+- **Text Editor**: Lexical v0.24.0
 - **UI Components**: Shadcn UI, Lucide React icons
 - **Notifications**: React Toastify
+- **Development**: tsx watch (backend), Vite HMR (frontend), concurrently
 
 ## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- npm or yarn
 
 ### Development
 
 1. Clone the repository
 2. Install dependencies:
-   ```
+   ```bash
    npm install
    ```
-3. Start the development server:
-   ```
+3. Start both backend and frontend servers:
+   ```bash
    npm run dev
    ```
+   This runs both:
+   - Backend API server on `http://localhost:3001`
+   - Frontend dev server on `http://localhost:5173` (with proxy to backend)
 
-### Building
+4. Open `http://localhost:5173` in your browser
 
-To build the application for production:
+### Individual Server Commands
 
-```
-npm run build
-```
-
-To preview the production build:
-
-```
-npm run preview
+```bash
+npm run dev:server   # Backend only (Express + SQLite)
+npm run dev:client   # Frontend only (Vite)
 ```
 
-To run Tauri commands:
+### Building for Production
 
-```
-npm run tauri
+1. Build both backend and frontend:
+   ```bash
+   npm run build
+   ```
+
+2. Start production server:
+   ```bash
+   npm start
+   ```
+
+   App runs on `http://localhost:3000` (configurable via `PORT` environment variable)
+
+### Database Management
+
+```bash
+npm run db:generate  # Generate migration from schema changes
+npm run db:migrate   # Apply migrations to database
 ```
 
-To run Tauri create debug release:
+### Docker Deployment
 
-```
-npm run tauri build -- --debug
+Run the app in a Docker container:
+
+```bash
+docker-compose up --build
 ```
 
-To run Tauri create release build:
+Access on `http://localhost:3000` or from any device on your network using your machine's IP address.
 
-```
-npm run tauri build
-```
+Database persists in `./data/storynexus.db` (mounted volume).
 
 ## Screenshots
 
@@ -86,29 +108,51 @@ npm run tauri build
 
 ## Project Structure
 
-- `src/features/` - Main application features (stories, chapters, prompts, ai, lorebook)
+### Backend
+- `server/` - Express.js API server
+  - `db/` - Database schema, client, migrations, and seeding
+  - `routes/` - API route handlers (stories, chapters, prompts, lorebook, etc.)
+  - `index.ts` - Server entry point
+
+### Frontend
+- `src/features/` - Feature modules (stories, chapters, prompts, ai, lorebook, brainstorm, notes)
+  - `*/hooks/` - TanStack Query hooks for data fetching
+  - `*/pages/` - Route components
+  - `*/components/` - Feature-specific UI components
 - `src/components/` - Reusable UI components
-- `src/Lexical/` - Text editor implementation
+- `src/Lexical/` - Text editor implementation (custom Lexical editor)
+- `src/services/` - Services (AI, database, export utilities, API client)
 - `src/types/` - TypeScript type definitions
-- `src/services/` - Application services
 - `src/lib/` - Utility functions and helpers
-- `src/hooks/` - Custom React hooks
-- `src/pages/` - Application pages
 
-## Prompts export/import
+## Data Management
 
-You can export and import prompts from the Prompts Manager UI.
+### Database Export/Import
 
--- Export: Click the export button to download a JSON file containing all non-system prompts (system prompts are excluded). The file format is:
+Export and import your entire database from the AI Settings page:
 
-```
+**Export**: Downloads a JSON file containing all your data (stories, chapters, prompts, lorebook entries, etc.)
+
+**Import**: Replaces all current data with data from a JSON file. System prompts are preserved.
+
+Migration workflow:
+1. Export from old IndexedDB-based version (if migrating)
+2. Import into new SQLite-based version
+3. System prompts automatically initialized on first run
+
+### Prompts Export/Import
+
+Export and import individual prompts from the Prompts Manager UI:
+
+**Export**: Downloads non-system prompts only (system prompts excluded)
+
+**Import**: Validates and creates imported prompts as non-system (editable). Duplicate names get `(Imported)` suffix. New IDs and timestamps generated.
+
+Format:
+```json
 {
    "version": "1.0",
    "type": "prompts",
    "prompts": [ /* array of prompt objects */ ]
 }
 ```
-
--- Import: Click the import button and choose a JSON file in the format above. Imported prompts are validated (messages must be an array of `{role, content}` objects). Imported prompts are always created as non-system prompts (so you can edit or delete them). If a prompt name already exists it will get a unique ` (Imported)` suffix. New IDs and `createdAt` timestamps are generated for imported prompts.
-
-If an imported prompt fails validation it will be skipped and a warning will be logged to the console.

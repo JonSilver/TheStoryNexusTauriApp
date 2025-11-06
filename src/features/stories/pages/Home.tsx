@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useStoryStore } from "@/features/stories/stores/useStoryStore";
+import { useStoriesQuery } from "@/features/stories/hooks/useStoriesQuery";
 import { CreateStoryDialog } from "@/features/stories/components/CreateStoryDialog";
 import { EditStoryDialog } from "@/features/stories/components/EditStoryDialog";
 import { StoryCard } from "@/features/stories/components/StoryCard";
@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { storyExportService } from "@/services/storyExportService";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export default function Home() {
-    const { stories, fetchStories } = useStoryStore();
+    const { data: stories = [], refetch: fetchStories } = useStoriesQuery();
     const { resetContext } = useStoryContext();
     const [editingStory, setEditingStory] = useState<Story | null>(null);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -19,8 +20,7 @@ export default function Home() {
 
     useEffect(() => {
         resetContext();
-        fetchStories();
-    }, [fetchStories, resetContext]);
+    }, [resetContext]);
 
     const handleEditStory = (story: Story) => {
         setEditingStory(story);
@@ -41,22 +41,18 @@ export default function Home() {
         if (!event.target.files || event.target.files.length === 0) return;
 
         const file = event.target.files[0];
-        const reader = new FileReader();
 
-        reader.onload = async (e) => {
-            const [error] = await attemptPromise(async () => {
-                const content = e.target?.result as string;
-                await storyExportService.importStory(content);
+        const [error] = await attemptPromise(async () => {
+            await storyExportService.importStory(file);
 
-                // Just refresh the story list without navigating
-                await fetchStories();
-            });
-            if (error) {
-                console.error("Import failed:", error);
-            }
-        };
+            // Just refresh the story list without navigating
+            await fetchStories();
+        });
 
-        reader.readAsText(file);
+        if (error) {
+            logger.error("Import failed:", error);
+        }
+
         // Reset the input
         event.target.value = '';
     };

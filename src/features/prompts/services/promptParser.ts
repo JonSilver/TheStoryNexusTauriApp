@@ -1,13 +1,14 @@
-import { StoryDatabase, db } from '@/services/database';
 import {
     PromptMessage,
     PromptParserConfig,
     ParsedPrompt,
     PromptContext,
+    LorebookEntry,
 } from '@/types/story';
-import { useLorebookStore } from '@/features/lorebook/stores/useLorebookStore';
+import is from '@sindresorhus/is';
 import { ContextBuilder } from './ContextBuilder';
 import { attemptPromise } from '@jfdi/attempt';
+import { promptsApi } from '@/services/api/client';
 import {
     VariableResolverRegistry,
     LorebookFormatter,
@@ -37,20 +38,28 @@ import {
     UserInputResolver,
     BrainstormContextResolver,
 } from './resolvers';
+import { logger } from '@/utils/logger';
+
+export interface PromptParserDependencies {
+    entries: LorebookEntry[];
+}
 
 export class PromptParser {
     private readonly registry: VariableResolverRegistry;
     private readonly contextBuilder: ContextBuilder;
     private readonly formatter: LorebookFormatter;
+    private readonly dependencies: PromptParserDependencies;
 
-    constructor(private database: StoryDatabase) {
-        this.contextBuilder = new ContextBuilder(database);
+    constructor(dependencies: PromptParserDependencies) {
+        this.dependencies = dependencies;
+        this.contextBuilder = new ContextBuilder();
         this.formatter = new LorebookFormatter();
         this.registry = this.initializeRegistry();
     }
 
     private initializeRegistry(): VariableResolverRegistry {
         const registry = new VariableResolverRegistry();
+        const { entries } = this.dependencies;
 
         // Chapter resolvers
         registry.register('summaries', new ChapterSummariesResolver());
@@ -59,22 +68,22 @@ export class PromptParser {
         registry.register('chapter_outline', new ChapterOutlineResolver());
         registry.register('chapter_data', new ChapterDataResolver());
 
-        // Lorebook resolvers
+        // Lorebook resolvers - pass entries as dependency
         registry.register('matched_entries_chapter', new MatchedEntriesChapterResolver(this.formatter));
         registry.register('lorebook_chapter_matched_entries', new MatchedEntriesChapterResolver(this.formatter));
         registry.register('lorebook_data', new MatchedEntriesChapterResolver(this.formatter));
         registry.register('lorebook_scenebeat_matched_entries', new SceneBeatMatchedEntriesResolver(this.formatter));
-        registry.register('all_entries', new AllEntriesResolver(this.formatter));
-        registry.register('character', new CharacterResolver(this.formatter));
-        registry.register('all_characters', new AllCharactersResolver(this.formatter));
-        registry.register('all_locations', new AllLocationsResolver(this.formatter));
-        registry.register('all_items', new AllItemsResolver(this.formatter));
-        registry.register('all_events', new AllEventsResolver(this.formatter));
-        registry.register('all_notes', new AllNotesResolver(this.formatter));
-        registry.register('all_synopsis', new AllSynopsisResolver(this.formatter));
-        registry.register('all_starting_scenarios', new AllStartingScenariosResolver(this.formatter));
-        registry.register('all_timelines', new AllTimelinesResolver(this.formatter));
-        registry.register('scenebeat_context', new SceneBeatContextResolver(this.formatter));
+        registry.register('all_entries', new AllEntriesResolver(this.formatter, entries));
+        registry.register('character', new CharacterResolver(this.formatter, entries));
+        registry.register('all_characters', new AllCharactersResolver(this.formatter, entries));
+        registry.register('all_locations', new AllLocationsResolver(this.formatter, entries));
+        registry.register('all_items', new AllItemsResolver(this.formatter, entries));
+        registry.register('all_events', new AllEventsResolver(this.formatter, entries));
+        registry.register('all_notes', new AllNotesResolver(this.formatter, entries));
+        registry.register('all_synopsis', new AllSynopsisResolver(this.formatter, entries));
+        registry.register('all_starting_scenarios', new AllStartingScenariosResolver(this.formatter, entries));
+        registry.register('all_timelines', new AllTimelinesResolver(this.formatter, entries));
+        registry.register('scenebeat_context', new SceneBeatContextResolver(this.formatter, entries));
 
         // Metadata resolvers
         registry.register('pov', new PoVResolver());
@@ -83,17 +92,17 @@ export class PromptParser {
         registry.register('story_language', new StoryLanguageResolver());
         registry.register('scenebeat', new SceneBeatResolver());
 
-        // Brainstorm resolvers
+        // Brainstorm resolvers - pass entries as dependency
         registry.register('chat_history', new ChatHistoryResolver());
         registry.register('user_input', new UserInputResolver());
-        registry.register('brainstorm_context', new BrainstormContextResolver(this.formatter));
+        registry.register('brainstorm_context', new BrainstormContextResolver(this.formatter, entries));
 
         return registry;
     }
 
     async parse(config: PromptParserConfig): Promise<ParsedPrompt> {
         const [promptError, prompt] = await attemptPromise(() =>
-            this.database.prompts.get(config.promptId)
+            promptsApi.getById(config.promptId)
         );
 
         if (promptError || !prompt) {
@@ -199,13 +208,12 @@ export class PromptParser {
 
     private getAdditionalContextFormatted(context: PromptContext): string {
         const selectedItems = context.additionalContext?.selectedItems;
-        if (!selectedItems || !Array.isArray(selectedItems) || selectedItems.length === 0) {
+        if (!selectedItems || !is.array(selectedItems) || selectedItems.length === 0) {
             return '';
         }
 
         const selectedItemIds = selectedItems as string[];
-        const lorebookStore = useLorebookStore.getState();
-        const entries = lorebookStore.entries.filter(entry => selectedItemIds.includes(entry.id));
+        const entries = this.dependencies.entries.filter(entry => selectedItemIds.includes(entry.id));
 
         const existingEntryIds = context.chapterMatchedEntries
             ? new Set(Array.from(context.chapterMatchedEntries).map(entry => entry.id))
@@ -245,10 +253,16 @@ export class PromptParser {
                 return acc.replace(fullMatch, resolved || '');
             }
 
-            console.warn(`Unknown variable: ${varName}`);
-            return acc.replace(fullMatch, `[Unknown variable: ${varName}]`);
+            logger.warn(`Unknown variable: ${varName}`);
+            return acc;
         }, Promise.resolve(content));
     }
 }
 
-export const createPromptParser = () => new PromptParser(db);
+/**
+ * Factory function to create a PromptParser with dependencies.
+ * Components should get data from TanStack Query hooks and pass it here.
+ */
+export const createPromptParser = (dependencies: PromptParserDependencies): PromptParser => {
+    return new PromptParser(dependencies);
+};

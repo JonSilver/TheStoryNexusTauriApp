@@ -16,10 +16,10 @@ interface MarkdownRendererProps {
 
 // Define our own CodeComponentProps interface
 interface CodeComponentProps {
-  node?: any;
+  node?: unknown;
   inline?: boolean;
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export default function MarkdownRenderer({

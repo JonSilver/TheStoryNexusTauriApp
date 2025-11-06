@@ -3,6 +3,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { debounce } from "lodash";
 import { useToolbarState } from "../../context/ToolbarContext";
 import { $isElementNode, type LexicalNode } from "lexical";
+import { countWords } from "@/utils/textUtils";
 
 export function WordCountPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -30,8 +31,7 @@ export function WordCountPlugin() {
           root.getChildren().forEach(traverse);
         }
       });
-      const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
-      updateToolbarState("wordCount", wordCount);
+      updateToolbarState("wordCount", countWords(text));
     }, 500),
     [editor, updateToolbarState]
   );

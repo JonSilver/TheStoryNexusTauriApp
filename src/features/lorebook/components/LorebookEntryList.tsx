@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useLorebookStore } from "../stores/useLorebookStore";
+import { useDeleteLorebookMutation, useUpdateLorebookMutation } from "../hooks/useLorebookQuery";
 import { CreateEntryDialog } from "./CreateEntryDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import type { LorebookEntry } from "@/types/story";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 interface LorebookEntryListProps {
     entries: LorebookEntry[];
@@ -29,7 +30,8 @@ interface LorebookEntryListProps {
 type SortOption = 'name' | 'category' | 'importance' | 'created';
 
 export function LorebookEntryList({ entries: allEntries }: LorebookEntryListProps) {
-    const { deleteEntry, updateEntry } = useLorebookStore();
+    const deleteMutation = useDeleteLorebookMutation();
+    const updateMutation = useUpdateLorebookMutation();
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState<SortOption>('name');
     const [editingEntry, setEditingEntry] = useState<LorebookEntry | null>(null);
@@ -76,20 +78,25 @@ export function LorebookEntryList({ entries: allEntries }: LorebookEntryListProp
     );
 
     const handleDelete = async (entry: LorebookEntry) => {
-        const [error] = await attemptPromise(async () => deleteEntry(entry.id));
+        const [error] = await attemptPromise(async () => {
+            await deleteMutation.mutateAsync(entry.id);
+        });
         if (error) {
-            console.error('Failed to delete entry:', error);
+            logger.error('Failed to delete entry:', error);
             return;
         }
         setDeletingEntry(null);
     };
 
     const toggleDisabled = async (entry: LorebookEntry) => {
-        const [error] = await attemptPromise(async () =>
-            updateEntry(entry.id, { isDisabled: !entry.isDisabled })
-        );
+        const [error] = await attemptPromise(async () => {
+            await updateMutation.mutateAsync({
+                id: entry.id,
+                data: { isDisabled: !entry.isDisabled }
+            });
+        });
         if (error) {
-            console.error('Failed to update entry:', error);
+            logger.error('Failed to update entry:', error);
         }
     };
 

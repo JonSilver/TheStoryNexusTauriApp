@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "../../../components/ui/button";
 import { Edit, Trash2, FolderUp } from "lucide-react";
 import { useNavigate } from "react-router";
-import { useStoryStore } from "@/features/stories/stores/useStoryStore";
+import { useDeleteStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
 import { DownloadMenu } from "@/components/ui/DownloadMenu";
 import {
     Tooltip,
@@ -11,6 +11,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ROUTES } from "@/constants/urls";
 
 interface StoryCardProps {
     story: Story;
@@ -19,13 +20,13 @@ interface StoryCardProps {
 }
 
 export function StoryCard({ story, onEdit, onExport }: StoryCardProps) {
-    const deleteStory = useStoryStore((state) => state.deleteStory);
+    const deleteStoryMutation = useDeleteStoryMutation();
     const navigate = useNavigate();
 
     const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (window.confirm("Are you sure you want to delete this story?")) {
-            await deleteStory(story.id);
+            deleteStoryMutation.mutate(story.id);
         }
     };
 
@@ -40,7 +41,7 @@ export function StoryCard({ story, onEdit, onExport }: StoryCardProps) {
     };
 
     const handleCardClick = () => {
-        navigate(`/dashboard/${story.id}/chapters`);
+        navigate(ROUTES.DASHBOARD.CHAPTERS(story.id));
     };
 
     return (

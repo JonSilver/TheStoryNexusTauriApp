@@ -7,6 +7,7 @@
  */
 
 import type { JSX } from "react";
+import is from '@sindresorhus/is';
 
 import "./index.css";
 
@@ -37,10 +38,11 @@ import {
 import { getDOMRangeRect } from "../../utils/getDOMRangeRect";
 import { getSelectedNode } from "../../utils/getSelectedNode";
 import { setFloatingElemPosition } from "../../utils/setFloatingElemPosition";
-import { usePromptStore } from "@/features/prompts/store/promptStore";
-import { useAIStore } from "@/features/ai/stores/useAIStore";
+import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
+import { aiService } from "@/services/ai/AIService";
+import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
+import { usePromptParser } from "@/features/prompts/hooks/usePromptParser";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
-import { createPromptParser } from "@/features/prompts/services/promptParser";
 import { toast } from "react-toastify";
 import {
   Prompt,
@@ -50,11 +52,12 @@ import {
 } from "@/types/story";
 import { PromptSelectMenu } from "@/components/ui/prompt-select-menu";
 import { Separator } from "@/components/ui/separator";
-import { useStoryStore } from "@/features/stories/stores/useStoryStore";
+import { useStoryQuery } from "@/features/stories/hooks/useStoriesQuery";
 import { PromptPreviewDialog } from "@/components/ui/prompt-preview-dialog";
-import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
+import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
 import { $isSceneBeatNode } from "../../nodes/SceneBeatNode";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 function TextFormatFloatingToolbar({
   editor,
@@ -71,10 +74,11 @@ function TextFormatFloatingToolbar({
 }): JSX.Element {
   const popupCharStylesEditorRef = useRef<HTMLDivElement | null>(null);
   const { currentStoryId, currentChapterId } = useStoryContext();
-  const { prompts, fetchPrompts, isLoading, error } = usePromptStore();
-  const { generateWithPrompt, processStreamedResponse } = useAIStore();
-  const { currentStory } = useStoryStore();
-  const { currentChapter } = useChapterStore();
+  const { data: prompts = [], isLoading, error } = usePromptsQuery();
+  const { generateWithPrompt } = useGenerateWithPrompt();
+  const { parsePrompt } = usePromptParser();
+  const { data: currentStory } = useStoryQuery(currentStoryId || '');
+  const { data: currentChapter } = useChapterQuery(currentChapterId || '');
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt>();
   const [selectedModel, setSelectedModel] = useState<AllowedModel>();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -84,13 +88,6 @@ function TextFormatFloatingToolbar({
   const [previewMessages, setPreviewMessages] = useState<PromptMessage[]>();
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
-
-  // Fetch prompts when the component mounts
-  useEffect(() => {
-    fetchPrompts().catch((error) => {
-      console.error("Error loading prompts:", error);
-    });
-  }, [fetchPrompts]);
 
   function mouseMoveListener(e: MouseEvent) {
     if (
@@ -262,7 +259,7 @@ function TextFormatFloatingToolbar({
           }
 
           // Traverse children
-          if (!$isTextNode(node) && typeof node.getChildren === "function") {
+          if (!$isTextNode(node) && is.function(node.getChildren)) {
             const children = node.getChildren();
             for (const child of children) {
               if (traverseNodes(child)) {
@@ -328,10 +325,9 @@ function TextFormatFloatingToolbar({
 
       let fullText = "";
 
-      await processStreamedResponse(
+      await aiService.processStreamedResponse(
         response,
         (token) => {
-          // Accumulate tokens but don't show them in UI
           fullText += token;
         },
         () => {
@@ -348,13 +344,13 @@ function TextFormatFloatingToolbar({
           toast.success("Text generated and inserted");
         },
         (error) => {
-          console.error("Error streaming response:", error);
+          logger.error("Error streaming response:", error);
           toast.error("Failed to generate text");
         }
       );
     });
     if (error) {
-      console.error("Error generating text:", error);
+      logger.error("Error generating text:", error);
       toast.error("Failed to generate text");
     }
     setIsGenerating(false);
@@ -370,16 +366,15 @@ function TextFormatFloatingToolbar({
     setPreviewError(null);
     setPreviewMessages(undefined);
 
-    const promptParser = createPromptParser();
     const config = createPromptConfig(selectedPrompt);
 
     const [error, result] = await attemptPromise(async () =>
-      promptParser.parse(config)
+      parsePrompt(config)
     );
     if (error) {
-      console.error("Error previewing prompt:", error);
+      logger.error("Error previewing prompt:", error);
       setPreviewError(
-        error instanceof Error ? error.message : "Failed to preview prompt"
+        is.error(error) ? error.message : "Failed to preview prompt"
       );
     } else if (result.error) {
       setPreviewError(result.error);
@@ -448,7 +443,7 @@ function TextFormatFloatingToolbar({
               <>
                 <PromptSelectMenu
                   isLoading={isLoading}
-                  error={error}
+                  error={error?.message || null}
                   prompts={prompts}
                   promptType="selection_specific"
                   selectedPrompt={selectedPrompt}

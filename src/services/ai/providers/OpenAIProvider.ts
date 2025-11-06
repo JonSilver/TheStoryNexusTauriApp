@@ -2,6 +2,8 @@ import OpenAI from 'openai';
 import { AIModel, AIProvider, PromptMessage } from '@/types/story';
 import { IAIProvider } from './IAIProvider';
 import { attemptPromise } from '@jfdi/attempt';
+import { wrapOpenAIStream } from '../streamUtils';
+import { logger } from '@/utils/logger';
 
 export class OpenAIProvider implements IAIProvider {
     private client: OpenAI | null = null;
@@ -17,16 +19,16 @@ export class OpenAIProvider implements IAIProvider {
 
     async fetchModels(): Promise<AIModel[]> {
         if (!this.client) {
-            console.warn('[OpenAIProvider] Client not initialized');
+            logger.warn('[OpenAIProvider] Client not initialized');
             return [];
         }
 
-        console.log('[OpenAIProvider] Fetching models');
+        logger.info('[OpenAIProvider] Fetching models');
 
         const [error, response] = await attemptPromise(() => this.client!.models.list());
 
         if (error) {
-            console.error('[OpenAIProvider] Error fetching models:', error);
+            logger.error('[OpenAIProvider] Error fetching models:', error);
             return [];
         }
 
@@ -40,7 +42,7 @@ export class OpenAIProvider implements IAIProvider {
             enabled: true
         }));
 
-        console.log(`[OpenAIProvider] Fetched ${models.length} models`);
+        logger.info(`[OpenAIProvider] Fetched ${models.length} models`);
         return models;
     }
 
@@ -59,30 +61,11 @@ export class OpenAIProvider implements IAIProvider {
             model,
             messages: messages.map(m => ({ role: m.role, content: m.content })),
             temperature,
-            max_tokens: maxTokens,
+            max_completion_tokens: maxTokens,
             stream: true
         }, { signal });
 
-        return new Response(
-            new ReadableStream({
-                async start(controller) {
-                    const [error] = await attemptPromise(async () => {
-                        for await (const chunk of stream) {
-                            const content = chunk.choices[0]?.delta?.content;
-                            if (content) {
-                                controller.enqueue(new TextEncoder().encode(content));
-                            }
-                        }
-                    });
-
-                    if (error) {
-                        controller.error(error);
-                    } else {
-                        controller.close();
-                    }
-                }
-            })
-        );
+        return wrapOpenAIStream(stream);
     }
 
     isInitialized(): boolean {

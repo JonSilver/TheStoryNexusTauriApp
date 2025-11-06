@@ -1,18 +1,20 @@
 import { PromptContext } from '@/types/story';
-import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
+import { getPreviousChapter, getChapterOutline } from '@/features/chapters/stores/useChapterStore';
+import { fetchChapterSummaries } from '@/features/chapters/hooks/useChapterSummariesQuery';
+import { chaptersApi } from '@/services/api/client';
+import { extractPlainTextFromLexical } from '@/utils/lexicalUtils';
 import { IVariableResolver } from './types';
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export class ChapterSummariesResolver implements IVariableResolver {
     async resolve(context: PromptContext): Promise<string> {
         if (!context.chapters) return '';
 
-        const { getChapterSummaries } = useChapterStore.getState();
-
         if (context.currentChapter) {
-            return await getChapterSummaries(context.storyId, context.currentChapter.order);
+            return await fetchChapterSummaries(context.storyId, context.currentChapter.order);
         } else {
-            return await getChapterSummaries(context.storyId, Infinity, true);
+            return await fetchChapterSummaries(context.storyId, Infinity, true);
         }
     }
 }
@@ -66,18 +68,17 @@ export class PreviousWordsResolver implements IVariableResolver {
         const currentPovType = context.povType || context.currentChapter.povType;
         const currentPovCharacter = context.povCharacter || context.currentChapter.povCharacter;
 
-        const chapterStore = useChapterStore.getState();
         const [error, previousChapter] = await attemptPromise(() =>
-            chapterStore.getPreviousChapter(context.currentChapter!.id)
+            getPreviousChapter(context.currentChapter!.id)
         );
 
         if (error) {
-            console.error('Error fetching previous chapter:', error);
+            logger.error('Error fetching previous chapter:', error);
             return currentResult;
         }
 
         if (!previousChapter) {
-            console.log('No previous chapter found');
+            logger.info('No previous chapter found');
             return currentResult;
         }
 
@@ -86,18 +87,20 @@ export class PreviousWordsResolver implements IVariableResolver {
             (currentPovType === previousChapter.povType && currentPovCharacter === previousChapter.povCharacter);
 
         if (!povMatches) {
-            console.log('Previous chapter POV does not match current chapter POV, skipping');
+            logger.info('Previous chapter POV does not match current chapter POV, skipping');
             return currentResult;
         }
 
-        const [contentError, previousContent] = await attemptPromise(() =>
-            chapterStore.getChapterPlainText(previousChapter.id)
+        const [contentError, prevChapter] = await attemptPromise(() =>
+            chaptersApi.getById(previousChapter.id)
         );
 
-        if (contentError || !previousContent) {
-            console.error('Error fetching previous chapter content:', contentError);
+        if (contentError || !prevChapter?.content) {
+            logger.error('Error fetching previous chapter content:', contentError);
             return currentResult;
         }
+
+        const previousContent = extractPlainTextFromLexical(prevChapter.content);
 
         const wordsNeeded = requestedWordCount - currentWordCount;
         const newlineToken = '§NEWLINE§';
@@ -112,7 +115,7 @@ export class PreviousWordsResolver implements IVariableResolver {
         }
 
         const prevContent = selectedPrevWords.join(' ').replace(new RegExp(newlineToken, 'g'), '\n');
-        console.log(`Added ${selectedPrevWords.length} words from previous chapter to context`);
+        logger.info(`Added ${selectedPrevWords.length} words from previous chapter to context`);
         return prevContent + '\n\n[...]\n\n' + currentResult;
     }
 }
@@ -126,24 +129,21 @@ export class ChapterContentResolver implements IVariableResolver {
             return plainTextContent;
         }
 
-        console.warn('No plain text content found for chapter:', context.currentChapter.id);
+        logger.warn('No plain text content found for chapter:', context.currentChapter.id);
         return '';
     }
 }
 
 export class ChapterOutlineResolver implements IVariableResolver {
     async resolve(context: PromptContext): Promise<string> {
-        const { getChapterOutline } = useChapterStore.getState();
         const outline = await getChapterOutline(context.currentChapter?.id);
         return outline ? outline.content : 'No chapter outline is available for this prompt.';
     }
 }
 
 export class ChapterDataResolver implements IVariableResolver {
-    async resolve(_context: PromptContext, args: string): Promise<string> {
-        const chapterOrder = parseInt(args);
-        const { getChapterPlainTextByChapterOrder } = useChapterStore.getState();
-        const data = await getChapterPlainTextByChapterOrder(chapterOrder);
-        return data ? data : 'No chapter data is available for this prompt.';
+    async resolve(_context: PromptContext, _args: string): Promise<string> {
+        logger.warn('ChapterDataResolver: getChapterPlainTextByChapterOrder is not implemented - requires storyId');
+        return 'No chapter data is available for this prompt.';
     }
 }

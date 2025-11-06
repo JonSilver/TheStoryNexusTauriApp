@@ -1,41 +1,39 @@
 import { useState, useEffect } from "react";
-import { attemptPromise } from "@jfdi/attempt";
 import { Button } from "../../../components/ui/button";
 import { Textarea } from "../../../components/ui/textarea";
-import { useChapterStore } from "../stores/useChapterStore";
+import { useUpdateChapterMutation } from "../hooks/useChaptersQuery";
 import { Save } from "lucide-react";
+import type { Chapter } from "@/types/story";
 
-export function ChapterOutline() {
-    const { currentChapter, updateChapterOutline } = useChapterStore();
+interface ChapterOutlineProps {
+    chapter: Chapter;
+}
+
+export function ChapterOutline({ chapter }: ChapterOutlineProps) {
     const [outlineContent, setOutlineContent] = useState("");
-    const [isSaving, setIsSaving] = useState(false);
+    const updateChapterMutation = useUpdateChapterMutation();
 
-    // Load outline content when current chapter changes
+    // Load outline content when chapter changes
     useEffect(() => {
-        if (currentChapter?.outline?.content) {
-            setOutlineContent(currentChapter.outline.content);
+        if (chapter?.outline?.content) {
+            setOutlineContent(chapter.outline.content);
         } else {
             setOutlineContent("");
         }
-    }, [currentChapter]);
+    }, [chapter]);
 
     const handleSave = async () => {
-        if (!currentChapter) return;
+        if (!chapter) return;
 
-        setIsSaving(true);
-
-        const [error] = await attemptPromise(async () =>
-            updateChapterOutline(currentChapter.id, {
-                content: outlineContent,
-                lastUpdated: new Date()
-            })
-        );
-
-        if (error) {
-            console.error("Failed to save outline:", error);
-        }
-
-        setIsSaving(false);
+        updateChapterMutation.mutate({
+            id: chapter.id,
+            data: {
+                outline: {
+                    content: outlineContent,
+                    lastUpdated: new Date()
+                }
+            }
+        });
     };
 
     return (
@@ -45,7 +43,7 @@ export function ChapterOutline() {
                     variant="ghost"
                     size="sm"
                     onClick={handleSave}
-                    disabled={isSaving || !currentChapter}
+                    disabled={updateChapterMutation.isPending || !chapter}
                 >
                     <Save className="h-4 w-4 mr-1" />
                     Save Outline
@@ -57,7 +55,7 @@ export function ChapterOutline() {
                     placeholder="Enter your chapter outline here..."
                     value={outlineContent}
                     onChange={(e) => setOutlineContent(e.target.value)}
-                    disabled={!currentChapter}
+                    disabled={!chapter}
                 />
             </div>
         </div>

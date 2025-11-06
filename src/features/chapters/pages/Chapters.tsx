@@ -4,8 +4,8 @@ import { useParams } from "react-router";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChapterCard } from "@/features/chapters/components/ChapterCard";
-import { useChapterStore } from "@/features/chapters/stores/useChapterStore";
-import { usePromptStore } from "@/features/prompts/store/promptStore";
+import { useChaptersByStoryQuery, useCreateChapterMutation, useUpdateChapterMutation } from "@/features/chapters/hooks/useChaptersQuery";
+import { useLorebookByStoryQuery } from "@/features/lorebook/hooks/useLorebookQuery";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
@@ -28,7 +28,6 @@ import {
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
-import { useLorebookStore } from "@/features/lorebook/stores/useLorebookStore";
 import {
   DndContext,
   closestCenter,
@@ -45,27 +44,23 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Chapter } from "@/types/story";
+import { logger } from '@/utils/logger';
+
+type POVType = "First Person" | "Third Person Limited" | "Third Person Omniscient";
 
 interface CreateChapterForm {
   title: string;
   povCharacter?: string;
-  povType?: "First Person" | "Third Person Limited" | "Third Person Omniscient";
+  povType?: POVType;
 }
 
 export default function Chapters() {
   const { storyId } = useParams();
   const { setCurrentStoryId } = useStoryContext();
-  const {
-    chapters,
-    loading,
-    error,
-    fetchChapters,
-    createChapter,
-    updateChapter: _updateChapter,
-    updateChapterOrders,
-  } = useChapterStore();
-  const { fetchPrompts } = usePromptStore();
-  const { entries } = useLorebookStore();
+  const { data: chapters = [], isLoading: loading, error: queryError } = useChaptersByStoryQuery(storyId || "");
+  const { data: lorebookEntries = [] } = useLorebookByStoryQuery(storyId || "");
+  const createChapterMutation = useCreateChapterMutation();
+  const updateChapterMutation = useUpdateChapterMutation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const form = useForm<CreateChapterForm>({
     defaultValues: {
@@ -73,8 +68,10 @@ export default function Chapters() {
     },
   });
 
+  const error = queryError?.message || null;
+
   const povType = form.watch("povType");
-  const characterEntries = entries.filter(
+  const characterEntries = lorebookEntries.filter(
     (entry) => entry.category === "character"
   );
 
@@ -88,11 +85,8 @@ export default function Chapters() {
   useEffect(() => {
     if (storyId) {
       setCurrentStoryId(storyId);
-      Promise.all([fetchChapters(storyId), fetchPrompts()]).catch(
-        console.error
-      );
     }
-  }, [storyId, fetchChapters, setCurrentStoryId, fetchPrompts]);
+  }, [storyId, setCurrentStoryId]);
 
   // Reset POV character when switching to omniscient
   useEffect(() => {
@@ -101,7 +95,7 @@ export default function Chapters() {
     }
   }, [povType, form]);
 
-  const handleCreateChapter = async (data: CreateChapterForm) => {
+  const handleCreateChapter = (data: CreateChapterForm) => {
     if (!storyId) return;
 
     const nextOrder =
@@ -115,31 +109,26 @@ export default function Chapters() {
         ? data.povCharacter
         : undefined;
 
-    const [error] = await attemptPromise(async () =>
-      createChapter({
-        storyId,
-        title: data.title,
-        content: "",
-        povCharacter,
-        povType: data.povType,
-        order: nextOrder,
-        outline: { content: "", lastUpdated: new Date() },
-      })
-    );
-
-    if (error) {
-      console.error("Failed to create chapter:", error);
-      toast.error("Failed to create chapter");
-      return;
-    }
-
-    setIsCreateDialogOpen(false);
-    form.reset({
-      title: "",
-      povType: "Third Person Omniscient",
-      povCharacter: undefined,
+    createChapterMutation.mutate({
+      id: "",
+      storyId,
+      title: data.title,
+      content: "",
+      povCharacter,
+      povType: data.povType,
+      order: nextOrder,
+      outline: { content: "", lastUpdated: new Date() },
+      wordCount: 0,
+    }, {
+      onSuccess: () => {
+        setIsCreateDialogOpen(false);
+        form.reset({
+          title: "",
+          povType: "Third Person Omniscient",
+          povCharacter: undefined,
+        });
+      }
     });
-    toast.success("Chapter created successfully");
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -157,22 +146,21 @@ export default function Chapters() {
 
     const updatedChapters = arrayMove(chapters, oldIndex, newIndex);
 
-    const [error] = await attemptPromise(async () =>
-      updateChapterOrders(
-        updatedChapters.map((chapter: Chapter, index) => ({
-          id: chapter.id,
-          order: index + 1,
-        }))
-      )
-    );
+    // Update all chapters with new order
+    const [error] = await attemptPromise(async () => {
+      await Promise.all(
+        updatedChapters.map((chapter: Chapter, index) =>
+          updateChapterMutation.mutateAsync({
+            id: chapter.id,
+            data: { order: index + 1 }
+          })
+        )
+      );
+    });
 
     if (error) {
-      console.error("Failed to update chapter order:", error);
+      logger.error("Failed to update chapter order:", error);
       toast.error("Failed to update chapter order");
-      // Refetch to ensure UI is in sync with database
-      if (storyId) {
-        await fetchChapters(storyId);
-      }
     }
   };
 
@@ -228,7 +216,7 @@ export default function Chapters() {
                   <Select
                     defaultValue="Third Person Omniscient"
                     onValueChange={(value) =>
-                      form.setValue("povType", value as any)
+                      form.setValue("povType", value as POVType)
                     }
                   >
                     <SelectTrigger id="povType">

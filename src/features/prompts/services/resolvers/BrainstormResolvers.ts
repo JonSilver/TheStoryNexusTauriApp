@@ -1,9 +1,11 @@
-import { PromptContext } from '@/types/story';
-import { useLorebookStore } from '@/features/lorebook/stores/useLorebookStore';
-import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
-import { db } from '@/services/database';
+import { PromptContext, LorebookEntry } from '@/types/story';
+import is from '@sindresorhus/is';
+import { chaptersApi } from '@/services/api/client';
+import { extractPlainTextFromLexical } from '@/utils/lexicalUtils';
+import { fetchAllChapterSummaries, fetchChapterSummary } from '@/features/chapters/hooks/useChapterSummariesQuery';
 import { IVariableResolver, ILorebookFormatter } from './types';
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export class ChatHistoryResolver implements IVariableResolver {
     async resolve(context: PromptContext): Promise<string> {
@@ -28,33 +30,29 @@ export class UserInputResolver implements IVariableResolver {
 }
 
 export class BrainstormContextResolver implements IVariableResolver {
-    constructor(private formatter: ILorebookFormatter) {}
+    constructor(
+        private formatter: ILorebookFormatter,
+        private entries: LorebookEntry[]
+    ) {}
 
     async resolve(context: PromptContext): Promise<string> {
-        const lorebookStore = useLorebookStore.getState();
-        const chapterStore = useChapterStore.getState();
-
-        console.log('DEBUG: brainstormContext additionalContext:', context.additionalContext);
-
-        if (lorebookStore.entries.length === 0) {
-            await lorebookStore.loadEntries(context.storyId);
-        }
+        logger.info('DEBUG: brainstormContext additionalContext:', context.additionalContext);
 
         if (context.additionalContext?.includeFullContext === true) {
-            const chapterSummary = await chapterStore.getAllChapterSummaries(context.storyId);
-            const entries = lorebookStore.getAllEntries();
+            const chapterSummary = await fetchAllChapterSummaries(context.storyId);
+            const filteredEntries = this.entries.filter(e => !e.isDisabled && e.storyId === context.storyId);
 
             const parts = [
                 chapterSummary ? `Story Chapter Summaries:\n${chapterSummary}` : '',
-                entries.length > 0 ? (chapterSummary ? "Story World Information:\n" : '') + this.formatter.formatEntries(entries) : ''
+                filteredEntries.length > 0 ? (chapterSummary ? "Story World Information:\n" : '') + this.formatter.formatEntries(filteredEntries) : ''
             ];
 
             return parts.filter(Boolean).join('\n\n');
         }
 
-        const summaries = await this.getSelectedSummaries(context, chapterStore);
-        const chapterContent = await this.getSelectedChapterContent(context, chapterStore);
-        const lorebookEntries = this.getSelectedLorebookEntries(context, lorebookStore);
+        const summaries = await this.getSelectedSummaries(context);
+        const chapterContent = await this.getSelectedChapterContent(context);
+        const lorebookEntries = this.getSelectedLorebookEntries(context);
 
         if (!summaries && !chapterContent && !lorebookEntries) {
             return "No story context is available for this query. Feel free to ask about anything related to writing or storytelling in general.";
@@ -70,58 +68,53 @@ export class BrainstormContextResolver implements IVariableResolver {
             "No story context is available for this query. Feel free to ask about anything related to writing or storytelling in general.";
     }
 
-    private async getSelectedSummaries(context: PromptContext, chapterStore: ReturnType<typeof useChapterStore.getState>): Promise<string> {
+    private async getSelectedSummaries(context: PromptContext): Promise<string> {
         const selectedSummaries = context.additionalContext?.selectedSummaries;
-        if (!selectedSummaries || !Array.isArray(selectedSummaries) || selectedSummaries.length === 0) {
+        if (!selectedSummaries || !is.array(selectedSummaries) || selectedSummaries.length === 0) {
             return '';
         }
 
         if (selectedSummaries.includes('all')) {
-            return await chapterStore.getAllChapterSummaries(context.storyId);
+            return await fetchAllChapterSummaries(context.storyId);
         }
 
         const summaries = await Promise.all(
-            (selectedSummaries as string[]).map(id => chapterStore.getChapterSummary(id))
+            (selectedSummaries as string[]).map(id => fetchChapterSummary(id))
         );
         return summaries.filter(Boolean).join('\n\n');
     }
 
-    private async getSelectedChapterContent(context: PromptContext, chapterStore: ReturnType<typeof useChapterStore.getState>): Promise<string> {
+    private async getSelectedChapterContent(context: PromptContext): Promise<string> {
         const selectedContent = context.additionalContext?.selectedChapterContent;
-        if (!selectedContent || !Array.isArray(selectedContent) || selectedContent.length === 0) {
-            console.log('DEBUG: No selectedChapterContent found or empty array');
+        if (!selectedContent || !is.array(selectedContent) || selectedContent.length === 0) {
+            logger.info('DEBUG: No selectedChapterContent found or empty array');
             return '';
         }
 
-        console.log('DEBUG: Processing selectedChapterContent:', selectedContent);
+        logger.info('DEBUG: Processing selectedChapterContent:', selectedContent);
 
         const [error, contents] = await attemptPromise(() =>
             Promise.all(
                 (selectedContent as string[]).map(async id => {
-                    console.log(`DEBUG: Fetching content for chapter ID: ${id}`);
+                    logger.info(`DEBUG: Fetching content for chapter ID: ${id}`);
 
-                    const [chapterError, chapter] = await attemptPromise(() => db.chapters.get(id));
+                    const [chapterError, chapter] = await attemptPromise(() => chaptersApi.getById(id));
 
                     if (chapterError) {
-                        console.error(`DEBUG: Error fetching chapter ${id}:`, chapterError);
+                        logger.error(`DEBUG: Error fetching chapter ${id}:`, chapterError);
                         return '';
                     }
 
-                    console.log(`DEBUG: Chapter fetch result:`, chapter ? `Found chapter ${chapter.order}` : 'Not found');
+                    logger.info(`DEBUG: Chapter fetch result:`, chapter ? `Found chapter ${chapter.order}` : 'Not found');
 
                     if (!chapter) return '';
 
-                    console.log(`DEBUG: Getting plain text for chapter ${chapter.order}`);
-                    const [contentError, content] = await attemptPromise(() =>
-                        chapterStore.getChapterPlainText(id)
-                    );
+                    logger.info(`DEBUG: Getting plain text for chapter ${chapter.order}`);
+                    const content = chapter.content
+                        ? extractPlainTextFromLexical(chapter.content)
+                        : '';
 
-                    if (contentError) {
-                        console.error(`DEBUG: Error getting content for chapter ${id}:`, contentError);
-                        return '';
-                    }
-
-                    console.log(`DEBUG: Content length for chapter ${chapter.order}: ${content ? content.length : 0} chars`);
+                    logger.info(`DEBUG: Content length for chapter ${chapter.order}: ${content ? content.length : 0} chars`);
 
                     return content ? `Chapter ${chapter.order} Content:\n${content}` : '';
                 })
@@ -129,31 +122,31 @@ export class BrainstormContextResolver implements IVariableResolver {
         );
 
         if (error) {
-            console.error('DEBUG: Error in chapter content processing:', error);
+            logger.error('DEBUG: Error in chapter content processing:', error);
             return '';
         }
 
         const contentText = contents.filter(Boolean).join('\n\n');
-        console.log(`DEBUG: Final chapter content text:`, contentText.substring(0, 100) + '...');
+        logger.info(`DEBUG: Final chapter content text:`, contentText.substring(0, 100) + '...');
 
         if (contentText) {
-            console.log('DEBUG: Added chapter content to result');
+            logger.info('DEBUG: Added chapter content to result');
         } else {
-            console.log('DEBUG: No chapter content was added (empty content)');
+            logger.info('DEBUG: No chapter content was added (empty content)');
         }
 
         return contentText;
     }
 
-    private getSelectedLorebookEntries(context: PromptContext, lorebookStore: ReturnType<typeof useLorebookStore.getState>): string {
+    private getSelectedLorebookEntries(context: PromptContext): string {
         const selectedItems = context.additionalContext?.selectedItems;
-        if (!selectedItems || !Array.isArray(selectedItems) || selectedItems.length === 0) {
+        if (!selectedItems || !is.array(selectedItems) || selectedItems.length === 0) {
             return '';
         }
 
         const selectedItemIds = selectedItems as string[];
-        const entries = lorebookStore.entries.filter(entry => selectedItemIds.includes(entry.id));
+        const selectedEntries = this.entries.filter(entry => selectedItemIds.includes(entry.id));
 
-        return entries.length > 0 ? this.formatter.formatEntries(entries) : '';
+        return selectedEntries.length > 0 ? this.formatter.formatEntries(selectedEntries) : '';
     }
 }

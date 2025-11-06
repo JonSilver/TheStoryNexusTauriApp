@@ -1,4 +1,4 @@
-import { useLorebookStore } from '@/features/lorebook/stores/useLorebookStore';
+import { useChapterMatching } from '@/features/lorebook/hooks/useChapterMatching';
 import {
     Collapsible,
     CollapsibleContent,
@@ -12,7 +12,7 @@ import { useStoryContext } from '@/features/stories/context/StoryContext';
 import { LorebookEntry } from '@/types/story';
 
 export function MatchedTagEntries() {
-    const { chapterMatchedEntries } = useLorebookStore();
+    const { chapterMatchedEntries } = useChapterMatching();
     const { currentStoryId } = useStoryContext();
     const [openStates, setOpenStates] = useState<Record<string, boolean>>({});
     const [editingEntry, setEditingEntry] = useState<LorebookEntry | null>(null);

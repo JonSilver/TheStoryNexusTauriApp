@@ -1,4 +1,5 @@
-import { db } from '@/services/database';
+import { storiesApi, chaptersApi } from '@/services/api/client';
+import { extractPlainTextFromLexical } from './lexicalUtils';
 
 interface SerializedLexicalNode {
     type: string;
@@ -13,42 +14,6 @@ interface LexicalEditorState {
         children?: SerializedLexicalNode[];
     };
 }
-
-/**
- * Extracts plain text from a Lexical node recursively
- * @param node The Lexical node to extract text from
- * @returns Plain text content
- */
-const extractTextFromNode = (node: SerializedLexicalNode): string => {
-    if (node.type === 'text' && node.text) {
-        return node.text;
-    }
-
-    const childrenText = node.children
-        ? node.children.map(extractTextFromNode).join('')
-        : '';
-
-    const lineBreak = node.type === 'paragraph' ? '\n\n' : '';
-
-    return childrenText + lineBreak;
-};
-
-/**
- * Extracts plain text from Lexical JSON content
- * @param jsonContent The Lexical JSON content string
- * @returns Plain text representation of the content
- */
-const extractPlainTextFromLexical = (jsonContent: string): string => {
-    const editorState: LexicalEditorState = JSON.parse(jsonContent);
-
-    if (!editorState.root?.children) {
-        return '';
-    }
-
-    return editorState.root.children
-        .map(extractTextFromNode)
-        .join('');
-};
 
 /**
  * Converts Lexical JSON content to HTML
@@ -113,15 +78,13 @@ function downloadAsFile(content: string, filename: string, contentType: string) 
  * @param format The format to download ('html' or 'text')
  */
 export async function downloadStory(storyId: string, format: 'html' | 'text') {
-    const story = await db.stories.get(storyId);
+    const story = await storiesApi.getById(storyId);
     if (!story) {
         throw new Error('Story not found');
     }
 
-    const chapters = await db.chapters
-        .where('storyId')
-        .equals(storyId)
-        .sortBy('order');
+    const chaptersUnsorted = await chaptersApi.getByStory(storyId);
+    const chapters = chaptersUnsorted.sort((a, b) => a.order - b.order);
 
     if (format === 'html') {
         const chapterHtmlParts = await Promise.all(
@@ -162,7 +125,9 @@ export async function downloadStory(storyId: string, format: 'html' | 'text') {
     } else {
         const chapterTextParts = await Promise.all(
             chapters.map(async (chapter) => {
-                const chapterPlainText = extractPlainTextFromLexical(chapter.content);
+                const chapterPlainText = extractPlainTextFromLexical(chapter.content, {
+                    paragraphSpacing: '\n\n'
+                });
                 return `Chapter ${chapter.order}: ${chapter.title}\n\n${chapterPlainText.trim()}`;
             })
         );
@@ -181,12 +146,12 @@ export async function downloadStory(storyId: string, format: 'html' | 'text') {
  * @param format The format to download ('html' or 'text')
  */
 export async function downloadChapter(chapterId: string, format: 'html' | 'text') {
-    const chapter = await db.chapters.get(chapterId);
+    const chapter = await chaptersApi.getById(chapterId);
     if (!chapter) {
         throw new Error('Chapter not found');
     }
 
-    const story = await db.stories.get(chapter.storyId);
+    const story = await storiesApi.getById(chapter.storyId);
     if (!story) {
         throw new Error('Story not found');
     }
@@ -218,7 +183,9 @@ export async function downloadChapter(chapterId: string, format: 'html' | 'text'
 
         downloadAsFile(htmlContent, `${story.title} - Chapter ${chapter.order}.html`, 'text/html');
     } else {
-        const chapterPlainText = extractPlainTextFromLexical(chapter.content);
+        const chapterPlainText = extractPlainTextFromLexical(chapter.content, {
+            paragraphSpacing: '\n\n'
+        });
         const textContent = `${story.title}\nChapter ${chapter.order}: ${chapter.title}\n\n${chapterPlainText.trim()}`;
         downloadAsFile(textContent, `${story.title} - Chapter ${chapter.order}.txt`, 'text/plain');
     }

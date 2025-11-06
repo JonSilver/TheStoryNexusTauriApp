@@ -3,6 +3,7 @@ import { ErrorBoundary as ReactErrorBoundary, type FallbackProps } from 'react-e
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 const DefaultErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
 	<div className="flex items-center justify-center min-h-[400px] p-4">
@@ -37,7 +38,7 @@ interface ErrorBoundaryProps {
 
 export const ErrorBoundary = ({ children, fallback, onError, resetKeys }: ErrorBoundaryProps) => {
 	const handleError = (error: Error, info: { componentStack: string }) => {
-		console.error('Error caught by boundary:', error, info);
+		logger.error('Error caught by boundary:', error, info);
 		onError?.(error, info);
 	};
 

@@ -1,22 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { useChapterStore } from '@/features/chapters/stores/useChapterStore';
+import { useChapterQuery } from '@/features/chapters/hooks/useChaptersQuery';
 import { useStoryContext } from '@/features/stories/context/StoryContext';
 import { attempt } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 export function LoadChapterContentPlugin(): null {
     const [editor] = useLexicalComposerContext();
     const { currentChapterId } = useStoryContext();
-    const { getChapter, currentChapter } = useChapterStore();
+    const { data: currentChapter } = useChapterQuery(currentChapterId || '');
     const [hasLoaded, setHasLoaded] = useState(false);
 
-    // Load chapter data when chapter ID changes
+    // Reset hasLoaded when chapter changes
     useEffect(() => {
         if (currentChapterId) {
-            getChapter(currentChapterId);
             setHasLoaded(false);
         }
-    }, [currentChapterId, getChapter]);
+    }, [currentChapterId]);
 
     // Set editor content when chapter data is available
     useEffect(() => {
@@ -30,7 +30,7 @@ export function LoadChapterContentPlugin(): null {
                     setHasLoaded(true);
                 });
                 if (error) {
-                    console.error('LoadChapterContent - Failed to load content:', error);
+                    logger.error('LoadChapterContent - Failed to load content:', error);
 
                     // Only in case of error, try to create an empty editor state
                     const [recoveryError] = attempt(() => {
@@ -38,19 +38,12 @@ export function LoadChapterContentPlugin(): null {
                         setHasLoaded(true);
                     });
                     if (recoveryError) {
-                        console.error('LoadChapterContent - Recovery failed:', recoveryError);
+                        logger.error('LoadChapterContent - Recovery failed:', recoveryError);
                     }
                 }
             });
         }
     }, [editor, currentChapter, currentChapterId, hasLoaded]);
-
-    // Reset hasLoaded when chapter changes
-    useEffect(() => {
-        if (currentChapterId) {
-            setHasLoaded(false);
-        }
-    }, [currentChapterId]);
 
     return null;
 }

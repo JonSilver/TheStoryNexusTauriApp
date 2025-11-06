@@ -1,53 +1,51 @@
 import { useEffect, useState, useCallback } from 'react';
-import { attemptPromise } from '@jfdi/attempt';
-import { useChapterStore } from '../stores/useChapterStore';
+import { useUpdateChapterMutation } from '../hooks/useChaptersQuery';
 import Editor from 'react-simple-wysiwyg';
 import { cn } from '@/lib/utils';
-import type { ChapterNotes } from '@/types/story';
+import type { Chapter, ChapterNotes } from '@/types/story';
 import debounce from 'lodash/debounce';
 
 interface ChapterNotesEditorProps {
+    chapter: Chapter;
     onClose: () => void;
 }
 
-export function ChapterNotesEditor({ onClose: _onClose }: ChapterNotesEditorProps) {
-    const { currentChapter, updateChapterNotes } = useChapterStore();
+export function ChapterNotesEditor({ chapter, onClose: _onClose }: ChapterNotesEditorProps) {
+    const updateChapterMutation = useUpdateChapterMutation();
     const [content, setContent] = useState('');
     const [lastSavedContent, setLastSavedContent] = useState('');
 
     // Create a debounced save function
     const debouncedSave = useCallback(
         debounce(async (newContent: string) => {
-            if (!currentChapter) return;
+            if (!chapter) return;
 
             const notes: ChapterNotes = {
                 content: newContent,
                 lastUpdated: new Date()
             };
 
-            const [error] = await attemptPromise(async () =>
-                updateChapterNotes(currentChapter.id, notes)
-            );
-
-            if (error) {
-                console.error('Failed to save notes:', error);
-                return;
-            }
-
-            setLastSavedContent(newContent);
+            updateChapterMutation.mutate({
+                id: chapter.id,
+                data: { notes }
+            }, {
+                onSuccess: () => {
+                    setLastSavedContent(newContent);
+                },
+            });
         }, 1000),
-        [currentChapter]
+        [chapter]
     );
 
     useEffect(() => {
-        if (currentChapter?.notes) {
-            setContent(currentChapter.notes.content);
-            setLastSavedContent(currentChapter.notes.content);
+        if (chapter?.notes) {
+            setContent(chapter.notes.content);
+            setLastSavedContent(chapter.notes.content);
         } else {
             setContent('');
             setLastSavedContent('');
         }
-    }, [currentChapter]);
+    }, [chapter]);
 
     useEffect(() => {
         if (content !== lastSavedContent) {
@@ -61,20 +59,12 @@ export function ChapterNotesEditor({ onClose: _onClose }: ChapterNotesEditorProp
         };
     }, [debouncedSave]);
 
-    if (!currentChapter) {
-        return (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-                <p>No chapter selected</p>
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-4">
             <div>
-                {currentChapter?.notes && (
+                {chapter?.notes && (
                     <p className="text-sm text-muted-foreground">
-                        Last updated: {new Date(currentChapter.notes.lastUpdated).toLocaleString()}
+                        Last updated: {new Date(chapter.notes.lastUpdated).toLocaleString()}
                     </p>
                 )}
             </div>

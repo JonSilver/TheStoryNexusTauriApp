@@ -1,10 +1,13 @@
 import { useState } from "react";
 import type { AllowedModel, PromptMessage } from "@/types/story";
-import { useAIStore } from "@/features/ai/stores/useAIStore";
+import is from '@sindresorhus/is';
+import { aiService } from "@/services/ai/AIService";
+import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
+import { usePromptParser } from "@/features/prompts/hooks/usePromptParser";
 import { toast } from "react-toastify";
-import { createPromptParser } from "@/features/prompts/services/promptParser";
 import type { PromptParserConfig } from "@/types/story";
 import { attemptPromise } from '@jfdi/attempt';
+import { logger } from '@/utils/logger';
 
 interface UseSceneBeatGenerationResult {
   streaming: boolean;
@@ -33,7 +36,8 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
-  const { generateWithPrompt, processStreamedResponse, abortGeneration } = useAIStore();
+  const { generateWithPrompt } = useGenerateWithPrompt();
+  const { parsePrompt } = usePromptParser();
 
   const generateWithConfig = async (
     config: PromptParserConfig,
@@ -51,17 +55,15 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
     const [error] = await attemptPromise(async () => {
       const response = await generateWithPrompt(config, model);
 
-      // Handle aborted responses (204) similar to the chat interface
       if (!response.ok && response.status !== 204) {
         throw new Error("Failed to generate response");
       }
 
       if (response.status === 204) {
-        // Generation was aborted
         return;
       }
 
-      await processStreamedResponse(
+      await aiService.processStreamedResponse(
         response,
         (token) => {
           setStreamedText((prev) => prev + token);
@@ -70,13 +72,13 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
           setStreamComplete(true);
         },
         (error) => {
-          console.error("Error streaming response:", error);
+          logger.error("Error streaming response:", error);
           toast.error("Failed to generate text");
         }
       );
     });
     if (error) {
-      console.error("Error generating text:", error);
+      logger.error("Error generating text:", error);
       toast.error("Failed to generate text");
     }
     setStreaming(false);
@@ -87,13 +89,11 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
     setPreviewError(null);
     setPreviewMessages(undefined);
 
-    const promptParser = createPromptParser();
-
     const [error, parsedPrompt] = await attemptPromise(async () =>
-      promptParser.parse(config)
+      parsePrompt(config)
     );
     if (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = is.error(error) ? error.message : String(error);
       setPreviewError(errorMessage);
       toast.error(`Error previewing prompt: ${errorMessage}`);
       setPreviewLoading(false);
@@ -112,7 +112,7 @@ export const useSceneBeatGeneration = (): UseSceneBeatGenerationResult => {
   };
 
   const stopGeneration = () => {
-    abortGeneration();
+    aiService.abortStream();
     setStreaming(false);
   };
 
