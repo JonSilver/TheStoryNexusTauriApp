@@ -100,9 +100,14 @@ export default function LorebookPage() {
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold">Story Lorebook</h1>
+                    <h1 className="text-3xl font-bold">
+                        {seriesId ? 'Series Lorebook' : 'Story Lorebook'}
+                    </h1>
                     <p className="text-muted-foreground mt-1">
-                        View and manage entries for this story (includes global and series entries)
+                        {seriesId
+                            ? 'View and manage entries for this series (shared across all stories in series)'
+                            : 'View and manage entries for this story (includes global and series entries)'
+                        }
                     </p>
                 </div>
                 <div className="flex gap-2">
