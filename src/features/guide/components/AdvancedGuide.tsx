@@ -1,4 +1,4 @@
-import { Library, BookOpen, Link as LinkIcon, Layers, FolderTree, CheckCircle, AlertCircle } from "lucide-react";
+import { Library, BookOpen, Link as LinkIcon, Layers, FolderTree, CheckCircle, AlertCircle, GripVertical, Pencil, ChevronDown, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,9 +14,11 @@ export default function AdvancedGuide() {
             </div>
 
             <Tabs defaultValue="series" className="w-full">
-                <TabsList className="grid grid-cols-3 mb-8">
-                    <TabsTrigger value="series">Series Management</TabsTrigger>
-                    <TabsTrigger value="workflow">Workflow Tips</TabsTrigger>
+                <TabsList className="grid grid-cols-5 mb-8">
+                    <TabsTrigger value="series">Series</TabsTrigger>
+                    <TabsTrigger value="content">Content Management</TabsTrigger>
+                    <TabsTrigger value="workflow">Workflow & Shortcuts</TabsTrigger>
+                    <TabsTrigger value="troubleshooting">Troubleshooting</TabsTrigger>
                     <TabsTrigger value="future">Future Topics</TabsTrigger>
                 </TabsList>
 
@@ -198,6 +200,191 @@ export default function AdvancedGuide() {
                     </Alert>
                 </TabsContent>
 
+                <TabsContent value="content" className="space-y-6">
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Managing Your Content</h3>
+                        <p>
+                            Master the tools for managing stories, chapters, and notes to keep your writing organised and accessible.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
+                        <h3 className="text-lg font-medium">Chapter Management</h3>
+                        <p className="text-sm">
+                            Chapters can be managed from the Chapters page in your story dashboard.
+                        </p>
+
+                        <div className="space-y-4 mt-4">
+                            <div>
+                                <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                                    <GripVertical className="h-4 w-4 text-primary" />
+                                    Reordering Chapters
+                                </h4>
+                                <p className="text-sm text-muted-foreground ml-6">
+                                    Drag and drop chapters by the grip handle (six dots) on the left side of each chapter card. The order updates automatically and affects chapter numbering and summary context.
+                                </p>
+                            </div>
+
+                            <div>
+                                <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                                    <Pencil className="h-4 w-4 text-primary" />
+                                    Editing Chapter Details
+                                </h4>
+                                <p className="text-sm text-muted-foreground ml-6">
+                                    Click the edit icon on a chapter card to modify:
+                                </p>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-12 mt-1">
+                                    <li><strong>Title:</strong> Change the chapter title</li>
+                                    <li><strong>POV Type:</strong> First Person, Third Person Limited, or Third Person Omniscient</li>
+                                    <li><strong>POV Character:</strong> Select from your lorebook characters (disabled for Omniscient POV)</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                                    <ChevronDown className="h-4 w-4 text-primary" />
+                                    Viewing & Editing Summaries
+                                </h4>
+                                <p className="text-sm text-muted-foreground ml-6">
+                                    Click the expand arrow on a chapter card to view its summary. You can:
+                                </p>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-12 mt-1">
+                                    <li>Edit the summary directly in the textarea</li>
+                                    <li>Generate a new summary using the AI (select a "Generate Summary" prompt and model)</li>
+                                    <li>Export the chapter to various formats using the download menu</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                    Deleting Chapters
+                                </h4>
+                                <p className="text-sm text-muted-foreground ml-6">
+                                    Click the delete icon on a chapter card. You'll be asked to confirm. <strong className="text-destructive">Deletion is permanent and cannot be undone.</strong> All chapter content, notes, outlines, and scene beats are deleted.
+                                </p>
+                            </div>
+
+                            <div>
+                                <h4 className="font-medium text-sm mb-2">Chapter Notes & Outlines</h4>
+                                <p className="text-sm text-muted-foreground ml-6">
+                                    Access notes and outlines from within the chapter editor:
+                                </p>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-12 mt-1">
+                                    <li><strong>Outline:</strong> Plan your chapter structure, scene beats, and plot points before writing</li>
+                                    <li><strong>Notes:</strong> Track character arcs, continuity reminders, or revision notes for this specific chapter</li>
+                                    <li>Both persist automatically and are accessible from the editor sidebar or toolbar</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
+                        <h3 className="text-lg font-medium">Story Management</h3>
+                        <p className="text-sm">
+                            Manage story metadata and settings from the Stories page.
+                        </p>
+
+                        <div className="space-y-4 mt-4">
+                            <div>
+                                <h4 className="font-medium text-sm mb-2">Editing Story Details</h4>
+                                <p className="text-sm text-muted-foreground ml-6">
+                                    From the Stories page, click the edit icon on a story card to modify:
+                                </p>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-12 mt-1">
+                                    <li><strong>Title:</strong> Story title</li>
+                                    <li><strong>Author:</strong> Author name</li>
+                                    <li><strong>Language:</strong> Primary story language (used in AI prompts)</li>
+                                    <li><strong>Synopsis:</strong> Brief story description or summary</li>
+                                    <li><strong>Series:</strong> Assign to a series or change series assignment (leave blank for standalone)</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h4 className="font-medium text-sm mb-2">Converting Standalone to Series Story</h4>
+                                <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground ml-6">
+                                    <li>Create a series from the Series page if you haven't already</li>
+                                    <li>Edit your standalone story details</li>
+                                    <li>Select the series from the "Series" dropdown</li>
+                                    <li>Save changes</li>
+                                    <li>Your story now has access to series-level lorebook entries</li>
+                                </ol>
+                            </div>
+
+                            <div>
+                                <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                    Deleting Stories
+                                </h4>
+                                <p className="text-sm text-muted-foreground ml-6">
+                                    Click the delete icon on a story card and confirm. <strong className="text-destructive">This permanently deletes the story and all its chapters, prompts, lorebook entries, notes, brainstorm chats, and scene beats.</strong> Consider exporting before deletion if you want to keep a backup.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
+                        <h3 className="text-lg font-medium">Notes Feature</h3>
+                        <p className="text-sm">
+                            The Notes feature provides story-level note-taking separate from chapter notes. Access it from the "Notes" tab in your story dashboard.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">When to Use Notes</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ul className="list-disc list-inside space-y-1 text-sm">
+                                        <li>Story-wide ideas and brainstorming</li>
+                                        <li>Research and reference material</li>
+                                        <li>Todo lists for revision or editing</li>
+                                        <li>General notes not tied to specific chapters</li>
+                                    </ul>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Note Types</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ul className="list-disc list-inside space-y-1 text-sm">
+                                        <li><strong>Idea:</strong> Plot ideas, character concepts</li>
+                                        <li><strong>Research:</strong> Background research, references</li>
+                                        <li><strong>Todo:</strong> Tasks, revisions, editing notes</li>
+                                        <li><strong>Other:</strong> Anything else</li>
+                                    </ul>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <div className="mt-4">
+                            <h4 className="font-medium text-sm mb-2">Using Notes</h4>
+                            <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground ml-6">
+                                <li>Navigate to Dashboard → [Your Story] → Notes</li>
+                                <li>Click "Create New Note" in the sidebar</li>
+                                <li>Enter a title and select a note type</li>
+                                <li>Write your note content in the editor</li>
+                                <li>Notes save automatically</li>
+                                <li>Click on notes in the sidebar to switch between them</li>
+                                <li>Delete notes using the delete button when a note is selected</li>
+                            </ol>
+                        </div>
+
+                        <Alert className="mt-4">
+                            <AlertTitle>Notes vs Chapter Notes vs Lorebook</AlertTitle>
+                            <AlertDescription>
+                                <ul className="list-disc list-inside space-y-1 text-sm">
+                                    <li><strong>Story Notes:</strong> General story-wide information, not tied to chapters</li>
+                                    <li><strong>Chapter Notes:</strong> Specific to one chapter, accessed from chapter editor</li>
+                                    <li><strong>Lorebook Notes Category:</strong> Story elements visible to AI during generation</li>
+                                </ul>
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                </TabsContent>
+
                 <TabsContent value="workflow" className="space-y-6">
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Optimising Your Writing Workflow</h3>
@@ -272,10 +459,186 @@ export default function AdvancedGuide() {
                         </div>
                     </div>
 
-                    <Alert className="mt-6 bg-primary/10 border-primary">
-                        <AlertTitle>Workflow Tip: Keyboard Shortcuts</AlertTitle>
+                    <div className="space-y-4 border-l-4 border-primary pl-4 py-2 mt-6">
+                        <h3 className="text-lg font-medium">Keyboard Shortcuts Reference</h3>
+                        <p className="text-sm">
+                            Master these shortcuts to speed up your writing workflow.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Editor Shortcuts</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span>Insert Scene Beat</span>
+                                            <kbd className="px-2 py-1 bg-muted rounded border text-xs">Alt+S / Opt+S</kbd>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Trigger @ Autocomplete</span>
+                                            <kbd className="px-2 py-1 bg-muted rounded border text-xs">@</kbd>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Save Chapter</span>
+                                            <kbd className="px-2 py-1 bg-muted rounded border text-xs">Auto-save</kbd>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Navigation Tips</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ul className="list-disc list-inside space-y-1 text-sm">
+                                        <li>Use browser back/forward for navigation</li>
+                                        <li>Story dashboard tabs accessible via mouse</li>
+                                        <li>Most features keyboard-accessible via Tab key</li>
+                                    </ul>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="troubleshooting" className="space-y-6">
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Troubleshooting Common Issues</h3>
+                        <p>
+                            Solutions to common problems you might encounter while using The Story Nexus.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4 border-l-4 border-destructive pl-4 py-2">
+                        <h3 className="text-lg font-medium">AI Generation Issues</h3>
+
+                        <div className="space-y-3">
+                            <div className="border rounded-lg p-4 bg-card">
+                                <h4 className="font-medium text-sm mb-2">Models Don't Appear After Adding API Key</h4>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                    <strong>For OpenAI/OpenRouter:</strong>
+                                </p>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                                    <li>Wait a few seconds - models fetch automatically after key is saved</li>
+                                    <li>Check that your API key is valid (test it at the provider's website)</li>
+                                    <li>Ensure you have internet connectivity</li>
+                                    <li>Try refreshing the page</li>
+                                </ul>
+                                <p className="text-sm text-muted-foreground mt-2 mb-2">
+                                    <strong>For Local Models:</strong>
+                                </p>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                                    <li>Ensure LM Studio (or your local AI server) is running</li>
+                                    <li>Check the API URL is correct (default: http://localhost:1234/v1)</li>
+                                    <li>Click the "Refresh Models" button after starting your local server</li>
+                                    <li>Verify a model is loaded in LM Studio</li>
+                                </ul>
+                            </div>
+
+                            <div className="border rounded-lg p-4 bg-card">
+                                <h4 className="font-medium text-sm mb-2">Scene Beat Won't Generate</h4>
+                                <p className="text-sm text-muted-foreground mb-2">Check these requirements:</p>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                                    <li>You've entered a scene beat command</li>
+                                    <li>You've selected a prompt from the dropdown</li>
+                                    <li>You've selected a model from the dropdown</li>
+                                    <li>The "Generate Prose" button should become active when all three are set</li>
+                                    <li>If using a local model, ensure your server is running and responsive</li>
+                                </ul>
+                            </div>
+
+                            <div className="border rounded-lg p-4 bg-card">
+                                <h4 className="font-medium text-sm mb-2">Generation Fails or Returns Error</h4>
+                                <p className="text-sm text-muted-foreground mb-2">Common causes:</p>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                                    <li><strong>API Key Issues:</strong> Invalid or expired key, insufficient credits</li>
+                                    <li><strong>Rate Limits:</strong> You may have hit provider rate limits - wait and try again</li>
+                                    <li><strong>Context Too Large:</strong> Too much lorebook context or chapter content. Try using "Use Custom Context" with fewer entries</li>
+                                    <li><strong>Local Server:</strong> Server crashed or model unloaded - restart LM Studio</li>
+                                    <li><strong>Network Issues:</strong> Check internet connection for cloud providers</li>
+                                </ul>
+                            </div>
+
+                            <div className="border rounded-lg p-4 bg-card">
+                                <h4 className="font-medium text-sm mb-2">Generation is Slow</h4>
+                                <p className="text-sm text-muted-foreground mb-2">Speed factors:</p>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                                    <li><strong>Local Models:</strong> Speed depends on your hardware (CPU/GPU)</li>
+                                    <li><strong>Cloud Models:</strong> Network speed and provider server load affect generation</li>
+                                    <li><strong>Context Size:</strong> More lorebook entries = slower generation. Use selective context</li>
+                                    <li><strong>Max Tokens:</strong> Higher max tokens = longer generation time</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 border-l-4 border-destructive pl-4 py-2">
+                        <h3 className="text-lg font-medium">Lorebook Issues</h3>
+
+                        <div className="space-y-3">
+                            <div className="border rounded-lg p-4 bg-card">
+                                <h4 className="font-medium text-sm mb-2">Entries Not Matching in Text</h4>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                                    <li>Check that entry is not disabled (eye icon should show enabled)</li>
+                                    <li>Ensure tags include the exact text you're typing (case-insensitive match)</li>
+                                    <li>Remember the entry name is automatically a tag</li>
+                                    <li>Tags with special characters or spaces should still match</li>
+                                </ul>
+                            </div>
+
+                            <div className="border rounded-lg p-4 bg-card">
+                                <h4 className="font-medium text-sm mb-2">Can't See Series Lorebook Entries in Story</h4>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                                    <li>Verify your story is assigned to a series (edit story details to check)</li>
+                                    <li>Series entries show with "Series" badge - look for the level badge on each entry</li>
+                                    <li>If you just assigned the story to a series, try refreshing the page</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 border-l-4 border-destructive pl-4 py-2">
+                        <h3 className="text-lg font-medium">Data & Storage Issues</h3>
+
+                        <div className="space-y-3">
+                            <div className="border rounded-lg p-4 bg-card">
+                                <h4 className="font-medium text-sm mb-2">Changes Not Saving</h4>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                                    <li><strong>Chapter Content:</strong> Auto-saves as you type with debounce - wait a moment after stopping typing</li>
+                                    <li><strong>Other Fields:</strong> Most save when you click Save/Update buttons or close dialogs</li>
+                                    <li>Check browser console for errors (F12 → Console tab)</li>
+                                    <li>Ensure you're not running out of disk space (SQLite database)</li>
+                                </ul>
+                            </div>
+
+                            <div className="border rounded-lg p-4 bg-card">
+                                <h4 className="font-medium text-sm mb-2">Where is My Data Stored?</h4>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                    All data is stored locally in an SQLite database on your machine:
+                                </p>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                                    <li>Database location depends on your installation method</li>
+                                    <li>Nothing is sent to cloud (except AI API calls for generation)</li>
+                                    <li>Back up the database file regularly if you want to preserve your work</li>
+                                    <li>Consider using export features for additional backups</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <Alert className="mt-6">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Still Having Issues?</AlertTitle>
                         <AlertDescription>
-                            Master keyboard shortcuts to speed up your writing: Alt+S (Option+S on Mac) inserts Scene Beats directly in the editor without breaking your flow.
+                            <p className="mb-2">If you encounter persistent problems:</p>
+                            <ul className="list-disc list-inside space-y-1 text-sm">
+                                <li>Check the browser console (F12) for error messages</li>
+                                <li>Try refreshing the page or restarting the application</li>
+                                <li>Report issues at: <a href="https://github.com/JonSilver/TheStoryNexus/issues" className="text-primary underline" target="_blank" rel="noopener noreferrer">GitHub Issues</a></li>
+                            </ul>
                         </AlertDescription>
                     </Alert>
                 </TabsContent>

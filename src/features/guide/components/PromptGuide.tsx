@@ -298,14 +298,21 @@ export default function PromptGuide() {
                                         <Sliders className="h-5 w-5 text-primary" />
                                         <h5 className="font-medium">Temperature</h5>
                                     </div>
-                                    <p className="text-sm">
-                                        Controls randomness and creativity
+                                    <p className="text-sm mb-2">
+                                        Controls randomness and creativity in AI output.
                                     </p>
-                                    <ul className="list-disc list-inside space-y-1 ml-4 text-sm text-muted-foreground mt-2">
-                                        <li>Lower values (0.1-0.5): More focused, predictable outputs</li>
-                                        <li>Medium values (0.6-1.0): Balanced creativity and coherence</li>
-                                        <li>Higher values (1.1-2.0): More creative, potentially less coherent</li>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                        <strong>Range:</strong> 0.0 to 2.0 (typically). Most providers support 0.0-2.0, some allow higher.
+                                    </p>
+                                    <ul className="list-disc list-inside space-y-1 ml-4 text-sm text-muted-foreground">
+                                        <li><strong>0.1-0.4:</strong> Very focused, deterministic. Good for factual or technical writing</li>
+                                        <li><strong>0.5-0.7:</strong> Balanced (recommended default). Reliable with some variation</li>
+                                        <li><strong>0.8-1.2:</strong> More creative. Good for fiction, dialogue, varied prose</li>
+                                        <li><strong>1.3+:</strong> Highly creative but may lose coherence or drift off-topic</li>
                                     </ul>
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                        <strong>Tip:</strong> Start at 0.7 and adjust based on results. Different models respond differently to the same temperature.
+                                    </p>
                                 </div>
 
                                 <div className="border rounded-lg p-4 bg-card">
@@ -313,13 +320,17 @@ export default function PromptGuide() {
                                         <Table className="h-5 w-5 text-primary" />
                                         <h5 className="font-medium">Max Tokens</h5>
                                     </div>
-                                    <p className="text-sm">
-                                        Sets the maximum length of the generated text
+                                    <p className="text-sm mb-2">
+                                        Maximum number of tokens (roughly words) the AI can generate in response.
                                     </p>
-                                    <ul className="list-disc list-inside space-y-1 ml-4 text-sm text-muted-foreground mt-2">
-                                        <li>Higher values allow for longer generations</li>
-                                        <li>Consider the context length limitations of your chosen models</li>
+                                    <ul className="list-disc list-inside space-y-1 ml-4 text-sm text-muted-foreground">
+                                        <li><strong>Short (100-300 tokens):</strong> Quick responses, dialogue, brief descriptions</li>
+                                        <li><strong>Medium (400-800 tokens):</strong> Scene beats, substantial paragraphs</li>
+                                        <li><strong>Long (1000+ tokens):</strong> Extended scenes, multiple paragraphs</li>
                                     </ul>
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                        <strong>Note:</strong> The AI may generate fewer tokens than the max if it reaches a natural stopping point. Higher max tokens = slower generation and higher API costs.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -490,6 +501,48 @@ export default function PromptGuide() {
                             </p>
                         </div>
 
+                        <div className="space-y-4 mt-6">
+                            <h4 className="text-lg font-medium">Variable Edge Cases & Fallbacks</h4>
+                            <p className="text-sm">
+                                Understanding what happens when variables have no value helps you write robust prompts.
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Empty or Undefined Variables</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="text-sm space-y-2">
+                                        <p>When a variable has no value, it's replaced with an empty string:</p>
+                                        <ul className="list-disc list-inside space-y-1 text-xs">
+                                            <li><code>&#123;&#123;pov&#125;&#125;</code> → Empty if no POV set on chapter</li>
+                                            <li><code>&#123;&#123;summaries&#125;&#125;</code> → Empty if no chapter summaries exist</li>
+                                            <li><code>&#123;&#123;selected_text&#125;&#125;</code> → Empty if no text selected</li>
+                                        </ul>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            Prompts won't fail, but empty variables may affect AI output quality.
+                                        </p>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Writing Robust Prompts</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="text-sm space-y-2">
+                                        <p>Handle optional variables gracefully:</p>
+                                        <div className="bg-muted p-2 rounded text-xs font-mono mt-1">
+                                            Write a scene where &#123;&#123;scenebeat&#125;&#125;.
+                                            &#123;&#123;#if pov&#125;&#125;Maintain &#123;&#123;pov&#125;&#125; perspective.&#123;&#123;/if&#125;&#125;
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            <strong>Note:</strong> Conditional syntax shown is illustrative. Currently, prompts should be written to work whether variables are populated or empty.
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
+
                         <Alert className="mt-6">
                             <AlertTitle className="flex items-center gap-2">
                                 <Sparkles className="h-5 w-5" />
@@ -606,6 +659,91 @@ export default function PromptGuide() {
                                     </AlertDescription>
                                 </Alert>
                             </div>
+                        </div>
+
+                        <div className="space-y-4 mt-6">
+                            <h4 className="text-lg font-medium">Cloning System Prompts</h4>
+                            <p>
+                                System prompts cannot be edited or deleted, but you can clone them to create customizable versions.
+                            </p>
+                            <div className="bg-muted p-4 rounded-md">
+                                <h5 className="font-medium text-sm mb-2">How to Clone a System Prompt:</h5>
+                                <ol className="list-decimal list-inside space-y-2 ml-4 text-sm">
+                                    <li>Navigate to the Prompts page in your story dashboard</li>
+                                    <li>Find the system prompt you want to clone (marked with "System" badge)</li>
+                                    <li>Click the clone/duplicate icon next to the prompt</li>
+                                    <li>A new custom prompt is created with the same content</li>
+                                    <li>The cloned prompt can be fully edited and customised</li>
+                                    <li>The cloned prompt is now story-specific and can be deleted if needed</li>
+                                </ol>
+                            </div>
+                            <Alert className="mt-3">
+                                <AlertTitle>Why Clone System Prompts?</AlertTitle>
+                                <AlertDescription>
+                                    <ul className="list-disc list-inside space-y-1 text-sm">
+                                        <li>Customise system prompts for your specific writing style</li>
+                                        <li>Tweak temperature or token settings for a system prompt</li>
+                                        <li>Add story-specific instructions to a proven prompt template</li>
+                                        <li>Experiment with variations without losing the original</li>
+                                    </ul>
+                                </AlertDescription>
+                            </Alert>
+                        </div>
+
+                        <div className="space-y-4 mt-6">
+                            <h4 className="text-lg font-medium">Import & Export Prompts</h4>
+                            <p>
+                                Share prompts between stories or back them up using import/export functionality.
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Exporting Prompts</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2 text-sm">
+                                        <ol className="list-decimal list-inside space-y-1">
+                                            <li>Navigate to the Prompts page</li>
+                                            <li>Click the Export button in the toolbar</li>
+                                            <li>Only custom (non-system) prompts are exported</li>
+                                            <li>A JSON file downloads with your prompts</li>
+                                        </ol>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            Exported files include all prompt data: name, messages, settings, allowed models, and prompt type.
+                                        </p>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Importing Prompts</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2 text-sm">
+                                        <ol className="list-decimal list-inside space-y-1">
+                                            <li>Navigate to the Prompts page</li>
+                                            <li>Click the Import button</li>
+                                            <li>Select a JSON file exported from another story</li>
+                                            <li>Review the prompts to be imported</li>
+                                            <li>Confirm to add them to your story</li>
+                                        </ol>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            <strong>Name collisions:</strong> If a prompt with the same name exists, the imported prompt gets an "(Imported)" suffix. System prompts are never overwritten during import.
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            <Alert className="mt-3">
+                                <AlertTitle>Import/Export Use Cases</AlertTitle>
+                                <AlertDescription>
+                                    <ul className="list-disc list-inside space-y-1 text-sm">
+                                        <li><strong>Reuse:</strong> Move your best prompts from one story to another</li>
+                                        <li><strong>Backup:</strong> Export prompts before experimenting with changes</li>
+                                        <li><strong>Collaboration:</strong> Share effective prompts with other writers</li>
+                                        <li><strong>Templates:</strong> Build prompt libraries for different genres</li>
+                                    </ul>
+                                </AlertDescription>
+                            </Alert>
                         </div>
 
                         <div className="space-y-4 mt-6">

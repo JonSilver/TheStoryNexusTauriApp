@@ -366,13 +366,13 @@ export default function LorebookGuide() {
                                 <li>
                                     <strong>Type:</strong> Specify a more specific type within the category
                                     <p className="text-sm text-muted-foreground ml-6">
-                                        Examples: Protagonist, Villain, Capital City, Magical Artifact
+                                        Examples: "Protagonist", "Villain", "Capital City", "Magical Artifact". This is for your organization—the AI doesn't specifically use this field differently, but it's included in the entry context.
                                     </p>
                                 </li>
                                 <li>
-                                    <strong>Status:</strong> Set the current status of this entry
+                                    <strong>Status:</strong> Set the narrative status of this entry
                                     <p className="text-sm text-muted-foreground ml-6">
-                                        Options include active, inactive, or historical
+                                        Options: <strong>active</strong> (currently relevant to your story), <strong>inactive</strong> (temporarily not in play), <strong>historical</strong> (past events/deceased characters). This is descriptive metadata for your reference and is included in the entry description sent to the AI.
                                     </p>
                                 </li>
                                 <li>
@@ -539,6 +539,62 @@ export default function LorebookGuide() {
                             </div>
                         </div>
 
+                        <div className="space-y-4 mt-6">
+                            <h4 className="text-lg font-medium">Import & Export Lorebook Entries</h4>
+                            <p className="text-sm">
+                                Share lorebook entries between stories or back them up using import/export functionality.
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Exporting Entries</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2 text-sm">
+                                        <ol className="list-decimal list-inside space-y-1">
+                                            <li>Navigate to the Lorebook page</li>
+                                            <li>Look for the Export button in the toolbar</li>
+                                            <li>Select which entries to export (by level, category, or all)</li>
+                                            <li>A JSON file downloads with your entries</li>
+                                        </ol>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            Exported files include all entry data: names, descriptions, tags, categories, metadata, and level information.
+                                        </p>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Importing Entries</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2 text-sm">
+                                        <ol className="list-decimal list-inside space-y-1">
+                                            <li>Navigate to the Lorebook page</li>
+                                            <li>Click the Import button</li>
+                                            <li>Select a JSON file exported from another story</li>
+                                            <li>Review the entries to be imported</li>
+                                            <li>Confirm to add them to your lorebook</li>
+                                        </ol>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            Name collisions are handled automatically with unique suffixes. Level assignments are preserved or can be reassigned during import.
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            <Alert className="mt-3">
+                                <AlertTitle>Import/Export Use Cases</AlertTitle>
+                                <AlertDescription>
+                                    <ul className="list-disc list-inside space-y-1 text-sm">
+                                        <li><strong>Backup:</strong> Export all lorebook entries as a backup before making major changes</li>
+                                        <li><strong>Reuse:</strong> Export character/location entries from one story to use in another</li>
+                                        <li><strong>Collaboration:</strong> Share lorebook entries with co-authors or beta readers</li>
+                                        <li><strong>Templates:</strong> Create template lorebook sets for recurring story types</li>
+                                    </ul>
+                                </AlertDescription>
+                            </Alert>
+                        </div>
+
                         <Alert className="mt-6">
                             <AlertTitle>Best Practices</AlertTitle>
                             <AlertDescription>
@@ -635,24 +691,42 @@ export default function LorebookGuide() {
                         </div>
 
                         <div className="space-y-4 mt-6">
-                            <h4 className="text-lg font-medium">Viewing Matched Entries</h4>
+                            <h4 className="text-lg font-medium">Viewing Matched Entries in the Editor</h4>
                             <p>
-                                While writing, you can view which Lorebook entries have been matched in your current chapter.
+                                While writing, you can view which Lorebook entries are actively matched in your current chapter.
                             </p>
-                            <ol className="list-decimal list-inside space-y-2 ml-4">
-                                <li>
-                                    In the chapter editor, click on "Matched Tags" in the right sidebar
-                                    <p className="text-sm text-muted-foreground ml-6">
-                                        This will open a drawer showing all Lorebook entries that match text in your current chapter
-                                    </p>
-                                </li>
-                                <li>
-                                    Review the matched entries to ensure the right context is being provided to the AI
-                                    <p className="text-sm text-muted-foreground ml-6">
-                                        If important entries are missing, make sure to mention them by name in your text
-                                    </p>
-                                </li>
-                            </ol>
+                            <div className="bg-muted p-4 rounded-md">
+                                <h5 className="font-medium text-sm mb-2">How to View Matched Entries:</h5>
+                                <ol className="list-decimal list-inside space-y-2 ml-4 text-sm">
+                                    <li>
+                                        In the chapter editor, look for the "Matched Tags" button in the right sidebar or toolbar
+                                    </li>
+                                    <li>
+                                        Click it to open a drawer showing all lorebook entries that match text in your current chapter
+                                    </li>
+                                    <li>
+                                        The drawer displays:
+                                        <ul className="list-disc list-inside ml-6 mt-1 space-y-1">
+                                            <li>Entry name and category</li>
+                                            <li>Which tags triggered the match</li>
+                                            <li>Entry level badge (global/series/story)</li>
+                                            <li>A preview of the entry description</li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        Review matches to ensure the right context will be provided to the AI
+                                    </li>
+                                    <li>
+                                        If important entries are missing, mention them by their exact name or tags in your text
+                                    </li>
+                                </ol>
+                            </div>
+                            <Alert className="mt-3">
+                                <AlertTitle>Matching is Dynamic</AlertTitle>
+                                <AlertDescription>
+                                    Lorebook matching updates as you type. As soon as you mention a character name or location tag, the corresponding entry becomes matched and available to the AI.
+                                </AlertDescription>
+                            </Alert>
                         </div>
 
                         <div className="mt-8 p-6 border rounded-lg bg-muted/30">
