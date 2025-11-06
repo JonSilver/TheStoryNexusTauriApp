@@ -25,6 +25,8 @@ const LorebookPage = lazy(() => import("./features/lorebook/pages/LorebookPage")
 const BrainstormPage = lazy(() => import("./features/brainstorm/pages/BrainstormPage"));
 const GuidePage = lazy(() => import("./features/guide/pages/GuidePage"));
 const NotesPage = lazy(() => import("./features/notes/pages/NotesPage"));
+const SeriesListPage = lazy(() => import("./features/series/pages/SeriesListPage"));
+const SeriesDashboard = lazy(() => import("./features/series/pages/SeriesDashboard"));
 
 // Loading fallback component
 const PageLoadingFallback = () => (
@@ -50,6 +52,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 <Route element={<MainLayout />}>
                   {/* Stories section */}
                   <Route path="/stories" element={<Home />} />
+                  {/* Series section */}
+                  <Route path="/series" element={<SeriesListPage />} />
+                  <Route path="/series/:seriesId" element={<SeriesDashboard />} />
+                  <Route path="/series/:seriesId/lorebook" element={<LorebookPage />} />
                   {/* AI Settings */}
                   <Route path="/ai-settings" element={<AISettingsPage />} />
                   {/* Guide */}

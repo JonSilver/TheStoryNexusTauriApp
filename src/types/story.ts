@@ -1,5 +1,5 @@
 // Base types for common fields
-interface BaseEntity {
+export interface BaseEntity {
     id: string;
     createdAt: Date;
     isDemo?: boolean; // Flag to identify demo content
@@ -11,6 +11,13 @@ export interface Story extends BaseEntity {
     author: string;
     language: string;
     synopsis?: string;
+    seriesId?: string;
+}
+
+// Series type
+export interface Series extends BaseEntity {
+    name: string;
+    description?: string;
 }
 
 // Chapter structure
@@ -136,8 +143,11 @@ export interface Note extends BaseEntity {
 }
 
 // Lorebook types
+export type LorebookLevel = 'global' | 'series' | 'story';
+
 export interface LorebookEntry extends BaseEntity {
-    storyId: string;
+    level: LorebookLevel;
+    scopeId?: string; // seriesId when level='series', storyId when level='story'
     name: string;
     description: string;
     category: 'character' | 'location' | 'item' | 'event' | 'note' | 'synopsis' | 'starting scenario' | 'timeline';
@@ -156,6 +166,14 @@ export interface LorebookEntry extends BaseEntity {
     };
     isDisabled?: boolean;
 }
+
+// Validation helper for lorebook entry level/scopeId constraints
+export const validateLorebookEntry = (entry: LorebookEntry): boolean => {
+    if (entry.level === 'global' && entry.scopeId) return false;
+    if (entry.level === 'series' && !entry.scopeId) return false;
+    if (entry.level === 'story' && !entry.scopeId) return false;
+    return true;
+};
 
 // Prompt Parser types
 export interface PromptParserConfig {
@@ -216,8 +234,25 @@ export interface StoryExport {
     type: 'story';
     exportDate: string;
     story: Story;
+    series?: Series;
     chapters: Chapter[];
     lorebookEntries: LorebookEntry[];
     sceneBeats: SceneBeat[];
     aiChats: AIChat[];
+}
+
+export interface SeriesExport {
+    version: string;
+    type: 'series';
+    exportDate: string;
+    series: Series;
+    lorebookEntries: LorebookEntry[];
+    stories: StoryExport[];
+}
+
+export interface GlobalLorebookExport {
+    version: string;
+    type: 'global-lorebook';
+    exportDate: string;
+    lorebookEntries: LorebookEntry[];
 }

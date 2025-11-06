@@ -27,13 +27,20 @@ import {
 } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
 import { attemptPromise } from '@jfdi/attempt';
+import { useSeriesQuery } from '@/features/series/hooks/useSeriesQuery';
+import { useStoryQuery } from '@/features/stories/hooks/useStoriesQuery';
+import { LevelBadge } from './LevelBadge';
 
 interface CreateEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  storyId: string;
+  storyId?: string;
+  seriesId?: string;
   entry?: LorebookEntry;
+  defaultCategory?: LorebookCategory;
 }
+
+type LorebookLevel = LorebookEntry["level"];
 
 // Use the category type directly from the LorebookEntry interface
 type LorebookCategory = LorebookEntry["category"];
@@ -57,17 +64,31 @@ export function CreateEntryDialog({
   open,
   onOpenChange,
   storyId,
+  seriesId,
   entry,
+  defaultCategory,
 }: CreateEntryDialogProps) {
   const createMutation = useCreateLorebookMutation();
   const updateMutation = useUpdateLorebookMutation();
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
+  // Fetch story and series data
+  const { data: story } = useStoryQuery(storyId || '');
+  const { data: seriesList } = useSeriesQuery();
+
+  // Determine default level based on context
+  const defaultLevel: LorebookLevel = entry?.level || (seriesId ? 'series' : 'story');
+  const defaultScopeId = entry?.scopeId || (seriesId || storyId);
+
+  // Level and scope state
+  const [selectedLevel, setSelectedLevel] = useState<LorebookLevel>(defaultLevel);
+  const [selectedScopeId, setSelectedScopeId] = useState<string | undefined>(defaultScopeId);
+
   // Initial form state in a separate constant for reuse
   const initialFormState = {
     name: "",
     description: "",
-    category: "character" as const,
+    category: (defaultCategory || "character"),
     tags: [],
     isDisabled: false,
     metadata: {
@@ -113,6 +134,8 @@ export function CreateEntryDialog({
       const dataToSubmit = {
         ...formData,
         tags: processedTags,
+        level: selectedLevel,
+        scopeId: selectedLevel === 'global' ? undefined : selectedScopeId,
       };
 
       if (entry) {
@@ -124,7 +147,7 @@ export function CreateEntryDialog({
         await createMutation.mutateAsync({
           id: crypto.randomUUID(),
           ...dataToSubmit,
-          storyId,
+          storyId: storyId || selectedScopeId || '',
         } as Omit<LorebookEntry, "createdAt">);
         resetForm();
       }
@@ -139,9 +162,87 @@ export function CreateEntryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[625px] overflow-y-auto max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>{entry ? "Edit Entry" : "Create New Entry"}</DialogTitle>
+          <DialogTitle>
+            <div className="flex items-center gap-2">
+              {entry ? "Edit Entry" : "Create New Entry"}
+              {entry && <LevelBadge level={entry.level} />}
+            </div>
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Level Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="level">Level</Label>
+            <Select
+              value={selectedLevel}
+              onValueChange={(value: LorebookLevel) => {
+                setSelectedLevel(value);
+                // Reset scopeId when level changes
+                if (value === 'global') {
+                  setSelectedScopeId(undefined);
+                } else if (value === 'story') {
+                  setSelectedScopeId(storyId);
+                } else if (value === 'series') {
+                  setSelectedScopeId(story?.seriesId);
+                }
+              }}
+            >
+              <SelectTrigger id="level">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="global">Global</SelectItem>
+                <SelectItem value="series">Series</SelectItem>
+                <SelectItem value="story">Story</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Series Selector */}
+          {selectedLevel === 'series' && (
+            <div className="space-y-2">
+              <Label htmlFor="series">Series</Label>
+              <Select
+                value={selectedScopeId || ''}
+                onValueChange={setSelectedScopeId}
+              >
+                <SelectTrigger id="series">
+                  <SelectValue placeholder="Select series" />
+                </SelectTrigger>
+                <SelectContent>
+                  {seriesList?.map((series) => (
+                    <SelectItem key={series.id} value={series.id}>
+                      {series.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Story Selector (when not in story context) */}
+          {selectedLevel === 'story' && !storyId && (
+            <div className="space-y-2">
+              <Label htmlFor="story-select">Story</Label>
+              <Input
+                id="story-select"
+                value={story?.title || ''}
+                disabled
+                placeholder="Current story"
+              />
+            </div>
+          )}
+
+          {/* Story display (when in story context) */}
+          {selectedLevel === 'story' && storyId && (
+            <div className="space-y-2">
+              <Label>Story</Label>
+              <div className="text-sm text-muted-foreground">
+                This entry will be created for the current story
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input

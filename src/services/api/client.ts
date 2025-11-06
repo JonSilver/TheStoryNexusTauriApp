@@ -6,7 +6,8 @@ import type {
     AISettings,
     AIChat,
     SceneBeat,
-    Note
+    Note,
+    Series
 } from '@/types/story';
 
 const API_BASE = '/api';
@@ -61,6 +62,39 @@ export const storiesApi = {
     },
 };
 
+// Series API
+export const seriesApi = {
+    getAll: () => fetchJSON<Series[]>('/series'),
+    getById: (id: string) => fetchJSON<Series>(`/series/${id}`),
+    getStories: (seriesId: string) => fetchJSON<Story[]>(`/series/${seriesId}/stories`),
+    getLorebook: (seriesId: string) => fetchJSON<LorebookEntry[]>(`/series/${seriesId}/lorebook`),
+    create: (data: Omit<Series, 'id' | 'createdAt'>) => fetchJSON<Series>('/series', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+    update: (id: string, data: Partial<Omit<Series, 'id' | 'createdAt'>>) => fetchJSON<Series>(`/series/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    }),
+    delete: (id: string) => fetchJSON<{ success: boolean }>(`/series/${id}`, {
+        method: 'DELETE',
+    }),
+    exportSeries: (id: string) => fetchJSON<any>(`/series/${id}/export`),
+    importSeries: (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return fetch(`${API_BASE}/series/import`, {
+            method: 'POST',
+            body: formData,
+        }).then(async (response) => {
+            if (!response.ok) {
+                throw new Error('Failed to import series');
+            }
+            return response.json();
+        });
+    },
+};
+
 // Chapters API
 export const chaptersApi = {
     getByStory: (storyId: string) => fetchJSON<Chapter[]>(`/chapters/story/${storyId}`),
@@ -97,6 +131,25 @@ export const lorebookApi = {
     delete: (id: string) => fetchJSON<{ success: boolean }>(`/lorebook/${id}`, {
         method: 'DELETE',
     }),
+    // Level-based queries
+    getGlobal: () => fetchJSON<LorebookEntry[]>('/lorebook/global'),
+    getBySeries: (seriesId: string) => fetchJSON<LorebookEntry[]>(`/lorebook/series/${seriesId}`),
+    getHierarchical: (storyId: string) => fetchJSON<LorebookEntry[]>(`/lorebook/story/${storyId}/hierarchical`),
+    // Export/Import
+    exportGlobal: () => fetchJSON<any>('/lorebook/global/export'),
+    importGlobal: (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return fetch(`${API_BASE}/lorebook/global/import`, {
+            method: 'POST',
+            body: formData,
+        }).then(async (response) => {
+            if (!response.ok) {
+                throw new Error('Failed to import global lorebook');
+            }
+            return response.json();
+        });
+    },
 };
 
 // Prompts API

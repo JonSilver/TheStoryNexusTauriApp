@@ -32,8 +32,12 @@ export const useCreateStoryMutation = () => {
 
     return useMutation({
         mutationFn: storiesApi.create,
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: storiesKeys.all });
+            // Invalidate series stories list if story is assigned to a series
+            if (data.seriesId) {
+                queryClient.invalidateQueries({ queryKey: ['series', data.seriesId, 'stories'] });
+            }
             toast.success('Story created successfully');
         },
         onError: (error: Error) => {
@@ -52,6 +56,15 @@ export const useUpdateStoryMutation = () => {
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: storiesKeys.all });
             queryClient.invalidateQueries({ queryKey: storiesKeys.detail(variables.id) });
+            // Invalidate series stories list if seriesId was updated
+            if (variables.data.seriesId !== undefined) {
+                // Invalidate the new series
+                if (variables.data.seriesId) {
+                    queryClient.invalidateQueries({ queryKey: ['series', variables.data.seriesId, 'stories'] });
+                }
+                // Also invalidate the old series (data contains the updated story with old seriesId still cached)
+                queryClient.invalidateQueries({ queryKey: ['series'] });
+            }
             toast.success('Story updated successfully');
         },
         onError: (error: Error) => {

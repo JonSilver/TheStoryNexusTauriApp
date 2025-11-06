@@ -6,17 +6,64 @@ import { toast } from 'react-toastify';
 // Query keys
 export const lorebookKeys = {
     all: ['lorebook'] as const,
+    lists: () => [...lorebookKeys.all, 'list'] as const,
+    list: (storyId?: string) => [...lorebookKeys.lists(), storyId ?? 'all'] as const,
+    details: () => [...lorebookKeys.all, 'detail'] as const,
+    detail: (id: string) => [...lorebookKeys.details(), id] as const,
+
+    // Level-based query keys
+    global: () => [...lorebookKeys.all, 'global'] as const,
+    series: (seriesId: string) => [...lorebookKeys.all, 'series', seriesId] as const,
+    story: (storyId: string) => [...lorebookKeys.all, 'story', storyId] as const,
+    hierarchical: (storyId: string) => [...lorebookKeys.all, 'hierarchical', storyId] as const,
+
+    // Legacy keys (backward compatibility)
     byStory: (storyId: string) => ['lorebook', 'story', storyId] as const,
     byCategory: (storyId: string, category: string) => ['lorebook', 'story', storyId, 'category', category] as const,
     byTag: (storyId: string, tag: string) => ['lorebook', 'story', storyId, 'tag', tag] as const,
-    detail: (id: string) => ['lorebook', id] as const,
 };
 
-// Fetch lorebook entries by story
+// Fetch lorebook entries by story (legacy - returns hierarchical)
 export const useLorebookByStoryQuery = (storyId: string) => {
     return useQuery({
         queryKey: lorebookKeys.byStory(storyId),
         queryFn: () => lorebookApi.getByStory(storyId),
+        enabled: !!storyId,
+    });
+};
+
+// Query: Global lorebook entries
+export const useGlobalLorebookQuery = () => {
+    return useQuery({
+        queryKey: lorebookKeys.global(),
+        queryFn: lorebookApi.getGlobal,
+    });
+};
+
+// Query: Series-level lorebook entries
+export const useSeriesLorebookQuery = (seriesId: string | undefined) => {
+    return useQuery({
+        queryKey: lorebookKeys.series(seriesId!),
+        queryFn: () => lorebookApi.getBySeries(seriesId!),
+        enabled: !!seriesId,
+    });
+};
+
+// Query: Story-level lorebook entries only
+export const useStoryLorebookQuery = (storyId: string | undefined) => {
+    return useQuery({
+        queryKey: lorebookKeys.story(storyId!),
+        queryFn: () => lorebookApi.getByStory(storyId!),
+        enabled: !!storyId,
+    });
+};
+
+// Query: Hierarchical lorebook (global + series + story)
+// CRITICAL: This is what prompt context should use
+export const useHierarchicalLorebookQuery = (storyId: string | undefined) => {
+    return useQuery({
+        queryKey: lorebookKeys.hierarchical(storyId!),
+        queryFn: () => lorebookApi.getHierarchical(storyId!),
         enabled: !!storyId,
     });
 };
@@ -28,7 +75,19 @@ export const useCreateLorebookMutation = () => {
     return useMutation({
         mutationFn: lorebookApi.create,
         onSuccess: (newEntry) => {
-            queryClient.invalidateQueries({ queryKey: lorebookKeys.byStory(newEntry.storyId) });
+            // Invalidate based on entry level
+            if (newEntry.level === 'global') {
+                queryClient.invalidateQueries({ queryKey: lorebookKeys.global() });
+            } else if (newEntry.level === 'series' && newEntry.scopeId) {
+                queryClient.invalidateQueries({ queryKey: lorebookKeys.series(newEntry.scopeId) });
+            } else if (newEntry.level === 'story' && newEntry.scopeId) {
+                queryClient.invalidateQueries({ queryKey: lorebookKeys.story(newEntry.scopeId) });
+                queryClient.invalidateQueries({ queryKey: lorebookKeys.hierarchical(newEntry.scopeId) });
+            }
+
+            // Also invalidate list query
+            queryClient.invalidateQueries({ queryKey: lorebookKeys.lists() });
+
             toast.success('Lorebook entry created successfully');
         },
         onError: (error: Error) => {
@@ -44,12 +103,10 @@ export const useUpdateLorebookMutation = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<LorebookEntry> }) =>
             lorebookApi.update(id, data),
-        onSuccess: (updatedEntry, variables) => {
-            queryClient.setQueryData(lorebookKeys.detail(variables.id), updatedEntry);
-            queryClient.setQueryData<LorebookEntry[]>(
-                lorebookKeys.byStory(updatedEntry.storyId),
-                (old) => old?.map(e => e.id === updatedEntry.id ? updatedEntry : e)
-            );
+        onSuccess: () => {
+            // Just invalidate ALL lorebook queries - simpler and actually works
+            queryClient.invalidateQueries({ queryKey: lorebookKeys.all });
+
             toast.success('Lorebook entry updated successfully');
         },
         onError: (error: Error) => {
@@ -64,12 +121,55 @@ export const useDeleteLorebookMutation = () => {
 
     return useMutation({
         mutationFn: lorebookApi.delete,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: lorebookKeys.all });
+        onMutate: async (id) => {
+            // Get entry before deletion to know which queries to invalidate
+            const entry = queryClient.getQueryData<LorebookEntry>(lorebookKeys.detail(id));
+            return { entry };
+        },
+        onSuccess: (_, __, context) => {
+            const entry = context?.entry;
+
+            if (entry) {
+                // Invalidate level-based queries
+                if (entry.level === 'global') {
+                    queryClient.invalidateQueries({ queryKey: lorebookKeys.global() });
+                } else if (entry.level === 'series' && entry.scopeId) {
+                    queryClient.invalidateQueries({ queryKey: lorebookKeys.series(entry.scopeId) });
+                } else if (entry.level === 'story' && entry.scopeId) {
+                    queryClient.invalidateQueries({ queryKey: lorebookKeys.story(entry.scopeId) });
+                    queryClient.invalidateQueries({ queryKey: lorebookKeys.hierarchical(entry.scopeId) });
+                }
+            }
+
+            // Always invalidate lists as fallback
+            queryClient.invalidateQueries({ queryKey: lorebookKeys.lists() });
+
             toast.success('Lorebook entry deleted successfully');
         },
         onError: (error: Error) => {
             toast.error(`Failed to delete lorebook entry: ${error.message}`);
+        },
+    });
+};
+
+// Mutation: Change entry level (e.g., story → series)
+// Useful for promoting/demoting entries between levels
+export const useChangeLorebookLevelMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, newLevel, newScopeId }: {
+            id: string;
+            newLevel: 'global' | 'series' | 'story';
+            newScopeId?: string;
+        }) => lorebookApi.update(id, { level: newLevel, scopeId: newScopeId }),
+        onSuccess: () => {
+            // Invalidate all lorebook queries (level changed, hard to track precisely)
+            queryClient.invalidateQueries({ queryKey: lorebookKeys.all });
+            toast.success('Lorebook entry level updated successfully');
+        },
+        onError: (error: Error) => {
+            toast.error(`Failed to change lorebook entry level: ${error.message}`);
         },
     });
 };

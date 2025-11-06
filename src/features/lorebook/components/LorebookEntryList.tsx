@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useDeleteLorebookMutation, useUpdateLorebookMutation } from "../hooks/useLorebookQuery";
 import { CreateEntryDialog } from "./CreateEntryDialog";
+import { LevelBadge } from "./LevelBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,11 +26,15 @@ import { logger } from '@/utils/logger';
 
 interface LorebookEntryListProps {
     entries: LorebookEntry[];
+    editable?: boolean;
+    showLevel?: boolean;
+    editableFilter?: (entry: LorebookEntry) => boolean;
+    contextStoryId?: string;
 }
 
 type SortOption = 'name' | 'category' | 'importance' | 'created';
 
-export function LorebookEntryList({ entries: allEntries }: LorebookEntryListProps) {
+export function LorebookEntryList({ entries: allEntries, editable = true, showLevel = false, editableFilter, contextStoryId }: LorebookEntryListProps) {
     const deleteMutation = useDeleteLorebookMutation();
     const updateMutation = useUpdateLorebookMutation();
     const [searchTerm, setSearchTerm] = useState("");
@@ -146,76 +151,84 @@ export function LorebookEntryList({ entries: allEntries }: LorebookEntryListProp
             )}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {sortedEntries.map((entry) => (
-                    <Card
-                        key={entry.id}
-                        className={`border-2 border-gray-300 dark:border-gray-700 shadow-sm ${entry.isDisabled ? "opacity-60" : ""}`}
-                    >
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-50 dark:bg-transparent">
-                            <CardTitle className="text-lg font-semibold">{entry.name}</CardTitle>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => toggleDisabled(entry)}
-                                    title={entry.isDisabled ? "Enable entry" : "Disable entry"}
-                                >
-                                    {entry.isDisabled ? (
-                                        <Eye className="h-4 w-4" />
-                                    ) : (
-                                        <EyeOff className="h-4 w-4" />
+                {sortedEntries.map((entry) => {
+                    const isEntryEditable = editableFilter ? editableFilter(entry) : editable;
+                    return (
+                        <Card
+                            key={entry.id}
+                            className={`border-2 border-gray-300 dark:border-gray-700 shadow-sm ${entry.isDisabled ? "opacity-60" : ""} ${!isEntryEditable ? "opacity-75" : ""}`}
+                        >
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-50 dark:bg-transparent">
+                                <div className="flex items-center gap-2">
+                                    {showLevel && <LevelBadge level={entry.level} />}
+                                    <CardTitle className="text-lg font-semibold">{entry.name}</CardTitle>
+                                </div>
+                                {isEntryEditable && (
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => toggleDisabled(entry)}
+                                            title={entry.isDisabled ? "Enable entry" : "Disable entry"}
+                                        >
+                                            {entry.isDisabled ? (
+                                                <Eye className="h-4 w-4" />
+                                            ) : (
+                                                <EyeOff className="h-4 w-4" />
+                                            )}
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setEditingEntry(entry)}
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setDeletingEntry(entry)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                    <Badge variant="secondary">{entry.category}</Badge>
+                                    {entry.metadata?.importance && (
+                                        <Badge variant="outline">{entry.metadata.importance}</Badge>
                                     )}
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setEditingEntry(entry)}
-                                >
-                                    <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setDeletingEntry(entry)}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-wrap gap-2 mb-2">
-                                <Badge variant="secondary">{entry.category}</Badge>
-                                {entry.metadata?.importance && (
-                                    <Badge variant="outline">{entry.metadata.importance}</Badge>
-                                )}
-                                {entry.isDisabled && (
-                                    <Badge variant="outline" className="bg-destructive/10 text-destructive">Disabled</Badge>
-                                )}
-                            </div>
-                            <div className="flex flex-wrap gap-1 mb-2">
-                                {entry.tags && entry.tags.map((tag) => (
-                                    <Badge
-                                        key={tag}
-                                        variant="secondary"
-                                        className="bg-primary/10 text-xs px-2 py-0.5"
-                                    >
-                                        {tag}
-                                    </Badge>
-                                ))}
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-3">
-                                {entry.description}
-                            </p>
-                        </CardContent>
-                    </Card>
-                ))}
+                                    {entry.isDisabled && (
+                                        <Badge variant="outline" className="bg-destructive/10 text-destructive">Disabled</Badge>
+                                    )}
+                                </div>
+                                <div className="flex flex-wrap gap-1 mb-2">
+                                    {entry.tags && entry.tags.map((tag) => (
+                                        <Badge
+                                            key={tag}
+                                            variant="secondary"
+                                            className="bg-primary/10 text-xs px-2 py-0.5"
+                                        >
+                                            {tag}
+                                        </Badge>
+                                    ))}
+                                </div>
+                                <p className="text-sm text-muted-foreground line-clamp-3">
+                                    {entry.description}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </div>
 
             {editingEntry && (
                 <CreateEntryDialog
                     open={!!editingEntry}
                     onOpenChange={() => setEditingEntry(null)}
-                    storyId={editingEntry.storyId}
+                    storyId={contextStoryId}
                     entry={editingEntry}
                 />
             )}

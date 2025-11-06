@@ -1,9 +1,11 @@
 import { Story } from "@/types/story";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
+import { Badge } from "../../../components/ui/badge";
 import { Edit, Trash2, FolderUp } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useDeleteStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
+import { useSingleSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
 import { DownloadMenu } from "@/components/ui/DownloadMenu";
 import {
     Tooltip,
@@ -22,6 +24,7 @@ interface StoryCardProps {
 export function StoryCard({ story, onEdit, onExport }: StoryCardProps) {
     const deleteStoryMutation = useDeleteStoryMutation();
     const navigate = useNavigate();
+    const { data: series } = useSingleSeriesQuery(story.seriesId);
 
     const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -48,7 +51,14 @@ export function StoryCard({ story, onEdit, onExport }: StoryCardProps) {
         <Card className="w-full cursor-pointer border-2 border-gray-300 dark:border-gray-700 hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm" onClick={handleCardClick}>
             <CardHeader>
                 <CardTitle>{story.title}</CardTitle>
-                <CardDescription>By {story.author}</CardDescription>
+                <CardDescription>
+                    {series && (
+                        <Badge variant="secondary" className="mb-2">
+                            Series: {series.name}
+                        </Badge>
+                    )}
+                    <div>By {story.author}</div>
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 {story.synopsis && <p className="text-sm text-muted-foreground">{story.synopsis}</p>}

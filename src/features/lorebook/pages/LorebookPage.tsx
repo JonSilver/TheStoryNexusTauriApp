@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useParams } from "react-router";
-import { useLorebookByStoryQuery } from "../hooks/useLorebookQuery";
+import {
+    useHierarchicalLorebookQuery,
+    useSeriesLorebookQuery,
+    lorebookKeys,
+} from "../hooks/useLorebookQuery";
 import { CreateEntryDialog } from "../components/CreateEntryDialog";
 import { LorebookEntryList } from "../components/LorebookEntryList";
 import { Button } from "@/components/ui/button";
@@ -12,26 +16,46 @@ import { attempt, attemptPromise } from '@jfdi/attempt';
 import { logger } from '@/utils/logger';
 import { LorebookImportExportService } from '../stores/LorebookImportExportService';
 import { useQueryClient } from '@tanstack/react-query';
-import { lorebookKeys } from '../hooks/useLorebookQuery';
+import type { LorebookEntry } from '@/types/story';
+
+type LorebookCategory = LorebookEntry['category'];
+
+const CATEGORIES: LorebookCategory[] = [
+    'character',
+    'location',
+    'item',
+    'event',
+    'note',
+    'synopsis',
+    'starting scenario',
+    'timeline',
+];
 
 export default function LorebookPage() {
-    const { storyId } = useParams<{ storyId: string }>();
+    const { storyId, seriesId } = useParams<{ storyId?: string; seriesId?: string }>();
     const queryClient = useQueryClient();
-    const { data: entries = [], isLoading, error } = useLorebookByStoryQuery(storyId!);
+
+    const [selectedCategory, setSelectedCategory] = useState<LorebookCategory>('character');
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState("all");
+
+    // Fetch appropriate entries based on context
+    const { data: storyEntries, isLoading: storyLoading } = useHierarchicalLorebookQuery(storyId);
+    const { data: seriesEntries, isLoading: seriesLoading } = useSeriesLorebookQuery(seriesId);
+
+    const entries = storyId ? (storyEntries || []) : (seriesEntries || []);
+    const isLoading = storyId ? storyLoading : seriesLoading;
+
+    // Filter by category
+    const entriesByCategory = entries.filter((e) => e.category === selectedCategory);
 
     // Calculate category counts from the current entries
     const categoryCounts = entries.reduce((acc, entry) => {
-        // Skip disabled entries in the count if you want
-        // if (entry.isDisabled) return acc;
-
         acc[entry.category] = (acc[entry.category] || 0) + 1;
         return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<LorebookCategory, number>);
 
     // Handle export functionality
-    const handleExport = () => {
+    const handleExport = async () => {
         if (storyId) {
             const [error] = attempt(() => LorebookImportExportService.exportEntries(entries, storyId));
             if (error) {
@@ -45,57 +69,45 @@ export default function LorebookPage() {
 
     // Handle import functionality
     const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!storyId || !event.target.files || event.target.files.length === 0) return;
+        if (!event.target.files || event.target.files.length === 0) return;
 
         const file = event.target.files[0];
-        const reader = new FileReader();
 
-        reader.onload = async (e) => {
-            const [error] = await attemptPromise(async () => {
-                const content = e.target?.result as string;
-                await LorebookImportExportService.importEntries(content, storyId, () => {
-                    queryClient.invalidateQueries({ queryKey: lorebookKeys.byStory(storyId) });
+        if (storyId) {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const [error] = await attemptPromise(async () => {
+                    const content = e.target?.result as string;
+                    await LorebookImportExportService.importEntries(content, storyId, () => {
+                        queryClient.invalidateQueries({ queryKey: lorebookKeys.byStory(storyId) });
+                    });
                 });
-            });
-            if (error) {
-                logger.error("Import failed:", error);
-                toast.error("Failed to import lorebook entries");
-                return;
-            }
-            toast.success("Lorebook entries imported successfully");
-        };
+                if (error) {
+                    logger.error("Import failed:", error);
+                    toast.error("Failed to import lorebook entries");
+                    return;
+                }
+                toast.success("Lorebook entries imported successfully");
+            };
+            reader.readAsText(file);
+        }
 
-        reader.readAsText(file);
         // Reset the input
         event.target.value = '';
     };
-
-    if (error) {
-        return (
-            <div className="p-4">
-                <p className="text-destructive">Error loading lorebook: {error.message}</p>
-            </div>
-        );
-    }
-
-    // Apply the filter based on the active tab
-    const filteredEntries = activeTab === "all"
-        ? entries
-        : entries.filter(entry => entry.category === activeTab);
-
-    // Debug logging to help identify issues
-    logger.info("Active tab:", activeTab);
-    logger.info("Category counts:", categoryCounts);
-    logger.info("Total entries:", entries.length);
-    logger.info("Filtered entries:", filteredEntries.length);
 
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold">Lorebook</h1>
+                    <h1 className="text-3xl font-bold">
+                        {seriesId ? 'Series Lorebook' : 'Story Lorebook'}
+                    </h1>
                     <p className="text-muted-foreground mt-1">
-                        Manage your story's characters, locations, and other important elements
+                        {seriesId
+                            ? 'View and manage entries for this series (shared across all stories in series)'
+                            : 'View and manage entries for this story (includes global and series entries)'
+                        }
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -127,79 +139,49 @@ export default function LorebookPage() {
 
             <Separator className="bg-gray-300 dark:bg-gray-700" />
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="w-full justify-start bg-gray-100 dark:bg-gray-800 p-1 border border-gray-300 dark:border-gray-700">
-                    <TabsTrigger
-                        value="all"
-                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:border-b-2 data-[state=active]:border-primary"
-                    >
-                        All ({entries.length})
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="character"
-                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:border-b-2 data-[state=active]:border-primary"
-                    >
-                        Characters ({categoryCounts.character || 0})
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="location"
-                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:border-b-2 data-[state=active]:border-primary"
-                    >
-                        Locations ({categoryCounts.location || 0})
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="item"
-                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:border-b-2 data-[state=active]:border-primary"
-                    >
-                        Items ({categoryCounts.item || 0})
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="event"
-                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:border-b-2 data-[state=active]:border-primary"
-                    >
-                        Events ({categoryCounts.event || 0})
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="note"
-                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:border-b-2 data-[state=active]:border-primary"
-                    >
-                        Notes ({categoryCounts.note || 0})
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="synopsis"
-                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:border-b-2 data-[state=active]:border-primary"
-                    >
-                        Synopsis ({categoryCounts.synopsis || 0})
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="starting scenario"
-                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:border-b-2 data-[state=active]:border-primary"
-                    >
-                        Starting Scenario ({categoryCounts['starting scenario'] || 0})
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="timeline"
-                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:border-b-2 data-[state=active]:border-primary"
-                    >
-                        Timeline ({categoryCounts.timeline || 0})
-                    </TabsTrigger>
+            {/* Category tabs and entry list */}
+            <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as LorebookCategory)} className="w-full">
+                <TabsList className="w-full justify-start bg-gray-100 dark:bg-gray-800 p-1 border border-gray-300 dark:border-gray-700 flex-wrap">
+                    {CATEGORIES.map((cat) => (
+                        <TabsTrigger
+                            key={cat}
+                            value={cat}
+                            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                        >
+                            {cat.charAt(0).toUpperCase() + cat.slice(1)} ({categoryCounts[cat] || 0})
+                        </TabsTrigger>
+                    ))}
                 </TabsList>
 
-                <TabsContent value={activeTab} className="mt-6">
-                    {isLoading ? (
-                        <div className="flex justify-center p-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                        </div>
-                    ) : (
-                        <LorebookEntryList entries={filteredEntries} />
-                    )}
-                </TabsContent>
+                {CATEGORIES.map((cat) => (
+                    <TabsContent key={cat} value={cat} className="mt-6">
+                        {isLoading ? (
+                            <div className="flex justify-center p-8">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                            </div>
+                        ) : entriesByCategory.length > 0 ? (
+                            <LorebookEntryList
+                                entries={entriesByCategory}
+                                editable={true}
+                                showLevel={true}
+                                contextStoryId={storyId}
+                            />
+                        ) : (
+                            <div className="text-center text-muted-foreground py-12">
+                                No {cat} entries yet
+                            </div>
+                        )}
+                    </TabsContent>
+                ))}
             </Tabs>
 
+            {/* Create dialog */}
             <CreateEntryDialog
                 open={isCreateDialogOpen}
                 onOpenChange={setIsCreateDialogOpen}
-                storyId={storyId!}
+                storyId={storyId}
+                seriesId={seriesId}
+                defaultCategory={selectedCategory}
             />
         </div>
     );

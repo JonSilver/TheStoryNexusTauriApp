@@ -14,6 +14,7 @@ import brainstormRouter from './routes/brainstorm.js';
 import scenebeatsRouter from './routes/scenebeats.js';
 import notesRouter from './routes/notes.js';
 import adminRouter from './routes/admin.js';
+import seriesRouter from './routes/series.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,6 +41,7 @@ if (NODE_ENV === 'development') {
 }
 
 // API routes
+app.use('/api/series', seriesRouter);
 app.use('/api/stories', storiesRouter);
 app.use('/api/chapters', chaptersRouter);
 app.use('/api/lorebook', lorebookRouter);
