@@ -1,32 +1,30 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { chaptersApi } from '@/services/api/client';
-import type { Chapter } from '@/types/story';
-import { toast } from 'react-toastify';
+import { chaptersApi } from "@/services/api/client";
+import type { Chapter } from "@/types/story";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 // Query keys
 export const chaptersKeys = {
-    all: ['chapters'] as const,
-    byStory: (storyId: string) => ['chapters', 'story', storyId] as const,
-    detail: (id: string) => ['chapters', id] as const,
+    all: ["chapters"] as const,
+    byStory: (storyId: string) => ["chapters", "story", storyId] as const,
+    detail: (id: string) => ["chapters", id] as const
 };
 
 // Fetch chapters by story
-export const useChaptersByStoryQuery = (storyId: string) => {
-    return useQuery({
+export const useChaptersByStoryQuery = (storyId: string) =>
+    useQuery({
         queryKey: chaptersKeys.byStory(storyId),
         queryFn: () => chaptersApi.getByStory(storyId),
-        enabled: !!storyId,
+        enabled: !!storyId
     });
-};
 
 // Fetch single chapter
-export const useChapterQuery = (id: string) => {
-    return useQuery({
+export const useChapterQuery = (id: string) =>
+    useQuery({
         queryKey: chaptersKeys.detail(id),
         queryFn: () => chaptersApi.getById(id),
-        enabled: !!id,
+        enabled: !!id
     });
-};
 
 // Create chapter mutation
 export const useCreateChapterMutation = () => {
@@ -34,13 +32,13 @@ export const useCreateChapterMutation = () => {
 
     return useMutation({
         mutationFn: chaptersApi.create,
-        onSuccess: (newChapter) => {
+        onSuccess: newChapter => {
             queryClient.invalidateQueries({ queryKey: chaptersKeys.byStory(newChapter.storyId) });
-            toast.success('Chapter created successfully');
+            toast.success("Chapter created successfully");
         },
         onError: (error: Error) => {
             toast.error(`Failed to create chapter: ${error.message}`);
-        },
+        }
     });
 };
 
@@ -49,18 +47,16 @@ export const useUpdateChapterMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: Partial<Chapter> }) =>
-            chaptersApi.update(id, data),
-        onSuccess: (updatedChapter) => {
+        mutationFn: ({ id, data }: { id: string; data: Partial<Chapter> }) => chaptersApi.update(id, data),
+        onSuccess: updatedChapter => {
             queryClient.setQueryData(chaptersKeys.detail(updatedChapter.id), updatedChapter);
-            queryClient.setQueryData<Chapter[]>(
-                chaptersKeys.byStory(updatedChapter.storyId),
-                (old) => old?.map(ch => ch.id === updatedChapter.id ? updatedChapter : ch)
+            queryClient.setQueryData<Chapter[]>(chaptersKeys.byStory(updatedChapter.storyId), old =>
+                old?.map(ch => (ch.id === updatedChapter.id ? updatedChapter : ch))
             );
         },
         onError: () => {
-            toast.error('Failed to update chapter');
-        },
+            toast.error("Failed to update chapter");
+        }
     });
 };
 
@@ -72,10 +68,10 @@ export const useDeleteChapterMutation = () => {
         mutationFn: chaptersApi.delete,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: chaptersKeys.all });
-            toast.success('Chapter deleted successfully');
+            toast.success("Chapter deleted successfully");
         },
         onError: (error: Error) => {
             toast.error(`Failed to delete chapter: ${error.message}`);
-        },
+        }
     });
 };
