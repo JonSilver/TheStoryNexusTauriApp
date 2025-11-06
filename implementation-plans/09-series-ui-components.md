@@ -217,40 +217,82 @@ export const SeriesForm = ({ series, onSuccess }: SeriesFormProps) => {
 ```
 
 ### 4. Create SeriesDashboard Component
-Similar to `StoryDashboard.tsx`:
+Shows series metadata with inline edit and lists stories in series:
 
 ```typescript
 // src/features/series/pages/SeriesDashboard.tsx
-import { useParams, Link, Outlet } from 'react-router-dom';
-import { useSingleSeriesQuery } from '../hooks/useSeriesQuery';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Edit2, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useSingleSeriesQuery, useSeriesStoriesQuery } from '../hooks/useSeriesQuery';
+import { SeriesForm } from '../components/SeriesForm';
+import { StoryCard } from '@/features/stories/components/StoryCard';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 export const SeriesDashboard = () => {
     const { seriesId } = useParams<{ seriesId: string }>();
-    const { data: series, isLoading } = useSingleSeriesQuery(seriesId);
+    const navigate = useNavigate();
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-    if (isLoading) return <div>Loading series...</div>;
+    const { data: series, isLoading: seriesLoading } = useSingleSeriesQuery(seriesId);
+    const { data: stories, isLoading: storiesLoading } = useSeriesStoriesQuery(seriesId);
+
+    if (seriesLoading) return <div>Loading series...</div>;
     if (!series) return <div>Series not found</div>;
 
     return (
         <div className="container mx-auto p-6">
-            <h1 className="text-3xl font-bold mb-6">{series.name}</h1>
-            {series.description && (
-                <p className="text-muted-foreground mb-6">{series.description}</p>
-            )}
+            <div className="flex justify-between items-start mb-6">
+                <div>
+                    <h1 className="text-3xl font-bold mb-2">{series.name}</h1>
+                    {series.description && (
+                        <p className="text-muted-foreground">{series.description}</p>
+                    )}
+                </div>
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
+                    <Edit2 className="w-4 h-4 mr-2" />
+                    Edit Series
+                </Button>
+            </div>
 
-            <Tabs defaultValue="stories" className="mb-6">
-                <TabsList>
-                    <TabsTrigger value="stories" asChild>
-                        <Link to={`/series/${seriesId}/stories`}>Stories</Link>
-                    </TabsTrigger>
-                    <TabsTrigger value="lorebook" asChild>
-                        <Link to={`/series/${seriesId}/lorebook`}>Lorebook</Link>
-                    </TabsTrigger>
-                </TabsList>
-            </Tabs>
+            <div className="mb-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-semibold">Stories in Series</h2>
+                    <Button onClick={() => navigate('/stories/new', { state: { seriesId } })}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Story
+                    </Button>
+                </div>
 
-            <Outlet />
+                {storiesLoading ? (
+                    <div>Loading stories...</div>
+                ) : stories && stories.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {stories.map((story) => (
+                            <StoryCard key={story.id} story={story} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center text-muted-foreground py-12">
+                        No stories in this series yet. Create one to get started.
+                    </div>
+                )}
+            </div>
+
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Series</DialogTitle>
+                    </DialogHeader>
+                    <SeriesForm series={series} onSuccess={() => setIsEditDialogOpen(false)} />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
@@ -268,16 +310,6 @@ Update routing configuration (e.g., `src/App.tsx` or routes file):
 {
     path: '/series/:seriesId',
     element: <SeriesDashboard />,
-    children: [
-        {
-            path: 'stories',
-            element: <SeriesStoriesView />,  // To be created in next task
-        },
-        {
-            path: 'lorebook',
-            element: <SeriesLorebookView />,  // To be created in next task
-        },
-    ],
 },
 ```
 
@@ -286,7 +318,7 @@ After implementation:
 
 **Pages:**
 - `SeriesListPage` - List all series with create/delete
-- `SeriesDashboard` - Series detail view with tabs
+- `SeriesDashboard` - View/edit series metadata and list stories
 
 **Components:**
 - `SeriesCard` - Card display for series
@@ -294,19 +326,20 @@ After implementation:
 
 **Routes:**
 - `/series` - Series list
-- `/series/:seriesId/stories` - Stories in series
-- `/series/:seriesId/lorebook` - Series lorebook
+- `/series/:seriesId` - Series dashboard
 
 ## Validation
 - Series list displays all series
 - Create series opens dialog, saves successfully
 - Delete series shows confirmation, updates list
 - Click series card navigates to dashboard
-- Dashboard shows series name and description
-- Tabs navigate between stories and lorebook views
+- Dashboard shows series name and description with edit button
+- Dashboard lists all stories in series
+- "New Story" button navigates to story creation with series pre-selected
 
 ## Notes
-- Reuse shadcn/ui components for consistency
+- No separate lorebook tab - lorebook managed via unified `/lorebook` page
+- Series dashboard focuses on metadata and story list only
+- Reuse existing `StoryCard` component for displaying stories
 - Follow existing patterns from story components
-- Stories and lorebook views will be implemented in separate tasks
 - Add navigation link to series list in main nav/header

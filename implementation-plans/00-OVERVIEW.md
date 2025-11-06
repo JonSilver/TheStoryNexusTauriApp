@@ -3,6 +3,16 @@
 ## Purpose
 This directory contains individual implementation plans for adding three-tier lorebook hierarchy (Global/Series/Story) to The Story Nexus application.
 
+## Key Architectural Decision: Unified Lorebook UI
+
+**Important:** The UI implementation uses a **single unified lorebook manager** rather than three separate pages. This simplifies the UX significantly:
+
+- **Main Manager** (`/lorebook`): Level/scope selector at top, user chooses context (Global/Series/Story)
+- **Story Shortcut** (`/dashboard/:storyId/lorebook`): Same component, pre-filtered to story with inherited entries visible
+- **No separate pages** for global or series lorebook - all managed through unified interface
+
+This approach reuses 100% of existing lorebook components and provides consistent UX.
+
 ## Implementation Strategy
 
 ### Two-Phase Approach
@@ -76,20 +86,22 @@ User interface implementation:
 - **Task 09**: Series UI Components
   - SeriesListPage, SeriesDashboard
   - SeriesForm, SeriesCard
-  - Routes and navigation
+  - Routes and navigation (no lorebook tab)
   - Dependencies: Tasks 02, 07
 
-- **Task 10**: Global Lorebook UI
-  - GlobalLorebookPage
-  - Level-aware entry dialogs
-  - Route and navigation
+- **Task 10**: Unified Lorebook Manager
+  - Single page for global/series/story management
+  - Level/scope selector UI
+  - LevelBadge and LevelScopeSelector components
+  - Used by both `/lorebook` and story shortcut routes
   - Dependencies: Task 08
 
-- **Task 11**: Story Lorebook - Inheritance Display
-  - Show inherited entries (read-only)
-  - Show story entries (editable)
-  - Level badges and sectioned layout
-  - Dependencies: Task 08
+- **Task 11**: Story Lorebook Routing
+  - Add route for story lorebook shortcut
+  - Uses unified manager from Task 10
+  - Pre-filtered hierarchical view
+  - Navigation integration in story dashboard
+  - Dependencies: Task 10
 
 - **Task 12**: Story Form - Series Selection
   - Add series dropdown to story create/edit
@@ -152,9 +164,9 @@ These tasks are **critical** for functionality and must be done correctly:
 8. Task 08 - Lorebook Query Hooks
 
 ### Sprint 3: UI Components
-9. Task 09 - Series UI
-10. Task 10 - Global Lorebook UI
-11. Task 11 - Story Lorebook Inheritance
+9. Task 09 - Series UI (list, dashboard, forms)
+10. Task 10 - Unified Lorebook Manager (single page for all levels)
+11. Task 11 - Story Lorebook Routing (shortcut to unified manager)
 12. Task 12 - Story Form Series Selection
 
 ### Sprint 4: Services & Integration
@@ -184,9 +196,11 @@ These tasks are **critical** for functionality and must be done correctly:
 
 ### After Sprint 3 (UI Complete)
 - Full user workflow testing
-- Create global/series/story entries
-- Verify inheritance display
-- Test series assignment
+- Test unified lorebook manager with level/scope selector
+- Create global/series/story entries via unified UI
+- Test story lorebook shortcut shows inherited entries
+- Verify level badges and read-only inherited entries
+- Test series assignment in story form
 
 ### After Sprint 4 (Integration Complete)
 - **CRITICAL**: Test AI features with hierarchical context
@@ -220,11 +234,12 @@ If issues found after Phase 2 migration:
 ### Phase 1 Complete
 - [ ] All 16 implementation plans completed (01-15, skip 16)
 - [ ] All existing features still work
-- [ ] Can create global lorebook entries
-- [ ] Can create series with series-level entries
-- [ ] Can assign stories to series
-- [ ] Story lorebook shows inherited entries
-- [ ] AI context includes global/series entries
+- [ ] Unified lorebook manager accessible at `/lorebook`
+- [ ] Can create global/series/story entries via unified UI
+- [ ] Level/scope selector works correctly
+- [ ] Can create series and assign stories
+- [ ] Story lorebook shortcut shows inherited entries (read-only) + story entries (editable)
+- [ ] AI context includes global/series entries in hierarchical queries
 - [ ] Import/export works with new formats
 - [ ] Production stable for 2+ weeks
 
