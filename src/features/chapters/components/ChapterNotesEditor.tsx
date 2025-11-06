@@ -17,26 +17,27 @@ export function ChapterNotesEditor({ chapter, onClose: _onClose }: ChapterNotesE
 
     // Create a debounced save function
     const debouncedSave = useMemo(
-        () => debounce(async (newContent: string) => {
-            if (!chapter) return;
+        () =>
+            debounce(async (newContent: string) => {
+                if (!chapter) return;
 
-            const notes: ChapterNotes = {
-                content: newContent,
-                lastUpdated: new Date()
-            };
+                const notes: ChapterNotes = {
+                    content: newContent,
+                    lastUpdated: new Date()
+                };
 
-            updateChapterMutation.mutate(
-                {
-                    id: chapter.id,
-                    data: { notes }
-                },
-                {
-                    onSuccess: () => {
-                        setLastSavedContent(newContent);
+                updateChapterMutation.mutate(
+                    {
+                        id: chapter.id,
+                        data: { notes }
+                    },
+                    {
+                        onSuccess: () => {
+                            setLastSavedContent(newContent);
+                        }
                     }
-                }
-            );
-        }, 1000),
+                );
+            }, 1000),
         [chapter, updateChapterMutation]
     );
 

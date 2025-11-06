@@ -1,16 +1,15 @@
-import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { PromptForm } from './PromptForm';
-import { PromptsList } from './PromptList';
-import { Plus } from 'lucide-react';
-import { Upload } from 'lucide-react';
-import type { Prompt } from '@/types/story';
-import { cn } from '@/lib/utils';
-import { toastCRUD } from '@/utils/toastUtils';
-import { attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
-import { promptsApi } from '@/services/api/client';
-import { downloadJSONDataURI, generateExportFilename } from '@/utils/jsonExportUtils';
+import { cn } from "@/lib/utils";
+import { promptsApi } from "@/services/api/client";
+import type { Prompt } from "@/types/story";
+import { downloadJSONDataURI, generateExportFilename } from "@/utils/jsonExportUtils";
+import { logger } from "@/utils/logger";
+import { toastCRUD } from "@/utils/toastUtils";
+import { attemptPromise } from "@jfdi/attempt";
+import { Plus, Upload } from "lucide-react";
+import { useState } from "react";
+import { PromptForm } from "./PromptForm";
+import { PromptsList } from "./PromptList";
 
 export function PromptsManager() {
     const [selectedPrompt, setSelectedPrompt] = useState<Prompt | undefined>(undefined);
@@ -29,7 +28,6 @@ export function PromptsManager() {
         setShowMobileForm(true);
     };
 
-
     const handleSave = () => {
         setShowMobileForm(false);
     };
@@ -45,8 +43,8 @@ export function PromptsManager() {
         const [error, allPrompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
         if (error) {
-            logger.error('Export failed', error);
-            toastCRUD.exportError('prompts', error);
+            logger.error("Export failed", error);
+            toastCRUD.exportError("prompts", error);
             return;
         }
 
@@ -54,29 +52,28 @@ export function PromptsManager() {
         const prompts = allPrompts.filter(p => !p.isSystem);
 
         const exportData = {
-            version: '1.0',
-            type: 'prompts',
+            version: "1.0",
+            type: "prompts",
             prompts
         };
 
-        const filename = generateExportFilename('prompts-export');
+        const filename = generateExportFilename("prompts-export");
         downloadJSONDataURI(exportData, filename);
-        toastCRUD.exportSuccess('Prompts');
+        toastCRUD.exportSuccess("Prompts");
     };
 
     return (
         <div className="flex h-full">
             {/* Left panel - Fixed Sidebar */}
-            <div className={cn(
-                "fixed w-[300px] h-screen border-r border-input bg-muted flex flex-col",
-                showMobileForm ? "hidden md:flex" : "flex"
-            )}>
+            <div
+                className={cn(
+                    "fixed w-[300px] h-screen border-r border-input bg-muted flex flex-col",
+                    showMobileForm ? "hidden md:flex" : "flex"
+                )}
+            >
                 <div className="p-4 border-b border-input">
                     <div className="flex gap-2">
-                        <Button
-                            onClick={handleNewPrompt}
-                            className="flex-1 flex items-center gap-2"
-                        >
+                        <Button onClick={handleNewPrompt} className="flex-1 flex items-center gap-2">
                             <Plus className="h-4 w-4" />
                             New Prompt
                         </Button>
@@ -86,8 +83,8 @@ export function PromptsManager() {
                             onClick={async () => {
                                 const [error] = await attemptPromise(async () => handleExportPrompts());
                                 if (error) {
-                                    logger.error('Export failed', error);
-                                    toastCRUD.exportError('prompts', error);
+                                    logger.error("Export failed", error);
+                                    toastCRUD.exportError("prompts", error);
                                 }
                             }}
                             title="Export prompts"
@@ -108,9 +105,9 @@ export function PromptsManager() {
             {/* Right panel - Content Area */}
             <div className="flex-1 pl-[300px] h-screen">
                 <div className="max-w-3xl mx-auto p-6">
-                    {(isCreating || selectedPrompt) ? (
+                    {isCreating || selectedPrompt ? (
                         <PromptForm
-                            key={selectedPrompt?.id || 'new'}
+                            key={selectedPrompt?.id || "new"}
                             prompt={selectedPrompt}
                             onSave={handleSave}
                             onCancel={() => {
@@ -127,4 +124,4 @@ export function PromptsManager() {
             </div>
         </div>
     );
-} 
+}
