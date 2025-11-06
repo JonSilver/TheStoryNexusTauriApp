@@ -1,0 +1,22 @@
+{
+    "root": true,
+    "ignorePatterns": ["**/*"],
+    "plugins": ["react", "react-hooks", "@typescript-eslint"],
+    "parserOptions": {
+        "project": "./tsconfig.base.json"
+    },
+    "overrides": [
+        {
+            "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+            "rules": {
+                "semi": [1, "always"],
+                "no-undef": "error",
+                "react-hooks/rules-of-hooks": "error",
+                "react-hooks/exhaustive-deps": "warn",
+                "no-template-curly-in-string": "off",
+                "no-useless-escape": "warn",
+                "no-unused-vars": "warn"
+            }
+        }
+    ]
+}

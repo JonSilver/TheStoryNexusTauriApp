@@ -3,19 +3,19 @@ import { useChaptersByStoryQuery } from "@/features/chapters/hooks/useChaptersQu
 import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
 import { LorebookFilterService } from "@/features/lorebook/stores/LorebookFilterService";
 import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
-import { usePromptSelection } from "../hooks/usePromptSelection";
-import { usePromptPreview } from "../hooks/usePromptPreview";
-import { useContextSelection } from "../hooks/useContextSelection";
-import { useMessageGeneration } from "../hooks/useMessageGeneration";
-import { useMessageEditing } from "../hooks/useMessageEditing";
-import { useChatMessages } from "../hooks/useChatMessages";
 import type {
     AIChat,
     AllowedModel,
     Prompt,
     PromptParserConfig,
 } from "@/types/story";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useChatMessages } from "../hooks/useChatMessages";
+import { useContextSelection } from "../hooks/useContextSelection";
+import { useMessageEditing } from "../hooks/useMessageEditing";
+import { useMessageGeneration } from "../hooks/useMessageGeneration";
+import { usePromptPreview } from "../hooks/usePromptPreview";
+import { usePromptSelection } from "../hooks/usePromptSelection";
 import { ChatMessageList } from "./ChatMessageList";
 import { ContextSelector } from "./ContextSelector";
 import { MessageInputArea } from "./MessageInputArea";
@@ -27,21 +27,30 @@ interface ChatInterfaceProps {
     onChatUpdate: (chat: AIChat) => void;
 }
 
-export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: ChatInterfaceProps) {
+export default function ChatInterface({
+    storyId,
+    selectedChat,
+    onChatUpdate,
+}: ChatInterfaceProps) {
     const [input, setInput] = useState("");
 
     const { entries: lorebookEntries } = useLorebookContext();
-    const { data: prompts = [], isLoading: promptsLoading, error: promptsQueryError } = usePromptsQuery({ includeSystem: true });
+    const {
+        data: prompts = [],
+        isLoading: promptsLoading,
+        error: promptsQueryError,
+    } = usePromptsQuery({ includeSystem: true });
     const { data: chapters = [] } = useChaptersByStoryQuery(storyId);
     const promptsError = promptsQueryError?.message ?? null;
 
     const { data: availableModels = [] } = useAvailableModels();
 
-    const {
-        selectedPrompt,
-        selectedModel,
-        selectPrompt,
-    } = usePromptSelection(selectedChat.id, selectedChat.lastUsedPromptId, selectedChat.lastUsedModelId, prompts);
+    const { selectedPrompt, selectedModel, selectPrompt } = usePromptSelection(
+        selectedChat.id,
+        selectedChat.lastUsedPromptId,
+        selectedChat.lastUsedModelId,
+        prompts
+    );
 
     const {
         showPreview,
@@ -68,23 +77,40 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
         clearSelections,
     } = useContextSelection();
 
-    const createPromptConfig = useCallback((prompt: Prompt): PromptParserConfig => {
-        return {
-            promptId: prompt.id,
+    const createPromptConfig = useCallback(
+        (prompt: Prompt): PromptParserConfig => {
+            return {
+                promptId: prompt.id,
+                storyId,
+                scenebeat: input.trim(),
+                additionalContext: {
+                    chatHistory: selectedChat.messages.map((msg) => ({
+                        role: msg.role,
+                        content: msg.content,
+                    })),
+                    includeFullContext,
+                    selectedSummaries: includeFullContext
+                        ? []
+                        : selectedSummaries,
+                    selectedItems: includeFullContext
+                        ? []
+                        : selectedItems.map((item) => item.id),
+                    selectedChapterContent: includeFullContext
+                        ? []
+                        : selectedChapterContent,
+                },
+            };
+        },
+        [
+            input,
             storyId,
-            scenebeat: input.trim(),
-            additionalContext: {
-                chatHistory: selectedChat.messages.map((msg) => ({
-                    role: msg.role,
-                    content: msg.content,
-                })),
-                includeFullContext,
-                selectedSummaries: includeFullContext ? [] : selectedSummaries,
-                selectedItems: includeFullContext ? [] : selectedItems.map((item) => item.id),
-                selectedChapterContent: includeFullContext ? [] : selectedChapterContent,
-            },
-        };
-    }, [input, storyId, selectedChat.messages, includeFullContext, selectedSummaries, selectedItems, selectedChapterContent]);
+            selectedChat.messages,
+            includeFullContext,
+            selectedSummaries,
+            selectedItems,
+            selectedChapterContent,
+        ]
+    );
 
     const {
         generate,
@@ -147,7 +173,10 @@ export default function ChatInterface({ storyId, selectedChat, onChatUpdate }: C
     };
 
     const handleItemSelect = (itemId: string) => {
-        const filteredEntries = LorebookFilterService.getFilteredEntries(lorebookEntries, false);
+        const filteredEntries = LorebookFilterService.getFilteredEntries(
+            lorebookEntries,
+            false
+        );
         const item = filteredEntries.find((entry) => entry.id === itemId);
         if (item) {
             addItem(item);
