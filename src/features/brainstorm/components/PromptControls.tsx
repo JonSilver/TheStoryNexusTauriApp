@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { PromptSelectMenu } from '@/components/ui/prompt-select-menu';
-import { PromptPreviewDialog } from '@/components/ui/prompt-preview-dialog';
-import { Eye } from 'lucide-react';
-import { Prompt, AllowedModel, PromptMessage } from '@/types/story';
+import { Button } from "@/components/ui/button";
+import { PromptPreviewDialog } from "@/components/ui/prompt-preview-dialog";
+import { PromptSelectMenu } from "@/components/ui/prompt-select-menu";
+import { AllowedModel, Prompt, PromptMessage } from "@/types/story";
+import { Eye } from "lucide-react";
 
 interface PromptControlsProps {
     prompts: Prompt[];
@@ -35,7 +35,6 @@ export function PromptControls({
     onPreviewPrompt,
     onClosePreview
 }: PromptControlsProps) {
-
     return (
         <div className="space-y-4 mb-4">
             <div className="flex items-center gap-2">
@@ -50,11 +49,7 @@ export function PromptControls({
                 />
 
                 {selectedPrompt && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={onPreviewPrompt}
-                    >
+                    <Button variant="outline" size="sm" onClick={onPreviewPrompt}>
                         <Eye className="h-4 w-4 mr-2" />
                         Preview
                     </Button>

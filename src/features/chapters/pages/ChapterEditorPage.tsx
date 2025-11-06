@@ -1,10 +1,10 @@
+import { StoryEditor } from "@/features/chapters/components/StoryEditor";
+import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
+import { ChapterMatchingProvider } from "@/features/lorebook/hooks/useChapterMatching";
+import { useStoryContext } from "@/features/stories/context/StoryContext";
+import { useStoryQuery } from "@/features/stories/hooks/useStoriesQuery";
 import { useEffect } from "react";
 import { useParams } from "react-router";
-import { useStoryQuery } from "@/features/stories/hooks/useStoriesQuery";
-import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
-import { useStoryContext } from "@/features/stories/context/StoryContext";
-import { StoryEditor } from "@/features/chapters/components/StoryEditor";
-import { ChapterMatchingProvider } from "@/features/lorebook/hooks/useChapterMatching";
 
 export default function ChapterEditorPage() {
     const { storyId, chapterId } = useParams<{ storyId: string; chapterId: string }>();
@@ -13,12 +13,9 @@ export default function ChapterEditorPage() {
     const { setCurrentStoryId, setCurrentChapterId } = useStoryContext();
 
     useEffect(() => {
-        if (storyId) {
-            setCurrentStoryId(storyId);
-        }
-        if (chapterId) {
-            setCurrentChapterId(chapterId);
-        }
+        if (storyId) setCurrentStoryId(storyId);
+
+        if (chapterId) setCurrentChapterId(chapterId);
 
         return () => {
             setCurrentChapterId(null);
@@ -64,4 +61,4 @@ export default function ChapterEditorPage() {
             </div>
         </ChapterMatchingProvider>
     );
-} 
+}

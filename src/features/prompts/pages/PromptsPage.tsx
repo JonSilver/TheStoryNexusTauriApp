@@ -1,4 +1,4 @@
-import { PromptsManager } from '../components/PromptsManager';
+import { PromptsManager } from "../components/PromptsManager";
 
 export default function PromptsPage() {
     return (
@@ -6,4 +6,4 @@ export default function PromptsPage() {
             <PromptsManager />
         </div>
     );
-} 
+}

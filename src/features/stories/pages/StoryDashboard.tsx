@@ -1,36 +1,33 @@
-import { Link, Outlet, useParams } from "react-router";
-import {
-    Home,
-    Sparkles,
-    Sliders,
-    BookOpen,
-    Book,
-    MessageSquare,
-    ChevronLeft,
-    ChevronRight,
-    StickyNote,
-    PenLine
-} from "lucide-react";
-import { z } from "zod";
-import { parseLocalStorage } from "@/schemas/entities";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useStoryQuery } from "@/features/stories/hooks/useStoriesQuery";
-import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
-import { useLocation } from "react-router";
+import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/constants/urls";
 import { useChaptersByStoryQuery } from "@/features/chapters/hooks/useChaptersQuery";
 import { LorebookProvider } from "@/features/lorebook/context/LorebookContext";
-import { ROUTES } from "@/constants/urls";
+import { useStoryQuery } from "@/features/stories/hooks/useStoriesQuery";
+import { cn } from "@/lib/utils";
+import { parseLocalStorage } from "@/schemas/entities";
+import {
+    Book,
+    BookOpen,
+    ChevronLeft,
+    ChevronRight,
+    Home,
+    MessageSquare,
+    PenLine,
+    Sliders,
+    Sparkles,
+    StickyNote
+} from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, Outlet, useLocation, useParams } from "react-router";
+import { z } from "zod";
 
 export default function StoryDashboard() {
     const { storyId } = useParams();
-    useStoryQuery(storyId || '');
-    const { data: chapters = [] } = useChaptersByStoryQuery(storyId || '');
+    useStoryQuery(storyId || "");
+    const { data: chapters = [] } = useChaptersByStoryQuery(storyId || "");
     const location = useLocation();
-    const [isExpanded, setIsExpanded] = useState(() => {
-        return parseLocalStorage(z.boolean(), 'nav-expanded', false);
-    });
+    const [isExpanded, setIsExpanded] = useState(() => parseLocalStorage(z.boolean(), "nav-expanded", false));
 
     // Get last edited chapter ID from localStorage
     const lastEditedChapterId = storyId ? localStorage.getItem(`lastEditedChapter_${storyId}`) : null;
@@ -38,7 +35,7 @@ export default function StoryDashboard() {
 
     // Save navigation state to localStorage when it changes
     useEffect(() => {
-        localStorage.setItem('nav-expanded', JSON.stringify(isExpanded));
+        localStorage.setItem("nav-expanded", JSON.stringify(isExpanded));
     }, [isExpanded]);
 
     const toggleSidebar = () => {
@@ -46,15 +43,14 @@ export default function StoryDashboard() {
     };
 
     const isActive = (path: string) => {
-        const currentPath = location.pathname.replace(/\/$/, '');
-        const targetPath = path.replace(/\/$/, '');
-        if (currentPath.includes('/write') && targetPath.includes('/chapters')) {
-            return true;
-        }
+        const currentPath = location.pathname.replace(/\/$/, "");
+        const targetPath = path.replace(/\/$/, "");
+        if (currentPath.includes("/write") && targetPath.includes("/chapters")) return true;
+
         return currentPath === targetPath;
     };
 
-    const navButton = (icon: React.ReactNode, to: string, label: string) => (
+    const navButton = (icon: ReactNode, to: string, label: string) => (
         <Button
             variant="ghost"
             size={isExpanded ? "default" : "icon"}
@@ -93,43 +89,40 @@ export default function StoryDashboard() {
                 )}
             >
                 {/* Toggle Button */}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleSidebar}
-                    className="self-end mb-4 mr-1"
-                >
+                <Button variant="ghost" size="icon" onClick={toggleSidebar} className="self-end mb-4 mr-1">
                     {isExpanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
 
                 {/* Top Navigation Icons */}
-                <div className={cn(
-                    "flex-1 flex flex-col space-y-4",
-                    isExpanded ? "items-start px-2" : "items-center"
-                )}>
+                <div className={cn("flex-1 flex flex-col space-y-4", isExpanded ? "items-start px-2" : "items-center")}>
                     {storyId && (
                         <>
-                            {navButton(<BookOpen className="h-5 w-5" />, ROUTES.DASHBOARD.CHAPTERS(storyId), "Chapters")}
-                            {lastEditedChapterId && lastEditedChapterExists && (
+                            {navButton(
+                                <BookOpen className="h-5 w-5" />,
+                                ROUTES.DASHBOARD.CHAPTERS(storyId),
+                                "Chapters"
+                            )}
+                            {lastEditedChapterId &&
+                                lastEditedChapterExists &&
                                 navButton(
                                     <PenLine className="h-5 w-5" />,
                                     ROUTES.DASHBOARD.CHAPTER_EDITOR(storyId, lastEditedChapterId),
                                     "Last Edited"
-                                )
-                            )}
+                                )}
                             {navButton(<Book className="h-5 w-5" />, ROUTES.DASHBOARD.LOREBOOK(storyId), "Lorebook")}
                             {navButton(<Sparkles className="h-5 w-5" />, ROUTES.DASHBOARD.PROMPTS(storyId), "Prompts")}
-                            {navButton(<MessageSquare className="h-5 w-5" />, ROUTES.DASHBOARD.BRAINSTORM(storyId), "Brainstorm")}
+                            {navButton(
+                                <MessageSquare className="h-5 w-5" />,
+                                ROUTES.DASHBOARD.BRAINSTORM(storyId),
+                                "Brainstorm"
+                            )}
                             {navButton(<StickyNote className="h-5 w-5" />, ROUTES.DASHBOARD.NOTES(storyId), "Notes")}
                         </>
                     )}
                 </div>
 
                 {/* Bottom Navigation */}
-                <div className={cn(
-                    "flex flex-col space-y-4 pb-4",
-                    isExpanded ? "items-start px-2" : "items-center"
-                )}>
+                <div className={cn("flex flex-col space-y-4 pb-4", isExpanded ? "items-start px-2" : "items-center")}>
                     <ThemeToggle isExpanded={isExpanded} />
                     {navButton(<Home className="h-5 w-5" />, "/stories", "Stories")}
                     {navButton(<Sliders className="h-5 w-5" />, "/ai-settings", "AI Settings")}
@@ -137,11 +130,8 @@ export default function StoryDashboard() {
             </div>
 
             {/* Main Content Area */}
-            <div className={cn(
-                "flex-1 transition-all duration-300 ease-in-out",
-                isExpanded ? "ml-[150px]" : "ml-12"
-            )}>
-                <LorebookProvider storyId={storyId || ''}>
+            <div className={cn("flex-1 transition-all duration-300 ease-in-out", isExpanded ? "ml-[150px]" : "ml-12")}>
+                <LorebookProvider storyId={storyId || ""}>
                     <Outlet />
                 </LorebookProvider>
             </div>

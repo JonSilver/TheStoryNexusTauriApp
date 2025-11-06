@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useUpdateChapterMutation } from '../hooks/useChaptersQuery';
-import Editor from 'react-simple-wysiwyg';
-import { cn } from '@/lib/utils';
-import type { Chapter, ChapterNotes } from '@/types/story';
-import debounce from 'lodash/debounce';
+import { cn } from "@/lib/utils";
+import type { Chapter, ChapterNotes } from "@/types/story";
+import debounce from "lodash/debounce";
+import { useCallback, useEffect, useState } from "react";
+import Editor from "react-simple-wysiwyg";
+import { useUpdateChapterMutation } from "../hooks/useChaptersQuery";
 
 interface ChapterNotesEditorProps {
     chapter: Chapter;
@@ -12,8 +12,8 @@ interface ChapterNotesEditorProps {
 
 export function ChapterNotesEditor({ chapter, onClose: _onClose }: ChapterNotesEditorProps) {
     const updateChapterMutation = useUpdateChapterMutation();
-    const [content, setContent] = useState('');
-    const [lastSavedContent, setLastSavedContent] = useState('');
+    const [content, setContent] = useState("");
+    const [lastSavedContent, setLastSavedContent] = useState("");
 
     // Create a debounced save function
     const debouncedSave = useCallback(
@@ -25,14 +25,17 @@ export function ChapterNotesEditor({ chapter, onClose: _onClose }: ChapterNotesE
                 lastUpdated: new Date()
             };
 
-            updateChapterMutation.mutate({
-                id: chapter.id,
-                data: { notes }
-            }, {
-                onSuccess: () => {
-                    setLastSavedContent(newContent);
+            updateChapterMutation.mutate(
+                {
+                    id: chapter.id,
+                    data: { notes }
                 },
-            });
+                {
+                    onSuccess: () => {
+                        setLastSavedContent(newContent);
+                    }
+                }
+            );
         }, 1000),
         [chapter]
     );
@@ -42,22 +45,21 @@ export function ChapterNotesEditor({ chapter, onClose: _onClose }: ChapterNotesE
             setContent(chapter.notes.content);
             setLastSavedContent(chapter.notes.content);
         } else {
-            setContent('');
-            setLastSavedContent('');
+            setContent("");
+            setLastSavedContent("");
         }
     }, [chapter]);
 
     useEffect(() => {
-        if (content !== lastSavedContent) {
-            debouncedSave(content);
-        }
+        if (content !== lastSavedContent) debouncedSave(content);
     }, [content, lastSavedContent, debouncedSave]);
 
-    useEffect(() => {
-        return () => {
+    useEffect(
+        () => () => {
             debouncedSave.cancel();
-        };
-    }, [debouncedSave]);
+        },
+        [debouncedSave]
+    );
 
     return (
         <div className="space-y-4">
@@ -70,16 +72,13 @@ export function ChapterNotesEditor({ chapter, onClose: _onClose }: ChapterNotesE
             </div>
             <Editor
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={e => setContent(e.target.value)}
                 containerProps={{
-                    style: { height: '82vh' },
-                    className: cn(
-                        "prose prose-sm max-w-none",
-                        "dark:prose-invert"
-                    )
+                    style: { height: "82vh" },
+                    className: cn("prose prose-sm max-w-none", "dark:prose-invert")
                 }}
-                style={{ height: '100%', overflow: 'auto' }}
+                style={{ height: "100%", overflow: "auto" }}
             />
         </div>
     );
-} 
+}

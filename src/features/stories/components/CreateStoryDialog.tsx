@@ -1,6 +1,3 @@
-import { useState } from "react";
-import { useCreateStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
-import { useSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -9,13 +6,15 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
+    DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
+import { useCreateStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
 import { PlusCircle } from "lucide-react";
-
+import { useState, type FormEvent } from "react";
 
 export function CreateStoryDialog() {
     const [open, setOpen] = useState(false);
@@ -27,26 +26,29 @@ export function CreateStoryDialog() {
     const createStoryMutation = useCreateStoryMutation();
     const { data: seriesList = [] } = useSeriesQuery();
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        createStoryMutation.mutate({
-            id: crypto.randomUUID(),
-            title,
-            author,
-            language,
-            synopsis,
-            seriesId,
-        }, {
-            onSuccess: () => {
-                setOpen(false);
-                // Reset form
-                setTitle("");
-                setAuthor("");
-                setLanguage("English");
-                setSynopsis("");
-                setSeriesId(undefined);
+        createStoryMutation.mutate(
+            {
+                id: crypto.randomUUID(),
+                title,
+                author,
+                language,
+                synopsis,
+                seriesId
             },
-        });
+            {
+                onSuccess: () => {
+                    setOpen(false);
+                    // Reset form
+                    setTitle("");
+                    setAuthor("");
+                    setLanguage("English");
+                    setSynopsis("");
+                    setSeriesId(undefined);
+                }
+            }
+        );
     };
 
     return (
@@ -71,7 +73,7 @@ export function CreateStoryDialog() {
                             <Input
                                 id="title"
                                 value={title}
-                                onChange={(e) => setTitle(e.target.value)}
+                                onChange={e => setTitle(e.target.value)}
                                 placeholder="Enter story title"
                                 required
                             />
@@ -81,7 +83,7 @@ export function CreateStoryDialog() {
                             <Input
                                 id="author"
                                 value={author}
-                                onChange={(e) => setAuthor(e.target.value)}
+                                onChange={e => setAuthor(e.target.value)}
                                 placeholder="Enter author name"
                                 required
                             />
@@ -105,15 +107,15 @@ export function CreateStoryDialog() {
                         <div className="grid gap-2">
                             <Label htmlFor="series">Series (optional)</Label>
                             <Select
-                                value={seriesId || 'none'}
-                                onValueChange={(value) => setSeriesId(value === 'none' ? undefined : value)}
+                                value={seriesId || "none"}
+                                onValueChange={value => setSeriesId(value === "none" ? undefined : value)}
                             >
                                 <SelectTrigger id="series">
                                     <SelectValue placeholder="Select series" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none">None</SelectItem>
-                                    {seriesList.map((series) => (
+                                    {seriesList.map(series => (
                                         <SelectItem key={series.id} value={series.id}>
                                             {series.name}
                                         </SelectItem>
@@ -129,7 +131,7 @@ export function CreateStoryDialog() {
                             <Input
                                 id="synopsis"
                                 value={synopsis}
-                                onChange={(e) => setSynopsis(e.target.value)}
+                                onChange={e => setSynopsis(e.target.value)}
                                 placeholder="Enter a brief synopsis (optional)"
                             />
                         </div>
@@ -141,4 +143,4 @@ export function CreateStoryDialog() {
             </DialogContent>
         </Dialog>
     );
-} 
+}

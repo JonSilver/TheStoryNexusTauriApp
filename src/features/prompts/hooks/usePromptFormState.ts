@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import type { Prompt } from '@/types/story';
+import type { Prompt } from "@/types/story";
+import { useState } from "react";
 
-type PromptType = Prompt['promptType'];
+type PromptType = Prompt["promptType"];
 
 interface UsePromptFormStateProps {
     prompt?: Prompt;
@@ -9,8 +9,8 @@ interface UsePromptFormStateProps {
 }
 
 export const usePromptFormState = ({ prompt, fixedType }: UsePromptFormStateProps) => {
-    const [name, setName] = useState(prompt?.name || '');
-    const [promptType, setPromptType] = useState<PromptType>(fixedType || prompt?.promptType || 'scene_beat');
+    const [name, setName] = useState(prompt?.name || "");
+    const [promptType, setPromptType] = useState<PromptType>(fixedType || prompt?.promptType || "scene_beat");
     const [temperature, setTemperature] = useState(prompt?.temperature ?? 1.0);
     const [maxTokens, setMaxTokens] = useState(prompt?.maxTokens ?? 2048);
     const [topP, setTopP] = useState(prompt?.top_p ?? 1.0);
@@ -34,6 +34,6 @@ export const usePromptFormState = ({ prompt, fixedType }: UsePromptFormStateProp
         repetitionPenalty,
         setRepetitionPenalty,
         minP,
-        setMinP,
+        setMinP
     };
 };

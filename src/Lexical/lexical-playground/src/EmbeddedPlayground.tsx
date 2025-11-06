@@ -1,12 +1,12 @@
-import { useStoryContext } from '@/features/stories/context/StoryContext';
-import { useChapterQuery } from '@/features/chapters/hooks/useChaptersQuery';
-import { ReactNode } from 'react';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCcw } from 'lucide-react';
-import PlaygroundApp from './App' // using the lexical playground App component
-import './index.css' // Ensure the CSS is imported
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
+import { useStoryContext } from "@/features/stories/context/StoryContext";
+import { AlertCircle, RefreshCcw } from "lucide-react";
+import { ReactNode } from "react";
+import PlaygroundApp from "./App"; // using the lexical playground App component
+import "./index.css"; // Ensure the CSS is imported
 
 interface EmbeddedPlaygroundProps {
     maximizeButton?: ReactNode;
@@ -24,11 +24,7 @@ const EditorErrorFallback = (error: Error, resetError: () => void) => (
                         <RefreshCcw className="h-4 w-4 mr-2" />
                         Reset Editor
                     </Button>
-                    <Button
-                        onClick={() => window.location.reload()}
-                        variant="outline"
-                        size="sm"
-                    >
+                    <Button onClick={() => window.location.reload()} variant="outline" size="sm">
                         Reload Page
                     </Button>
                 </div>
@@ -39,7 +35,7 @@ const EditorErrorFallback = (error: Error, resetError: () => void) => (
 
 export default function EmbeddedPlayground({ maximizeButton }: EmbeddedPlaygroundProps) {
     const { currentChapterId } = useStoryContext();
-    const { data: currentChapter } = useChapterQuery(currentChapterId || '');
+    const { data: currentChapter } = useChapterQuery(currentChapterId || "");
 
     if (!currentChapterId || !currentChapter) {
         return (

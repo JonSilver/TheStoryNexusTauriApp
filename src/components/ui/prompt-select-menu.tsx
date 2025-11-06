@@ -1,7 +1,17 @@
-import { useState } from "react";
-import { Prompt, AllowedModel } from "@/types/story";
-import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger } from "./menubar";
+import { AllowedModel, Prompt } from "@/types/story";
 import { ChevronDown } from "lucide-react";
+import { useState } from "react";
+import {
+    Menubar,
+    MenubarContent,
+    MenubarItem,
+    MenubarMenu,
+    MenubarSeparator,
+    MenubarSub,
+    MenubarSubContent,
+    MenubarSubTrigger,
+    MenubarTrigger
+} from "./menubar";
 import { PromptConfigDialog } from "./prompt-config-dialog";
 
 interface PromptSelectMenuProps {
@@ -54,7 +64,7 @@ export function PromptSelectMenu({
                         <MenubarItem disabled>No {promptType} prompts available</MenubarItem>
                     ) : (
                         <>
-                            {filteredPrompts.map((prompt) => (
+                            {filteredPrompts.map(prompt => (
                                 <MenubarSub key={prompt.id}>
                                     <MenubarSubTrigger>
                                         <div className="flex flex-col">
@@ -65,14 +75,14 @@ export function PromptSelectMenu({
                                         </div>
                                     </MenubarSubTrigger>
                                     <MenubarSubContent className="max-h-[300px] overflow-y-auto">
-                                        {prompt.allowedModels.map((model) => (
+                                        {prompt.allowedModels.map(model => (
                                             <MenubarItem
                                                 key={model.id}
                                                 onClick={() => onSelect(prompt, model)}
                                                 className={
-                                                    selectedPrompt?.id === prompt.id &&
-                                                        selectedModel?.id === model.id ?
-                                                        "bg-accent" : ""
+                                                    selectedPrompt?.id === prompt.id && selectedModel?.id === model.id
+                                                        ? "bg-accent"
+                                                        : ""
                                                 }
                                             >
                                                 <div className="flex flex-col">
@@ -87,9 +97,7 @@ export function PromptSelectMenu({
                                 </MenubarSub>
                             ))}
                             <MenubarSeparator />
-                            <MenubarItem onClick={() => setIsConfigDialogOpen(true)}>
-                                Configure Prompts...
-                            </MenubarItem>
+                            <MenubarItem onClick={() => setIsConfigDialogOpen(true)}>Configure Prompts...</MenubarItem>
                         </>
                     )}
                 </MenubarContent>
@@ -98,8 +106,8 @@ export function PromptSelectMenu({
             <PromptConfigDialog
                 open={isConfigDialogOpen}
                 onOpenChange={setIsConfigDialogOpen}
-                promptType={promptType as Prompt['promptType']}
+                promptType={promptType as Prompt["promptType"]}
             />
         </Menubar>
     );
-} 
+}

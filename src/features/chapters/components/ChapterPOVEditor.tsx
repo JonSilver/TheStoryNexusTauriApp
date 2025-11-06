@@ -1,25 +1,12 @@
-import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUpdateChapterMutation } from "@/features/chapters/hooks/useChaptersQuery";
 import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
-import { Button } from "@/components/ui/button";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import type { Chapter } from "@/types/story";
+import { useEffect, useMemo } from "react";
+import { useForm } from "react-hook-form";
 
 interface ChapterPOVEditorProps {
     chapter: Chapter;
@@ -27,7 +14,7 @@ interface ChapterPOVEditorProps {
 }
 
 interface POVForm {
-    povType: 'First Person' | 'Third Person Limited' | 'Third Person Omniscient';
+    povType: "First Person" | "Third Person Limited" | "Third Person Omniscient";
     povCharacter?: string;
 }
 
@@ -35,41 +22,40 @@ export function ChapterPOVEditor({ chapter, onClose }: ChapterPOVEditorProps) {
     const updateChapterMutation = useUpdateChapterMutation();
     const { entries } = useLorebookContext();
 
-    const characterEntries = useMemo(() => {
-        return entries.filter(entry => entry.category === 'character');
-    }, [entries]);
+    const characterEntries = useMemo(() => entries.filter(entry => entry.category === "character"), [entries]);
 
     const form = useForm<POVForm>({
         defaultValues: {
-            povType: chapter?.povType || 'Third Person Omniscient',
-            povCharacter: chapter?.povCharacter,
-        },
+            povType: chapter?.povType || "Third Person Omniscient",
+            povCharacter: chapter?.povCharacter
+        }
     });
 
-    const povType = form.watch('povType');
+    const povType = form.watch("povType");
 
     // Reset POV character when switching to omniscient
     useEffect(() => {
-        if (povType === 'Third Person Omniscient') {
-            form.setValue('povCharacter', undefined);
-        }
+        if (povType === "Third Person Omniscient") form.setValue("povCharacter", undefined);
     }, [povType, form]);
 
     const handleSubmit = async (data: POVForm) => {
         // Only include povCharacter if not omniscient
-        const povCharacter = data.povType !== 'Third Person Omniscient' ? data.povCharacter : undefined;
+        const povCharacter = data.povType !== "Third Person Omniscient" ? data.povCharacter : undefined;
 
-        updateChapterMutation.mutate({
-            id: chapter.id,
-            data: {
-                povType: data.povType,
-                povCharacter
+        updateChapterMutation.mutate(
+            {
+                id: chapter.id,
+                data: {
+                    povType: data.povType,
+                    povCharacter
+                }
+            },
+            {
+                onSuccess: () => {
+                    if (onClose) onClose();
+                }
             }
-        }, {
-            onSuccess: () => {
-                if (onClose) onClose();
-            }
-        });
+        );
     };
 
     return (
@@ -82,10 +68,7 @@ export function ChapterPOVEditor({ chapter, onClose }: ChapterPOVEditorProps) {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Point of View</FormLabel>
-                                <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                >
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select POV type" />
@@ -102,7 +85,7 @@ export function ChapterPOVEditor({ chapter, onClose }: ChapterPOVEditorProps) {
                         )}
                     />
 
-                    {povType !== 'Third Person Omniscient' && (
+                    {povType !== "Third Person Omniscient" && (
                         <FormField
                             control={form.control}
                             name="povCharacter"
@@ -110,10 +93,7 @@ export function ChapterPOVEditor({ chapter, onClose }: ChapterPOVEditorProps) {
                                 <FormItem>
                                     <FormLabel>POV Character</FormLabel>
                                     {characterEntries.length > 0 ? (
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                        >
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select character" />
@@ -132,7 +112,7 @@ export function ChapterPOVEditor({ chapter, onClose }: ChapterPOVEditorProps) {
                                             <Input
                                                 placeholder="Enter character name"
                                                 {...field}
-                                                value={field.value || ''}
+                                                value={field.value || ""}
                                             />
                                         </FormControl>
                                     )}
@@ -146,12 +126,10 @@ export function ChapterPOVEditor({ chapter, onClose }: ChapterPOVEditorProps) {
                         <Button type="button" variant="outline" onClick={onClose}>
                             Cancel
                         </Button>
-                        <Button type="submit">
-                            Save Changes
-                        </Button>
+                        <Button type="submit">Save Changes</Button>
                     </div>
                 </form>
             </Form>
         </div>
     );
-} 
+}

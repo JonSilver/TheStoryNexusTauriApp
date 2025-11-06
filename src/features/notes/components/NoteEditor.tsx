@@ -1,25 +1,22 @@
-import { useEffect, useState } from 'react';
-import { useNoteQuery, useUpdateNoteMutation } from '../hooks/useNotesQuery';
-import Editor from 'react-simple-wysiwyg';
-import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Save } from "lucide-react";
+import { useEffect, useState } from "react";
+import Editor from "react-simple-wysiwyg";
+import { useNoteQuery, useUpdateNoteMutation } from "../hooks/useNotesQuery";
 
 interface NoteEditorProps {
     selectedNoteId: string | null;
 }
 
 export default function NoteEditor({ selectedNoteId }: NoteEditorProps) {
-    const { data: selectedNote } = useNoteQuery(selectedNoteId || '');
+    const { data: selectedNote } = useNoteQuery(selectedNoteId || "");
     const updateNoteMutation = useUpdateNoteMutation();
-    const [content, setContent] = useState('');
+    const [content, setContent] = useState("");
 
     useEffect(() => {
-        if (selectedNote) {
-            setContent(selectedNote.content);
-        } else {
-            setContent('');
-        }
+        if (selectedNote) setContent(selectedNote.content);
+        else setContent("");
     }, [selectedNote]);
 
     const handleSave = async () => {
@@ -60,17 +57,13 @@ export default function NoteEditor({ selectedNoteId }: NoteEditorProps) {
             <div className="flex-1 overflow-y-auto p-4">
                 <Editor
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    onChange={e => setContent(e.target.value)}
                     containerProps={{
-                        className: cn(
-                            "prose prose-sm max-w-none min-h-full",
-                            "dark:prose-invert",
-                            "overflow-y-auto"
-                        )
+                        className: cn("prose prose-sm max-w-none min-h-full", "dark:prose-invert", "overflow-y-auto")
                     }}
                     className="h-full"
                 />
             </div>
         </div>
     );
-} 
+}

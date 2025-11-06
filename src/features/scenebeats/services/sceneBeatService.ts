@@ -1,11 +1,11 @@
-import { scenebeatsApi } from '@/services/api/client';
-import { SceneBeat } from '@/types/story';
+import { scenebeatsApi } from "@/services/api/client";
+import { SceneBeat } from "@/types/story";
 
 export const sceneBeatService = {
     /**
      * Create a new SceneBeat
      */
-    async createSceneBeat(data: Omit<SceneBeat, 'id' | 'createdAt'>): Promise<string> {
+    async createSceneBeat(data: Omit<SceneBeat, "id" | "createdAt">): Promise<string> {
         const sceneBeat = await scenebeatsApi.create({ id: crypto.randomUUID(), ...data });
         return sceneBeat.id;
     },
@@ -43,8 +43,6 @@ export const sceneBeatService = {
      */
     async deleteSceneBeatsByChapter(chapterId: string): Promise<void> {
         const sceneBeats = await scenebeatsApi.getByChapter(chapterId);
-        for (const sceneBeat of sceneBeats) {
-            await scenebeatsApi.delete(sceneBeat.id);
-        }
+        for (const sceneBeat of sceneBeats) await scenebeatsApi.delete(sceneBeat.id);
     }
-}; 
+};

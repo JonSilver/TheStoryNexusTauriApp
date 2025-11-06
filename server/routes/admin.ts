@@ -1,26 +1,28 @@
-import express from 'express';
-import multer from 'multer';
-import { attemptPromise } from '@jfdi/attempt';
-import { db, schema } from '../db/client.js';
+import { attemptPromise } from "@jfdi/attempt";
+import express from "express";
+import multer from "multer";
+import { db, schema } from "../db/client.js";
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
-router.get('/export', async (_, res) => {
-    const [error, tables] = await attemptPromise(() => Promise.all([
-        db.select().from(schema.stories),
-        db.select().from(schema.chapters),
-        db.select().from(schema.prompts),
-        db.select().from(schema.lorebookEntries),
-        db.select().from(schema.aiChats),
-        db.select().from(schema.sceneBeats),
-        db.select().from(schema.notes),
-        db.select().from(schema.aiSettings),
-    ]));
+router.get("/export", async (_, res) => {
+    const [error, tables] = await attemptPromise(() =>
+        Promise.all([
+            db.select().from(schema.stories),
+            db.select().from(schema.chapters),
+            db.select().from(schema.prompts),
+            db.select().from(schema.lorebookEntries),
+            db.select().from(schema.aiChats),
+            db.select().from(schema.sceneBeats),
+            db.select().from(schema.notes),
+            db.select().from(schema.aiSettings)
+        ])
+    );
 
     if (error) {
-        console.error('Error exporting database:', error);
-        res.status(500).json({ error: 'Failed to export database', details: error.message });
+        console.error("Error exporting database:", error);
+        res.status(500).json({ error: "Failed to export database", details: error.message });
         return;
     }
 
@@ -32,23 +34,23 @@ router.get('/export', async (_, res) => {
     });
 });
 
-router.post('/import', upload.single('file'), async (req, res) => {
+router.post("/import", upload.single("file"), async (req, res) => {
     if (!req.file) {
-        res.status(400).json({ error: 'No file uploaded' });
+        res.status(400).json({ error: "No file uploaded" });
         return;
     }
 
     const [parseError, jsonData] = await attemptPromise(() =>
-        Promise.resolve(JSON.parse(req.file!.buffer.toString('utf-8')))
+        Promise.resolve(JSON.parse(req.file!.buffer.toString("utf-8")))
     );
 
     if (parseError) {
-        res.status(400).json({ error: 'Invalid JSON file', details: parseError.message });
+        res.status(400).json({ error: "Invalid JSON file", details: parseError.message });
         return;
     }
 
     if (!jsonData.version || !jsonData.tables) {
-        res.status(400).json({ error: 'Invalid import file format' });
+        res.status(400).json({ error: "Invalid import file format" });
         return;
     }
 
@@ -65,69 +67,85 @@ router.post('/import', upload.single('file'), async (req, res) => {
         await db.delete(schema.aiSettings);
 
         if (tables.stories?.length) {
-            await Promise.all(tables.stories.map((story: any) =>
-                db.insert(schema.stories).values({ ...story, createdAt: new Date(story.createdAt) })
-            ));
+            await Promise.all(
+                tables.stories.map((story: any) =>
+                    db.insert(schema.stories).values({ ...story, createdAt: new Date(story.createdAt) })
+                )
+            );
         }
 
         if (tables.chapters?.length) {
-            await Promise.all(tables.chapters.map((chapter: any) =>
-                db.insert(schema.chapters).values({ ...chapter, createdAt: new Date(chapter.createdAt) })
-            ));
+            await Promise.all(
+                tables.chapters.map((chapter: any) =>
+                    db.insert(schema.chapters).values({ ...chapter, createdAt: new Date(chapter.createdAt) })
+                )
+            );
         }
 
         if (tables.prompts?.length) {
-            await Promise.all(tables.prompts.map((prompt: any) =>
-                db.insert(schema.prompts).values({ ...prompt, createdAt: new Date(prompt.createdAt) })
-            ));
+            await Promise.all(
+                tables.prompts.map((prompt: any) =>
+                    db.insert(schema.prompts).values({ ...prompt, createdAt: new Date(prompt.createdAt) })
+                )
+            );
         }
 
         if (tables.lorebookEntries?.length) {
-            await Promise.all(tables.lorebookEntries.map((entry: any) =>
-                db.insert(schema.lorebookEntries).values({ ...entry, createdAt: new Date(entry.createdAt) })
-            ));
+            await Promise.all(
+                tables.lorebookEntries.map((entry: any) =>
+                    db.insert(schema.lorebookEntries).values({ ...entry, createdAt: new Date(entry.createdAt) })
+                )
+            );
         }
 
         if (tables.aiChats?.length) {
-            await Promise.all(tables.aiChats.map((chat: any) =>
-                db.insert(schema.aiChats).values({
-                    ...chat,
-                    createdAt: new Date(chat.createdAt),
-                    updatedAt: chat.updatedAt ? new Date(chat.updatedAt) : undefined,
-                })
-            ));
+            await Promise.all(
+                tables.aiChats.map((chat: any) =>
+                    db.insert(schema.aiChats).values({
+                        ...chat,
+                        createdAt: new Date(chat.createdAt),
+                        updatedAt: chat.updatedAt ? new Date(chat.updatedAt) : undefined
+                    })
+                )
+            );
         }
 
         if (tables.sceneBeats?.length) {
-            await Promise.all(tables.sceneBeats.map((sceneBeat: any) =>
-                db.insert(schema.sceneBeats).values({ ...sceneBeat, createdAt: new Date(sceneBeat.createdAt) })
-            ));
+            await Promise.all(
+                tables.sceneBeats.map((sceneBeat: any) =>
+                    db.insert(schema.sceneBeats).values({ ...sceneBeat, createdAt: new Date(sceneBeat.createdAt) })
+                )
+            );
         }
 
         if (tables.notes?.length) {
-            await Promise.all(tables.notes.map((note: any) =>
-                db.insert(schema.notes).values({
-                    ...note,
-                    createdAt: new Date(note.createdAt),
-                    updatedAt: new Date(note.updatedAt),
-                })
-            ));
+            await Promise.all(
+                tables.notes.map((note: any) =>
+                    db.insert(schema.notes).values({
+                        ...note,
+                        createdAt: new Date(note.createdAt),
+                        updatedAt: new Date(note.updatedAt)
+                    })
+                )
+            );
         }
 
         if (tables.aiSettings?.length) {
-            await Promise.all(tables.aiSettings.map((setting: any) =>
-                db.insert(schema.aiSettings).values({
-                    ...setting,
-                    createdAt: new Date(setting.createdAt),
-                    updatedAt: setting.updatedAt ? new Date(setting.updatedAt) : undefined,
-                })
-            ));
+            await Promise.all(
+                tables.aiSettings.map((setting: any) =>
+                    db.insert(schema.aiSettings).values({
+                        ...setting,
+                        createdAt: new Date(setting.createdAt),
+                        updatedAt: setting.updatedAt ? new Date(setting.updatedAt) : undefined
+                    })
+                )
+            );
         }
     });
 
     if (error) {
-        console.error('Error importing database:', error);
-        res.status(500).json({ error: 'Failed to import database', details: error.message });
+        console.error("Error importing database:", error);
+        res.status(500).json({ error: "Failed to import database", details: error.message });
         return;
     }
 
@@ -141,7 +159,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
             aiChats: tables.aiChats?.length || 0,
             sceneBeats: tables.sceneBeats?.length || 0,
             notes: tables.notes?.length || 0,
-            aiSettings: tables.aiSettings?.length || 0,
+            aiSettings: tables.aiSettings?.length || 0
         }
     });
 });

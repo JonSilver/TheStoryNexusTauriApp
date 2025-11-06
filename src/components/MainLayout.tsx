@@ -1,7 +1,7 @@
-import { Link, Outlet } from "react-router";
 import { Home } from "lucide-react";
-import { Button } from "./ui/button";
+import { Link, Outlet } from "react-router";
 import { ThemeToggle } from "./ThemeToggle";
+import { Button } from "./ui/button";
 
 export function MainLayout() {
     return (

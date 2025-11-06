@@ -1,44 +1,44 @@
 import type { LexicalNode, NodeKey, SerializedLexicalNode, Spread } from "lexical";
 
-import { $applyNodeReplacement, DecoratorNode } from "lexical";
-import { Suspense, useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { ChevronRight, Eye } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Trash2 } from "lucide-react";
-import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
-import type { Prompt, AllowedModel, LorebookEntry } from "@/types/story";
-import { toast } from "react-toastify";
-import { Textarea } from "@/components/ui/textarea";
-import { useStoryContext } from "@/features/stories/context/StoryContext";
-import { useChapterMatching } from "@/features/lorebook/hooks/useChapterMatching";
-import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
-import { buildTagMap } from "@/features/lorebook/utils/lorebookFilters";
 import { PromptPreviewDialog } from "@/components/ui/prompt-preview-dialog";
-import { SceneBeatMatchedEntries } from "./SceneBeatMatchedEntries";
+import { Textarea } from "@/components/ui/textarea";
 import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
+import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
+import { useChapterMatching } from "@/features/lorebook/hooks/useChapterMatching";
+import { buildTagMap } from "@/features/lorebook/utils/lorebookFilters";
+import { usePromptsQuery } from "@/features/prompts/hooks/usePromptsQuery";
 import { sceneBeatService } from "@/features/scenebeats/services/sceneBeatService";
+import { useStoryContext } from "@/features/stories/context/StoryContext";
+import { cn } from "@/lib/utils";
+import type { AllowedModel, LorebookEntry, Prompt } from "@/types/story";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { $applyNodeReplacement, DecoratorNode } from "lexical";
+import { ChevronRight, Eye, Trash2 } from "lucide-react";
+import type { JSX } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
+import { SceneBeatMatchedEntries } from "./SceneBeatMatchedEntries";
 
 // Extracted components
-import { POVSettingsPopover } from "./scene-beat/components/POVSettingsPopover";
-import type { POVType } from "./scene-beat/components/POVSettingsPopover";
 import { ContextToggles } from "./scene-beat/components/ContextToggles";
+import { GenerationControls } from "./scene-beat/components/GenerationControls";
 import { LorebookMultiSelect } from "./scene-beat/components/LorebookMultiSelect";
 import { MatchedEntriesPanel } from "./scene-beat/components/MatchedEntriesPanel";
-import { GenerationControls } from "./scene-beat/components/GenerationControls";
+import type { POVType } from "./scene-beat/components/POVSettingsPopover";
+import { POVSettingsPopover } from "./scene-beat/components/POVSettingsPopover";
 
 // Extracted hooks
-import { useSceneBeatData } from "./scene-beat/hooks/useSceneBeatData";
 import { useCommandHistory } from "./scene-beat/hooks/useCommandHistory";
 import { useLorebookMatching } from "./scene-beat/hooks/useLorebookMatching";
-import { useSceneBeatSync } from "./scene-beat/hooks/useSceneBeatSync";
+import { useSceneBeatData } from "./scene-beat/hooks/useSceneBeatData";
 import { useSceneBeatGeneration } from "./scene-beat/hooks/useSceneBeatGeneration";
+import { useSceneBeatSync } from "./scene-beat/hooks/useSceneBeatSync";
 
 // Extracted services
-import { createPromptConfig } from "./scene-beat/services/sceneBeatPromptService";
-import { insertTextAfterNode } from "./scene-beat/services/lexicalEditorUtils";
 import { logger } from "@/utils/logger";
+import { insertTextAfterNode } from "./scene-beat/services/lexicalEditorUtils";
+import { createPromptConfig } from "./scene-beat/services/sceneBeatPromptService";
 
 export type SerializedSceneBeatNode = Spread<
     {
@@ -141,16 +141,12 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
 
     // Save command changes (debounced via useSceneBeatSync)
     useEffect(() => {
-        if (sceneBeatId && isLoaded) 
-      saveCommand(command);
-    
+        if (sceneBeatId && isLoaded) saveCommand(command);
     }, [command, sceneBeatId, saveCommand, isLoaded]);
 
     // Save toggle changes (debounced via useSceneBeatSync)
     useEffect(() => {
-        if (sceneBeatId && isLoaded) {
-            saveToggles(useMatchedChapter, useMatchedSceneBeat, useCustomContext);
-        }
+        if (sceneBeatId && isLoaded) saveToggles(useMatchedChapter, useMatchedSceneBeat, useCustomContext);
     }, [useMatchedChapter, useMatchedSceneBeat, useCustomContext, sceneBeatId, isLoaded, saveToggles]);
 
     // Event handlers
@@ -166,9 +162,7 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
 
         editor.update(() => {
             const node = editor.getEditorState().read(() => editor._editorState._nodeMap.get(nodeKey));
-            if (node) 
-        node.remove();
-      
+            if (node) node.remove();
         });
     };
 
@@ -249,9 +243,7 @@ function SceneBeatComponent({ nodeKey }: { nodeKey: NodeKey }): JSX.Element {
 
     const handleItemSelect = (itemId: string) => {
         const item = entries.find(entry => entry.id === itemId);
-        if (item && !selectedItems.some(i => i.id === itemId)) 
-      setSelectedItems([...selectedItems, item]);
-    
+        if (item && !selectedItems.some(i => i.id === itemId)) setSelectedItems([...selectedItems, item]);
     };
 
     const removeItem = (itemId: string) => {

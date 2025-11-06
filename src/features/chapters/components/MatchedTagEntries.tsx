@@ -1,15 +1,11 @@
-import { useChapterMatching } from '@/features/lorebook/hooks/useChapterMatching';
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { ChevronRight, Edit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
-import { CreateEntryDialog } from '@/features/lorebook/components/CreateEntryDialog';
-import { useStoryContext } from '@/features/stories/context/StoryContext';
-import { LorebookEntry } from '@/types/story';
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CreateEntryDialog } from "@/features/lorebook/components/CreateEntryDialog";
+import { useChapterMatching } from "@/features/lorebook/hooks/useChapterMatching";
+import { useStoryContext } from "@/features/stories/context/StoryContext";
+import { LorebookEntry } from "@/types/story";
+import { ChevronRight, Edit } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function MatchedTagEntries() {
     const { chapterMatchedEntries } = useChapterMatching();
@@ -22,9 +18,7 @@ export function MatchedTagEntries() {
         setOpenStates(prev => {
             const newState = { ...prev };
             Array.from(chapterMatchedEntries.values()).forEach(entry => {
-                if (!(entry.id in newState)) {
-                    newState[entry.id] = false;
-                }
+                if (!(entry.id in newState)) newState[entry.id] = false;
             });
             return newState;
         });
@@ -43,11 +37,11 @@ export function MatchedTagEntries() {
             ...entry,
             storyId: currentStoryId, // Make sure storyId is included
             metadata: {
-                importance: entry.metadata?.importance || 'minor',
-                status: entry.metadata?.status || 'active',
-                type: entry.metadata?.type || '',
+                importance: entry.metadata?.importance || "minor",
+                status: entry.metadata?.status || "active",
+                type: entry.metadata?.type || "",
                 relationships: entry.metadata?.relationships || [],
-                customFields: entry.metadata?.customFields || {},
+                customFields: entry.metadata?.customFields || {}
             }
         });
     };
@@ -55,11 +49,11 @@ export function MatchedTagEntries() {
     return (
         <div className="p-4 space-y-2">
             <h3 className="text-sm font-semibold">Matched Tag Entries</h3>
-            {Array.from(chapterMatchedEntries.values()).map((entry) => (
+            {Array.from(chapterMatchedEntries.values()).map(entry => (
                 <Collapsible
                     key={entry.id}
                     open={openStates[entry.id]}
-                    onOpenChange={(isOpen) => handleOpenChange(entry.id, isOpen)}
+                    onOpenChange={isOpen => handleOpenChange(entry.id, isOpen)}
                 >
                     <div className="flex items-center gap-2">
                         <CollapsibleTrigger className="flex flex-1 items-center gap-2 w-full text-left p-2 hover:bg-accent rounded-lg">
@@ -70,7 +64,7 @@ export function MatchedTagEntries() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={(e) => {
+                                onClick={e => {
                                     e.stopPropagation();
                                     handleEdit(entry);
                                 }}
@@ -83,7 +77,7 @@ export function MatchedTagEntries() {
                     <CollapsibleContent className="p-2 text-sm space-y-2 select-text">
                         <div className="select-text">
                             <span className="font-semibold">Tags: </span>
-                            {entry.tags.join(', ')}
+                            {entry.tags.join(", ")}
                         </div>
                         <div className="select-text">
                             <span className="font-semibold">Description: </span>
@@ -96,11 +90,11 @@ export function MatchedTagEntries() {
             {editingEntry && (
                 <CreateEntryDialog
                     open={!!editingEntry}
-                    onOpenChange={(open) => !open && setEditingEntry(null)}
+                    onOpenChange={open => !open && setEditingEntry(null)}
                     storyId={currentStoryId}
                     entry={editingEntry}
                 />
             )}
         </div>
     );
-} 
+}

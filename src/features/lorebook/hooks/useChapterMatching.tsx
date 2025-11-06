@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import type { LorebookEntry } from '@/types/story';
+import type { LorebookEntry } from "@/types/story";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 interface ChapterMatchingContextValue {
     chapterMatchedEntries: Map<string, LorebookEntry>;
@@ -24,8 +24,7 @@ export const ChapterMatchingProvider = ({ children }: ChapterMatchingProviderPro
 
 export const useChapterMatching = (): ChapterMatchingContextValue => {
     const context = useContext(ChapterMatchingContext);
-    if (!context) {
-        throw new Error('useChapterMatching must be used within ChapterMatchingProvider');
-    }
+    if (!context) throw new Error("useChapterMatching must be used within ChapterMatchingProvider");
+
     return context;
 };

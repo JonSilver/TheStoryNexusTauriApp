@@ -1,25 +1,25 @@
-import { useEffect, useState } from 'react';
-import { usePromptsQuery, useDeletePromptMutation, useClonePromptMutation } from '../hooks/usePromptsQuery';
 import { Button } from "@/components/ui/button";
-import { Trash2, Copy, ChevronDown, ChevronRight } from 'lucide-react';
-import type { Prompt } from '@/types/story';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
+import type { Prompt } from "@/types/story";
+import { ChevronDown, ChevronRight, Copy, Trash2 } from "lucide-react";
+import { useEffect, useState, type MouseEvent } from "react";
+import { useClonePromptMutation, useDeletePromptMutation, usePromptsQuery } from "../hooks/usePromptsQuery";
 
 interface PromptsListProps {
     onPromptSelect: (prompt: Prompt) => void;
     selectedPromptId?: string;
     onPromptDelete: (promptId: string) => void;
-    filterByType?: Prompt['promptType'];
+    filterByType?: Prompt["promptType"];
 }
 
-const getPromptTypeLabel = (type: Prompt['promptType']) => {
-    const labels: Record<Prompt['promptType'], string> = {
-        'scene_beat': 'Scene Beat',
-        'gen_summary': 'Generate Summary',
-        'selection_specific': 'Selection-Specific',
-        'continue_writing': 'Continue Writing',
-        'brainstorm': 'Brainstorm',
-        'other': 'Other',
+const getPromptTypeLabel = (type: Prompt["promptType"]) => {
+    const labels: Record<Prompt["promptType"], string> = {
+        scene_beat: "Scene Beat",
+        gen_summary: "Generate Summary",
+        selection_specific: "Selection-Specific",
+        continue_writing: "Continue Writing",
+        brainstorm: "Brainstorm",
+        other: "Other"
     };
     return labels[type];
 };
@@ -30,9 +30,7 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
     const clonePromptMutation = useClonePromptMutation();
 
     // Filter prompts by type if specified
-    const filteredPrompts = filterByType
-        ? prompts.filter(p => p.promptType === filterByType)
-        : prompts;
+    const filteredPrompts = filterByType ? prompts.filter(p => p.promptType === filterByType) : prompts;
     // Track which groups are expanded (default all expanded)
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
@@ -54,53 +52,49 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
         }));
     };
 
-    const handleDelete = (e: React.MouseEvent, promptId: string) => {
+    const handleDelete = (e: MouseEvent, promptId: string) => {
         e.stopPropagation();
         deletePromptMutation.mutate(promptId, {
             onSuccess: () => {
                 onPromptDelete(promptId);
-            },
+            }
         });
     };
 
-    const handleClone = (e: React.MouseEvent, promptId: string) => {
+    const handleClone = (e: MouseEvent, promptId: string) => {
         e.stopPropagation();
         clonePromptMutation.mutate(promptId);
     };
 
-    if (isLoading) {
-        return (
-            <div className="p-4 text-muted-foreground h-full">
-                Loading prompts...
-            </div>
-        );
-    }
+    if (isLoading) return <div className="p-4 text-muted-foreground h-full">Loading prompts...</div>;
 
     if (!filteredPrompts.length) {
         return (
             <div className="p-4 text-muted-foreground h-full">
-                {filterByType ? `No ${getPromptTypeLabel(filterByType)} prompts available` : 'No prompts available'}
+                {filterByType ? `No ${getPromptTypeLabel(filterByType)} prompts available` : "No prompts available"}
             </div>
         );
     }
 
     // Group prompts by promptType
-    const groupedPrompts = filteredPrompts.reduce((acc, prompt) => {
-        if (!acc[prompt.promptType]) {
-            acc[prompt.promptType] = [];
-        }
-        acc[prompt.promptType].push(prompt);
-        return acc;
-    }, {} as Record<Prompt['promptType'], Prompt[]>);
+    const groupedPrompts = filteredPrompts.reduce(
+        (acc, prompt) => {
+            if (!acc[prompt.promptType]) acc[prompt.promptType] = [];
+
+            acc[prompt.promptType].push(prompt);
+            return acc;
+        },
+        {} as Record<Prompt["promptType"], Prompt[]>
+    );
 
     // Define order for prompt types to display
-    const promptTypeOrder: Prompt['promptType'][] = [
-        'scene_beat',
-        'continue_writing',
-        'selection_specific',
-        'gen_summary',
-        'brainstorm',
-        'other'
+    const promptTypeOrder: Prompt["promptType"][] = [
+        "scene_beat",
+        "continue_writing",
+        "selection_specific",
+        "gen_summary",
+        "brainstorm",
+        "other"
     ];
 
     return (
@@ -118,10 +112,11 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
                             className="w-full px-4 py-2.5 bg-slate-300 dark:bg-slate-700 font-medium text-sm sticky top-0 shadow-sm border-b border-slate-500 dark:border-slate-600 flex items-center justify-between z-10 text-slate-800 dark:text-white hover:bg-slate-500 dark:hover:bg-slate-600 transition-colors cursor-pointer"
                         >
                             <div className="flex items-center">
-                                {isExpanded ?
-                                    <ChevronDown className="h-4 w-4 mr-1.5" /> :
+                                {isExpanded ? (
+                                    <ChevronDown className="h-4 w-4 mr-1.5" />
+                                ) : (
                                     <ChevronRight className="h-4 w-4 mr-1.5" />
-                                }
+                                )}
                                 {getPromptTypeLabel(promptType)}
                                 <span className="ml-2 px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-500 text-slate-800 dark:text-white rounded-full font-semibold">
                                     {promptsInGroup.length}
@@ -130,28 +125,31 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
                         </button>
                         {isExpanded && (
                             <div className="divide-y divide-border">
-                                {promptsInGroup.map((prompt) => (
+                                {promptsInGroup.map(prompt => (
                                     <div
                                         key={prompt.id}
                                         className={cn(
                                             "group relative",
-                                            selectedPromptId === prompt.id && "bg-muted border-l-2 border-emerald-600 dark:border-emerald-400"
+                                            selectedPromptId === prompt.id &&
+                                                "bg-muted border-l-2 border-emerald-600 dark:border-emerald-400"
                                         )}
                                     >
                                         <button
                                             onClick={() => onPromptSelect(prompt)}
                                             className={cn(
                                                 "w-full text-left p-4 hover:bg-muted transition-colors",
-                                                "focus:outline-none focus:bg-muted",
+                                                "focus:outline-none focus:bg-muted"
                                             )}
                                         >
                                             <div className="flex items-center">
-                                                <h3 className={cn(
-                                                    "font-medium",
-                                                    selectedPromptId === prompt.id
-                                                        ? "text-emerald-600 dark:text-emerald-400 font-semibold"
-                                                        : "text-foreground"
-                                                )}>
+                                                <h3
+                                                    className={cn(
+                                                        "font-medium",
+                                                        selectedPromptId === prompt.id
+                                                            ? "text-emerald-600 dark:text-emerald-400 font-semibold"
+                                                            : "text-foreground"
+                                                    )}
+                                                >
                                                     {prompt.name}
                                                 </h3>
                                                 {prompt.isSystem && (
@@ -172,7 +170,7 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
                                                 variant="ghost"
                                                 size="icon"
                                                 className="text-primary hover:text-primary"
-                                                onClick={(e) => handleClone(e, prompt.id)}
+                                                onClick={e => handleClone(e, prompt.id)}
                                                 title="Clone prompt"
                                             >
                                                 <Copy className="h-4 w-4" />
@@ -183,7 +181,7 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
                                                     variant="ghost"
                                                     size="icon"
                                                     className="text-destructive hover:text-destructive"
-                                                    onClick={(e) => handleDelete(e, prompt.id)}
+                                                    onClick={e => handleDelete(e, prompt.id)}
                                                     title="Delete prompt"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -199,4 +197,4 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
             })}
         </div>
     );
-} 
+}

@@ -1,4 +1,4 @@
-import { PromptContext, LorebookEntry } from '@/types/story';
+import { LorebookEntry, PromptContext } from "@/types/story";
 
 export interface IVariableResolver {
     resolve(context: PromptContext, ...params: string[]): Promise<string>;

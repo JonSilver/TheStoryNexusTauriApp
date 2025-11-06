@@ -1,23 +1,23 @@
-import { useEffect, useState, useRef } from 'react';
-import { attemptPromise } from '@jfdi/attempt';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronRight, Loader2, Download, Upload, AlertTriangle } from "lucide-react";
-import { toast } from 'react-toastify';
-import { cn } from '@/lib/utils';
-import { API_URLS } from '@/constants/urls';
-import { logger } from '@/utils/logger';
-import { downloadDatabaseExport } from '@/services/exportDexieDatabase';
-import { adminApi, promptsApi } from '@/services/api/client';
-import { useAIProviderState } from '@/features/ai/hooks/useAIProviderState';
-import { toastCRUD } from '@/utils/toastUtils';
-import { promptsExportSchema, parseJSON } from '@/schemas/entities';
-import { useQueryClient } from '@tanstack/react-query';
-import { promptsKeys } from '@/features/prompts/hooks/usePromptsQuery';
+import { API_URLS } from "@/constants/urls";
+import { useAIProviderState } from "@/features/ai/hooks/useAIProviderState";
+import { promptsKeys } from "@/features/prompts/hooks/usePromptsQuery";
+import { cn } from "@/lib/utils";
+import { parseJSON, promptsExportSchema } from "@/schemas/entities";
+import { adminApi, promptsApi } from "@/services/api/client";
+import { downloadDatabaseExport } from "@/services/exportDexieDatabase";
+import { logger } from "@/utils/logger";
+import { toastCRUD } from "@/utils/toastUtils";
+import { attemptPromise } from "@jfdi/attempt";
+import { useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, ChevronRight, Download, Loader2, Upload } from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { toast } from "react-toastify";
 
 export default function AISettingsPage() {
     const {
@@ -29,7 +29,7 @@ export default function AISettingsPage() {
         saveApiKey,
         refreshModels,
         saveLocalApiUrl,
-        updateDefaultModel,
+        updateDefaultModel
     } = useAIProviderState();
 
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
@@ -51,12 +51,12 @@ export default function AISettingsPage() {
         setIsMigrationLoading(true);
         const [error] = await attemptPromise(async () => {
             await downloadDatabaseExport();
-            toast.success('Database exported successfully');
+            toast.success("Database exported successfully");
         });
 
         if (error) {
-            logger.error('Error exporting database:', error);
-            toast.error('Failed to export database');
+            logger.error("Error exporting database:", error);
+            toast.error("Failed to export database");
         }
         setIsMigrationLoading(false);
     };
@@ -67,24 +67,21 @@ export default function AISettingsPage() {
         setIsMigrationLoading(true);
         const [error] = await attemptPromise(async () => {
             await adminApi.importDatabase(file);
-            toast.success('Database imported successfully. Please reload the application.');
+            toast.success("Database imported successfully. Please reload the application.");
         });
 
         if (error) {
-            logger.error('Error importing database:', error);
-            toast.error('Failed to import database');
+            logger.error("Error importing database:", error);
+            toast.error("Failed to import database");
         }
         setIsMigrationLoading(false);
     };
 
-    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (file) {
-            handleImportDatabase(file);
-        }
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
+        if (file) handleImportDatabase(file);
+
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const findUniqueName = async (baseName: string): Promise<string> => {
@@ -92,7 +89,7 @@ export default function AISettingsPage() {
 
         const generateCandidateName = (attempt: number): string => {
             if (attempt === 0) return baseName;
-            return `${baseName} (Imported${attempt > 1 ? ` ${attempt}` : ''})`;
+            return `${baseName} (Imported${attempt > 1 ? ` ${attempt}` : ""})`;
         };
 
         const attempts = Array.from({ length: MAX_IMPORT_ATTEMPTS }, (_, i) => i);
@@ -103,34 +100,29 @@ export default function AISettingsPage() {
             const [checkError, allPrompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
 
             if (checkError) {
-                logger.error('Error checking for existing prompt', checkError);
+                logger.error("Error checking for existing prompt", checkError);
                 throw checkError;
             }
 
             const existing = allPrompts.find(p => p.name === candidateName);
 
-            if (!existing) {
-                return candidateName;
-            }
+            if (!existing) return candidateName;
 
-            if (attempt === MAX_IMPORT_ATTEMPTS - 1) {
+            if (attempt === MAX_IMPORT_ATTEMPTS - 1)
                 throw new Error(`Failed to generate unique name after ${MAX_IMPORT_ATTEMPTS} attempts`);
-            }
         }
 
-        throw new Error('Failed to generate unique name');
+        throw new Error("Failed to generate unique name");
     };
 
     const handleImportPrompts = async (jsonData: string) => {
         const result = parseJSON(promptsExportSchema, jsonData);
-        if (!result.success) {
-            throw new Error(`Invalid prompts data: ${result.error.message}`);
-        }
+        if (!result.success) throw new Error(`Invalid prompts data: ${result.error.message}`);
 
         const imported = result.data.prompts;
 
         for (const p of imported) {
-            const newName = await findUniqueName(p.name || 'Imported Prompt');
+            const newName = await findUniqueName(p.name || "Imported Prompt");
 
             const { id: _id, createdAt: _createdAt, ...promptData } = p;
 
@@ -142,15 +134,13 @@ export default function AISettingsPage() {
 
             const [addError] = await attemptPromise(() => promptsApi.create(dataToCreate));
 
-            if (addError) {
-                logger.error(`Failed to import prompt "${newName}"`, addError);
-            }
+            if (addError) logger.error(`Failed to import prompt "${newName}"`, addError);
         }
 
         queryClient.invalidateQueries({ queryKey: promptsKeys.lists() });
     };
 
-    const handlePromptsFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePromptsFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
@@ -161,18 +151,13 @@ export default function AISettingsPage() {
         });
 
         if (error) {
-            logger.error('Import failed', error);
-            toastCRUD.importError('prompts', error);
-        } else {
-            toastCRUD.importSuccess('Prompts');
-        }
+            logger.error("Import failed", error);
+            toastCRUD.importError("prompts", error);
+        } else toastCRUD.importSuccess("Prompts");
 
         setIsImportingPrompts(false);
-        if (promptsFileInputRef.current) {
-            promptsFileInputRef.current.value = '';
-        }
+        if (promptsFileInputRef.current) promptsFileInputRef.current.value = "";
     };
-
 
     return (
         <div className="p-8">
@@ -188,10 +173,10 @@ export default function AISettingsPage() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => refreshModels('openai')}
+                                    onClick={() => refreshModels("openai")}
                                     disabled={isLoading || !providers.openai.apiKey.trim()}
                                 >
-                                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Refresh Models'}
+                                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh Models"}
                                 </Button>
                             </CardTitle>
                         </CardHeader>
@@ -204,13 +189,13 @@ export default function AISettingsPage() {
                                         type="password"
                                         placeholder="Enter your OpenAI API key"
                                         value={providers.openai.apiKey}
-                                        onChange={(e) => updateApiKey('openai', e.target.value)}
+                                        onChange={e => updateApiKey("openai", e.target.value)}
                                     />
                                     <Button
-                                        onClick={() => saveApiKey('openai', providers.openai.apiKey)}
+                                        onClick={() => saveApiKey("openai", providers.openai.apiKey)}
                                         disabled={isLoading || !providers.openai.apiKey.trim()}
                                     >
-                                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
                                     </Button>
                                 </div>
                             </div>
@@ -220,8 +205,10 @@ export default function AISettingsPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="openai-default">Default Model</Label>
                                         <Select
-                                            value={providers.openai.defaultModel || 'none'}
-                                            onValueChange={(value) => updateDefaultModel('openai', value === 'none' ? undefined : value)}
+                                            value={providers.openai.defaultModel || "none"}
+                                            onValueChange={value =>
+                                                updateDefaultModel("openai", value === "none" ? undefined : value)
+                                            }
                                         >
                                             <SelectTrigger id="openai-default">
                                                 <SelectValue placeholder="Select default model" />
@@ -252,10 +239,10 @@ export default function AISettingsPage() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => refreshModels('openrouter')}
+                                    onClick={() => refreshModels("openrouter")}
                                     disabled={isLoading || !providers.openrouter.apiKey.trim()}
                                 >
-                                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Refresh Models'}
+                                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh Models"}
                                 </Button>
                             </CardTitle>
                         </CardHeader>
@@ -268,13 +255,13 @@ export default function AISettingsPage() {
                                         type="password"
                                         placeholder="Enter your OpenRouter API key"
                                         value={providers.openrouter.apiKey}
-                                        onChange={(e) => updateApiKey('openrouter', e.target.value)}
+                                        onChange={e => updateApiKey("openrouter", e.target.value)}
                                     />
                                     <Button
-                                        onClick={() => saveApiKey('openrouter', providers.openrouter.apiKey)}
+                                        onClick={() => saveApiKey("openrouter", providers.openrouter.apiKey)}
                                         disabled={isLoading || !providers.openrouter.apiKey.trim()}
                                     >
-                                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
                                     </Button>
                                 </div>
                             </div>
@@ -284,8 +271,10 @@ export default function AISettingsPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="openrouter-default">Default Model</Label>
                                         <Select
-                                            value={providers.openrouter.defaultModel || 'none'}
-                                            onValueChange={(value) => updateDefaultModel('openrouter', value === 'none' ? undefined : value)}
+                                            value={providers.openrouter.defaultModel || "none"}
+                                            onValueChange={value =>
+                                                updateDefaultModel("openrouter", value === "none" ? undefined : value)
+                                            }
                                         >
                                             <SelectTrigger id="openrouter-default">
                                                 <SelectValue placeholder="Select default model" />
@@ -316,10 +305,10 @@ export default function AISettingsPage() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => refreshModels('local')}
+                                    onClick={() => refreshModels("local")}
                                     disabled={isLoading}
                                 >
-                                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Refresh Models'}
+                                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh Models"}
                                 </Button>
                             </CardTitle>
                         </CardHeader>
@@ -329,22 +318,24 @@ export default function AISettingsPage() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => saveApiKey('local', '')}
+                                    onClick={() => saveApiKey("local", "")}
                                     disabled={isLoading}
                                 >
-                                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Refresh Models'}
+                                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh Models"}
                                 </Button>
                             </div>
 
                             <Collapsible
                                 open={openSections.localAdvanced}
-                                onOpenChange={() => toggleSection('localAdvanced')}
+                                onOpenChange={() => toggleSection("localAdvanced")}
                             >
                                 <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                                    <ChevronRight className={cn(
-                                        "h-4 w-4 transition-transform",
-                                        openSections.localAdvanced && "transform rotate-90"
-                                    )} />
+                                    <ChevronRight
+                                        className={cn(
+                                            "h-4 w-4 transition-transform",
+                                            openSections.localAdvanced && "transform rotate-90"
+                                        )}
+                                    />
                                     Advanced Settings
                                 </CollapsibleTrigger>
                                 <CollapsibleContent className="mt-2 space-y-2">
@@ -356,13 +347,13 @@ export default function AISettingsPage() {
                                                 type="text"
                                                 placeholder={API_URLS.LOCAL_AI_DEFAULT}
                                                 value={providers.local.apiUrl}
-                                                onChange={(e) => updateLocalApiUrl(e.target.value)}
+                                                onChange={e => updateLocalApiUrl(e.target.value)}
                                             />
                                             <Button
                                                 onClick={() => saveLocalApiUrl(providers.local.apiUrl)}
                                                 disabled={isLoading || !providers.local.apiUrl.trim()}
                                             >
-                                                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                                                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
                                             </Button>
                                         </div>
                                         <p className="text-xs text-muted-foreground">
@@ -376,8 +367,10 @@ export default function AISettingsPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="local-default">Default Model</Label>
                                     <Select
-                                        value={providers.local.defaultModel || 'none'}
-                                        onValueChange={(value) => updateDefaultModel('local', value === 'none' ? undefined : value)}
+                                        value={providers.local.defaultModel || "none"}
+                                        onValueChange={value =>
+                                            updateDefaultModel("local", value === "none" ? undefined : value)
+                                        }
                                     >
                                         <SelectTrigger id="local-default">
                                             <SelectValue placeholder="Select default model" />
@@ -427,9 +420,7 @@ export default function AISettingsPage() {
                                     )}
                                     Import from JSON
                                 </Button>
-                                <p className="text-xs text-muted-foreground">
-                                    Import prompts from exported JSON file
-                                </p>
+                                <p className="text-xs text-muted-foreground">Import prompts from exported JSON file</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -502,4 +493,4 @@ export default function AISettingsPage() {
             </div>
         </div>
     );
-} 
+}

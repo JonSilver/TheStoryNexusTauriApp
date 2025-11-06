@@ -1,17 +1,17 @@
-import { lorebookApi } from '@/services/api/client';
-import type { LorebookEntry } from '@/types/story';
-import { attemptPromise } from '@jfdi/attempt';
-import { lorebookExportSchema, parseJSON } from '@/schemas/entities';
-import { downloadJSON } from '@/utils/jsonExportUtils';
-import { logger } from '@/utils/logger';
+import { lorebookExportSchema, parseJSON } from "@/schemas/entities";
+import { lorebookApi } from "@/services/api/client";
+import type { LorebookEntry } from "@/types/story";
+import { downloadJSON } from "@/utils/jsonExportUtils";
+import { logger } from "@/utils/logger";
+import { attemptPromise } from "@jfdi/attempt";
 
 export class LorebookImportExportService {
     static exportEntries(entries: LorebookEntry[], storyId: string): void {
         const entriesToExport = entries.filter(entry => entry.storyId === storyId);
 
         const exportData = {
-            version: '1.0',
-            type: 'lorebook',
+            version: "1.0",
+            type: "lorebook",
             entries: entriesToExport
         };
 
@@ -25,9 +25,7 @@ export class LorebookImportExportService {
         onEntriesAdded: (entries: LorebookEntry[]) => void
     ): Promise<void> {
         const result = parseJSON(lorebookExportSchema, jsonData);
-        if (!result.success) {
-            throw new Error(`Invalid lorebook data: ${result.error.message}`);
-        }
+        if (!result.success) throw new Error(`Invalid lorebook data: ${result.error.message}`);
 
         const newEntries: LorebookEntry[] = [];
 
@@ -35,15 +33,13 @@ export class LorebookImportExportService {
             const newEntryData = {
                 ...entry,
                 id: crypto.randomUUID(),
-                storyId: targetStoryId,
+                storyId: targetStoryId
             };
 
-            const [addError, createdEntry] = await attemptPromise(() =>
-                lorebookApi.create(newEntryData)
-            );
+            const [addError, createdEntry] = await attemptPromise(() => lorebookApi.create(newEntryData));
 
             if (addError) {
-                logger.error('Error adding lorebook entry:', addError);
+                logger.error("Error adding lorebook entry:", addError);
                 throw addError;
             }
 

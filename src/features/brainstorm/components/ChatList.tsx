@@ -1,22 +1,17 @@
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { AIChat } from "@/types/story";
+import { ChevronLeft, ChevronRight, Edit2, Plus, Trash2 } from "lucide-react";
+import { useState, type MouseEvent } from "react";
 import {
     useBrainstormByStoryQuery,
     useCreateBrainstormMutation,
-    useUpdateBrainstormMutation,
-    useDeleteBrainstormMutation
-} from '../hooks/useBrainstormQuery';
-import { cn } from '@/lib/utils';
-import { Plus, Trash2, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { AIChat } from '@/types/story';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
+    useDeleteBrainstormMutation,
+    useUpdateBrainstormMutation
+} from "../hooks/useBrainstormQuery";
 
 interface ChatListProps {
     storyId: string;
@@ -33,33 +28,34 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingChat, setEditingChat] = useState<AIChat | null>(null);
-    const [newTitle, setNewTitle] = useState('');
+    const [newTitle, setNewTitle] = useState("");
 
     const handleCreateNewChat = () => {
-        createMutation.mutate({
-            id: crypto.randomUUID(),
-            storyId,
-            title: `New Chat ${new Date().toLocaleString()}`,
-            messages: [],
-            updatedAt: new Date(),
-        }, {
-            onSuccess: (newChat) => {
-                onSelectChat(newChat);
+        createMutation.mutate(
+            {
+                id: crypto.randomUUID(),
+                storyId,
+                title: `New Chat ${new Date().toLocaleString()}`,
+                messages: [],
+                updatedAt: new Date()
+            },
+            {
+                onSuccess: newChat => {
+                    onSelectChat(newChat);
+                }
             }
-        });
+        );
     };
 
     const handleDeleteChat = (chatId: string) => {
         deleteMutation.mutate(chatId, {
             onSuccess: () => {
-                if (selectedChat?.id === chatId) {
-                    onSelectChat(null);
-                }
+                if (selectedChat?.id === chatId) onSelectChat(null);
             }
         });
     };
 
-    const handleEditClick = (chat: AIChat, e: React.MouseEvent) => {
+    const handleEditClick = (chat: AIChat, e: MouseEvent) => {
         e.stopPropagation();
         setEditingChat(chat);
         setNewTitle(chat.title);
@@ -68,25 +64,30 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
 
     const handleSaveTitle = () => {
         if (editingChat && newTitle.trim()) {
-            updateMutation.mutate({
-                id: editingChat.id,
-                data: { title: newTitle.trim() }
-            }, {
-                onSuccess: () => {
-                    setIsEditDialogOpen(false);
-                    setEditingChat(null);
-                    setNewTitle('');
+            updateMutation.mutate(
+                {
+                    id: editingChat.id,
+                    data: { title: newTitle.trim() }
+                },
+                {
+                    onSuccess: () => {
+                        setIsEditDialogOpen(false);
+                        setEditingChat(null);
+                        setNewTitle("");
+                    }
                 }
-            });
+            );
         }
     };
 
     return (
         <>
-            <div className={cn(
-                "relative border-r border-input bg-background transition-all duration-300",
-                isCollapsed ? "w-[40px]" : "w-[250px] sm:w-[300px]"
-            )}>
+            <div
+                className={cn(
+                    "relative border-r border-input bg-background transition-all duration-300",
+                    isCollapsed ? "w-[40px]" : "w-[250px] sm:w-[300px]"
+                )}
+            >
                 {/* Toggle button */}
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
@@ -101,10 +102,7 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
                 </button>
 
                 {/* Chat list content */}
-                <div className={cn(
-                    "h-full overflow-y-auto",
-                    isCollapsed ? "hidden" : "block"
-                )}>
+                <div className={cn("h-full overflow-y-auto", isCollapsed ? "hidden" : "block")}>
                     <div className="p-4 border-b border-input">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="font-semibold text-foreground">Brainstorm History</h2>
@@ -127,16 +125,13 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
                         ) : chats.length === 0 ? (
                             <li className="p-8 flex flex-col items-center justify-center text-center">
                                 <p className="text-muted-foreground mb-4">No chats yet</p>
-                                <Button
-                                    onClick={handleCreateNewChat}
-                                    className="flex items-center gap-1"
-                                >
+                                <Button onClick={handleCreateNewChat} className="flex items-center gap-1">
                                     <Plus className="h-4 w-4" />
                                     Start New Chat
                                 </Button>
                             </li>
                         ) : (
-                            chats.map((chat) => (
+                            chats.map(chat => (
                                 <li
                                     key={chat.id}
                                     className={cn(
@@ -144,16 +139,15 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
                                         selectedChat?.id === chat.id && "bg-muted/50"
                                     )}
                                 >
-                                    <div
-                                        onClick={() => onSelectChat(chat)}
-                                        className="flex flex-col gap-2"
-                                    >
+                                    <div onClick={() => onSelectChat(chat)} className="flex flex-col gap-2">
                                         {/* Title and timestamp with tooltip */}
                                         <div className="flex-1 min-w-0">
                                             <TooltipProvider delayDuration={100}>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                        <span className="text-sm block truncate text-foreground">{chat.title}</span>
+                                                        <span className="text-sm block truncate text-foreground">
+                                                            {chat.title}
+                                                        </span>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
                                                         <p className="max-w-xs break-words">{chat.title}</p>
@@ -161,7 +155,11 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
                                                 </Tooltip>
                                             </TooltipProvider>
                                             <span className="text-xs text-muted-foreground block mt-1">
-                                                {new Date(chat.updatedAt || chat.createdAt).toLocaleDateString()} {new Date(chat.updatedAt || chat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {new Date(chat.updatedAt || chat.createdAt).toLocaleDateString()}{" "}
+                                                {new Date(chat.updatedAt || chat.createdAt).toLocaleTimeString([], {
+                                                    hour: "2-digit",
+                                                    minute: "2-digit"
+                                                })}
                                             </span>
                                         </div>
 
@@ -170,7 +168,7 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={(e) => {
+                                                onClick={e => {
                                                     e.stopPropagation();
                                                     handleEditClick(chat, e);
                                                 }}
@@ -181,7 +179,7 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={(e) => {
+                                                onClick={e => {
                                                     e.stopPropagation();
                                                     handleDeleteChat(chat.id);
                                                 }}
@@ -207,27 +205,19 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
                     <div className="py-4">
                         <Input
                             value={newTitle}
-                            onChange={(e) => setNewTitle(e.target.value)}
+                            onChange={e => setNewTitle(e.target.value)}
                             placeholder="Enter new title"
                             className="w-full"
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleSaveTitle();
-                                }
+                            onKeyDown={e => {
+                                if (e.key === "Enter") handleSaveTitle();
                             }}
                         />
                     </div>
                     <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsEditDialogOpen(false)}
-                        >
+                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                             Cancel
                         </Button>
-                        <Button
-                            onClick={handleSaveTitle}
-                            disabled={!newTitle.trim()}
-                        >
+                        <Button onClick={handleSaveTitle} disabled={!newTitle.trim()}>
                             Save
                         </Button>
                     </DialogFooter>
@@ -235,4 +225,4 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
             </Dialog>
         </>
     );
-} 
+}

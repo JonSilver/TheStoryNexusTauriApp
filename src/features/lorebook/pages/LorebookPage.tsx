@@ -1,58 +1,57 @@
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { LorebookEntry } from "@/types/story";
+import { logger } from "@/utils/logger";
+import { attempt, attemptPromise } from "@jfdi/attempt";
+import { useQueryClient } from "@tanstack/react-query";
+import { Download, Plus, Upload } from "lucide-react";
+import { useState, type ChangeEvent } from "react";
 import { useParams } from "react-router";
-import {
-    useHierarchicalLorebookQuery,
-    useSeriesLorebookQuery,
-    lorebookKeys,
-} from "../hooks/useLorebookQuery";
+import { toast } from "react-toastify";
 import { CreateEntryDialog } from "../components/CreateEntryDialog";
 import { LorebookEntryList } from "../components/LorebookEntryList";
-import { Button } from "@/components/ui/button";
-import { Plus, Download, Upload } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "react-toastify";
-import { attempt, attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
-import { LorebookImportExportService } from '../stores/LorebookImportExportService';
-import { useQueryClient } from '@tanstack/react-query';
-import type { LorebookEntry } from '@/types/story';
+import { lorebookKeys, useHierarchicalLorebookQuery, useSeriesLorebookQuery } from "../hooks/useLorebookQuery";
+import { LorebookImportExportService } from "../stores/LorebookImportExportService";
 
-type LorebookCategory = LorebookEntry['category'];
+type LorebookCategory = LorebookEntry["category"];
 
 const CATEGORIES: LorebookCategory[] = [
-    'character',
-    'location',
-    'item',
-    'event',
-    'note',
-    'synopsis',
-    'starting scenario',
-    'timeline',
+    "character",
+    "location",
+    "item",
+    "event",
+    "note",
+    "synopsis",
+    "starting scenario",
+    "timeline"
 ];
 
 export default function LorebookPage() {
     const { storyId, seriesId } = useParams<{ storyId?: string; seriesId?: string }>();
     const queryClient = useQueryClient();
 
-    const [selectedCategory, setSelectedCategory] = useState<LorebookCategory>('character');
+    const [selectedCategory, setSelectedCategory] = useState<LorebookCategory>("character");
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
     // Fetch appropriate entries based on context
     const { data: storyEntries, isLoading: storyLoading } = useHierarchicalLorebookQuery(storyId);
     const { data: seriesEntries, isLoading: seriesLoading } = useSeriesLorebookQuery(seriesId);
 
-    const entries = storyId ? (storyEntries || []) : (seriesEntries || []);
+    const entries = storyId ? storyEntries || [] : seriesEntries || [];
     const isLoading = storyId ? storyLoading : seriesLoading;
 
     // Filter by category
-    const entriesByCategory = entries.filter((e) => e.category === selectedCategory);
+    const entriesByCategory = entries.filter(e => e.category === selectedCategory);
 
     // Calculate category counts from the current entries
-    const categoryCounts = entries.reduce((acc, entry) => {
-        acc[entry.category] = (acc[entry.category] || 0) + 1;
-        return acc;
-    }, {} as Record<LorebookCategory, number>);
+    const categoryCounts = entries.reduce(
+        (acc, entry) => {
+            acc[entry.category] = (acc[entry.category] || 0) + 1;
+            return acc;
+        },
+        {} as Record<LorebookCategory, number>
+    );
 
     // Handle export functionality
     const handleExport = async () => {
@@ -68,14 +67,14 @@ export default function LorebookPage() {
     };
 
     // Handle import functionality
-    const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
         if (!event.target.files || event.target.files.length === 0) return;
 
         const file = event.target.files[0];
 
         if (storyId) {
             const reader = new FileReader();
-            reader.onload = async (e) => {
+            reader.onload = async e => {
                 const [error] = await attemptPromise(async () => {
                     const content = e.target?.result as string;
                     await LorebookImportExportService.importEntries(content, storyId, () => {
@@ -93,25 +92,26 @@ export default function LorebookPage() {
         }
 
         // Reset the input
-        event.target.value = '';
+        event.target.value = "";
     };
 
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold">
-                        {seriesId ? 'Series Lorebook' : 'Story Lorebook'}
-                    </h1>
+                    <h1 className="text-3xl font-bold">{seriesId ? "Series Lorebook" : "Story Lorebook"}</h1>
                     <p className="text-muted-foreground mt-1">
                         {seriesId
-                            ? 'View and manage entries for this series (shared across all stories in series)'
-                            : 'View and manage entries for this story (includes global and series entries)'
-                        }
+                            ? "View and manage entries for this series (shared across all stories in series)"
+                            : "View and manage entries for this story (includes global and series entries)"}
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleExport} className="border-2 border-gray-300 dark:border-gray-700">
+                    <Button
+                        variant="outline"
+                        onClick={handleExport}
+                        className="border-2 border-gray-300 dark:border-gray-700"
+                    >
                         <Download className="w-4 h-4 mr-2" />
                         Export
                     </Button>
@@ -123,13 +123,7 @@ export default function LorebookPage() {
                             </div>
                         </Button>
                     </label>
-                    <input
-                        id="import-lorebook"
-                        type="file"
-                        accept=".json"
-                        className="hidden"
-                        onChange={handleImport}
-                    />
+                    <input id="import-lorebook" type="file" accept=".json" className="hidden" onChange={handleImport} />
                     <Button onClick={() => setIsCreateDialogOpen(true)}>
                         <Plus className="w-4 h-4 mr-2" />
                         New Entry
@@ -140,9 +134,13 @@ export default function LorebookPage() {
             <Separator className="bg-gray-300 dark:bg-gray-700" />
 
             {/* Category tabs and entry list */}
-            <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as LorebookCategory)} className="w-full">
+            <Tabs
+                value={selectedCategory}
+                onValueChange={v => setSelectedCategory(v as LorebookCategory)}
+                className="w-full"
+            >
                 <TabsList className="w-full justify-start bg-gray-100 dark:bg-gray-800 p-1 border border-gray-300 dark:border-gray-700 flex-wrap">
-                    {CATEGORIES.map((cat) => (
+                    {CATEGORIES.map(cat => (
                         <TabsTrigger
                             key={cat}
                             value={cat}
@@ -153,7 +151,7 @@ export default function LorebookPage() {
                     ))}
                 </TabsList>
 
-                {CATEGORIES.map((cat) => (
+                {CATEGORIES.map(cat => (
                     <TabsContent key={cat} value={cat} className="mt-6">
                         {isLoading ? (
                             <div className="flex justify-center p-8">
@@ -167,9 +165,7 @@ export default function LorebookPage() {
                                 contextStoryId={storyId}
                             />
                         ) : (
-                            <div className="text-center text-muted-foreground py-12">
-                                No {cat} entries yet
-                            </div>
+                            <div className="text-center text-muted-foreground py-12">No {cat} entries yet</div>
                         )}
                     </TabsContent>
                 ))}
@@ -185,4 +181,4 @@ export default function LorebookPage() {
             />
         </div>
     );
-} 
+}

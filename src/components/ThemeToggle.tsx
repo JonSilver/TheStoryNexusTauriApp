@@ -1,7 +1,7 @@
-import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-provider";
 import { cn } from "@/lib/utils";
+import { Moon, Sun } from "lucide-react";
 
 interface ThemeToggleProps {
     isExpanded?: boolean;
@@ -24,14 +24,10 @@ export function ThemeToggle({ isExpanded = false }: ThemeToggleProps) {
             }}
         >
             <div className="flex items-center">
-                {theme === "light" ? (
-                    <Sun className="h-5 w-5" />
-                ) : (
-                    <Moon className="h-5 w-5" />
-                )}
+                {theme === "light" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 {isExpanded && <span className="ml-2">Theme</span>}
             </div>
             <span className="sr-only">Toggle theme</span>
         </Button>
     );
-} 
+}

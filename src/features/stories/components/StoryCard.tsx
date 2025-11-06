@@ -1,19 +1,15 @@
-import { Story } from "@/types/story";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../../components/ui/card";
-import { Button } from "../../../components/ui/button";
-import { Badge } from "../../../components/ui/badge";
-import { Edit, Trash2, FolderUp } from "lucide-react";
-import { useNavigate } from "react-router";
-import { useDeleteStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
-import { useSingleSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
 import { DownloadMenu } from "@/components/ui/DownloadMenu";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/urls";
+import { useSingleSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
+import { useDeleteStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
+import { Story } from "@/types/story";
+import { Edit, FolderUp, Trash2 } from "lucide-react";
+import type { MouseEvent } from "react";
+import { useNavigate } from "react-router";
+import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../../components/ui/card";
 
 interface StoryCardProps {
     story: Story;
@@ -26,19 +22,17 @@ export function StoryCard({ story, onEdit, onExport }: StoryCardProps) {
     const navigate = useNavigate();
     const { data: series } = useSingleSeriesQuery(story.seriesId);
 
-    const handleDelete = async (e: React.MouseEvent) => {
+    const handleDelete = async (e: MouseEvent) => {
         e.stopPropagation();
-        if (window.confirm("Are you sure you want to delete this story?")) {
-            deleteStoryMutation.mutate(story.id);
-        }
+        if (window.confirm("Are you sure you want to delete this story?")) deleteStoryMutation.mutate(story.id);
     };
 
-    const handleEdit = (e: React.MouseEvent) => {
+    const handleEdit = (e: MouseEvent) => {
         e.stopPropagation();
         onEdit(story);
     };
 
-    const handleExport = (e: React.MouseEvent) => {
+    const handleExport = (e: MouseEvent) => {
         e.stopPropagation();
         onExport(story);
     };
@@ -48,7 +42,10 @@ export function StoryCard({ story, onEdit, onExport }: StoryCardProps) {
     };
 
     return (
-        <Card className="w-full cursor-pointer border-2 border-gray-300 dark:border-gray-700 hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm" onClick={handleCardClick}>
+        <Card
+            className="w-full cursor-pointer border-2 border-gray-300 dark:border-gray-700 hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm"
+            onClick={handleCardClick}
+        >
             <CardHeader>
                 <CardTitle>{story.title}</CardTitle>
                 <CardDescription>
@@ -118,4 +115,4 @@ export function StoryCard({ story, onEdit, onExport }: StoryCardProps) {
             </CardFooter>
         </Card>
     );
-} 
+}

@@ -1,6 +1,6 @@
-import { createContext, useContext, ReactNode } from 'react';
-import { useHierarchicalLorebookQuery } from '../hooks/useLorebookQuery';
-import type { LorebookEntry } from '@/types/story';
+import type { LorebookEntry } from "@/types/story";
+import { createContext, ReactNode, useContext } from "react";
+import { useHierarchicalLorebookQuery } from "../hooks/useLorebookQuery";
 
 interface LorebookContextValue {
     entries: LorebookEntry[];
@@ -23,11 +23,7 @@ interface LorebookProviderProps {
 export const LorebookProvider = ({ storyId, children }: LorebookProviderProps) => {
     const { data: entries = [], isLoading, error } = useHierarchicalLorebookQuery(storyId);
 
-    return (
-        <LorebookContext.Provider value={{ entries, isLoading, error }}>
-            {children}
-        </LorebookContext.Provider>
-    );
+    return <LorebookContext.Provider value={{ entries, isLoading, error }}>{children}</LorebookContext.Provider>;
 };
 
 /**
@@ -36,8 +32,7 @@ export const LorebookProvider = ({ storyId, children }: LorebookProviderProps) =
  */
 export const useLorebookContext = (): LorebookContextValue => {
     const context = useContext(LorebookContext);
-    if (!context) {
-        throw new Error('useLorebookContext must be used within LorebookProvider');
-    }
+    if (!context) throw new Error("useLorebookContext must be used within LorebookProvider");
+
     return context;
 };
