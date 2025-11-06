@@ -103,41 +103,9 @@ export const useUpdateLorebookMutation = () => {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<LorebookEntry> }) =>
             lorebookApi.update(id, data),
-        onMutate: async ({ id }) => {
-            // Get entry before update to know old level/scopeId
-            const oldEntry = queryClient.getQueryData<LorebookEntry>(lorebookKeys.detail(id));
-            return { oldEntry };
-        },
-        onSuccess: (updatedEntry, _, context) => {
-            const oldEntry = context?.oldEntry;
-
-            // Invalidate specific entry
-            queryClient.invalidateQueries({ queryKey: lorebookKeys.detail(updatedEntry.id) });
-
-            // Invalidate OLD level queries (where it was before)
-            if (oldEntry) {
-                if (oldEntry.level === 'global') {
-                    queryClient.invalidateQueries({ queryKey: lorebookKeys.global() });
-                } else if (oldEntry.level === 'series' && oldEntry.scopeId) {
-                    queryClient.invalidateQueries({ queryKey: lorebookKeys.series(oldEntry.scopeId) });
-                } else if (oldEntry.level === 'story' && oldEntry.scopeId) {
-                    queryClient.invalidateQueries({ queryKey: lorebookKeys.story(oldEntry.scopeId) });
-                    queryClient.invalidateQueries({ queryKey: lorebookKeys.hierarchical(oldEntry.scopeId) });
-                }
-            }
-
-            // Invalidate NEW level queries (where it is now)
-            if (updatedEntry.level === 'global') {
-                queryClient.invalidateQueries({ queryKey: lorebookKeys.global() });
-            } else if (updatedEntry.level === 'series' && updatedEntry.scopeId) {
-                queryClient.invalidateQueries({ queryKey: lorebookKeys.series(updatedEntry.scopeId) });
-            } else if (updatedEntry.level === 'story' && updatedEntry.scopeId) {
-                queryClient.invalidateQueries({ queryKey: lorebookKeys.story(updatedEntry.scopeId) });
-                queryClient.invalidateQueries({ queryKey: lorebookKeys.hierarchical(updatedEntry.scopeId) });
-            }
-
-            // Invalidate all hierarchical queries (safer - catches any story viewing this entry)
-            queryClient.invalidateQueries({ queryKey: lorebookKeys.lists() });
+        onSuccess: () => {
+            // Just invalidate ALL lorebook queries - simpler and actually works
+            queryClient.invalidateQueries({ queryKey: lorebookKeys.all });
 
             toast.success('Lorebook entry updated successfully');
         },
