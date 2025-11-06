@@ -1,22 +1,22 @@
-import { useState, useEffect, useMemo } from 'react';
-import { toast } from 'react-toastify';
-import { attemptPromise } from '@jfdi/attempt';
-import { aiService } from '@/services/ai/AIService';
-import { logger } from '@/utils/logger';
-import type { AIModel, AllowedModel } from '@/types/story';
+import { aiService } from "@/services/ai/AIService";
+import type { AIModel, AllowedModel } from "@/types/story";
+import { logger } from "@/utils/logger";
+import { attemptPromise } from "@jfdi/attempt";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
 
 interface ModelsByProvider {
     [key: string]: AIModel[];
 }
 
 const MOST_USED_MODELS = [
-    'Anthropic: Claude Sonnet 4',
-    'DeepSeek: DeepSeek V3.1',
-    'DeepSeek: DeepSeek V3 0324',
-    'Mistral: Mistral Small 3.2 24B',
-    'MoonshotAI: Kimi K2 0905',
-    'Z.AI: GLM 4.5 Air',
-    'Z.AI: GLM 4.5',
+    "Anthropic: Claude Sonnet 4",
+    "DeepSeek: DeepSeek V3.1",
+    "DeepSeek: DeepSeek V3 0324",
+    "Mistral: Mistral Small 3.2 24B",
+    "MoonshotAI: Kimi K2 0905",
+    "Z.AI: GLM 4.5 Air",
+    "Z.AI: GLM 4.5"
 ];
 
 interface UseModelSelectionProps {
@@ -26,7 +26,7 @@ interface UseModelSelectionProps {
 export const useModelSelection = ({ initialModels = [] }: UseModelSelectionProps) => {
     const [availableModels, setAvailableModels] = useState<AIModel[]>([]);
     const [selectedModels, setSelectedModels] = useState<AllowedModel[]>(initialModels);
-    const [modelSearch, setModelSearch] = useState('');
+    const [modelSearch, setModelSearch] = useState("");
 
     useEffect(() => {
         loadAvailableModels();
@@ -38,8 +38,8 @@ export const useModelSelection = ({ initialModels = [] }: UseModelSelectionProps
             return await aiService.getAvailableModels();
         });
         if (error) {
-            logger.error('Error loading AI models:', error);
-            toast.error('Failed to load AI models');
+            logger.error("Error loading AI models:", error);
+            toast.error("Failed to load AI models");
             return;
         }
         setAvailableModels(models);
@@ -47,47 +47,34 @@ export const useModelSelection = ({ initialModels = [] }: UseModelSelectionProps
 
     const modelGroups = useMemo(() => {
         const groups: ModelsByProvider = {
-            'Most Used': [],
-            'Local': [],
-            'xAI': [],
-            'Anthropic': [],
-            'OpenAI': [],
-            'DeepSeek': [],
-            'Mistral': [],
-            'NVIDIA': [],
-            'Free': [],
-            'Other': []
+            "Most Used": [],
+            Local: [],
+            xAI: [],
+            Anthropic: [],
+            OpenAI: [],
+            DeepSeek: [],
+            Mistral: [],
+            NVIDIA: [],
+            Free: [],
+            Other: []
         };
 
         availableModels.forEach(model => {
-            if (model.provider === 'local') {
-                groups['Local'].push(model);
-            } else if (MOST_USED_MODELS.some(name => model.name === name)) {
-                groups['Most Used'].push(model);
-            } else if (model.name.toLowerCase().includes('(free)')) {
-                groups['Free'].push(model);
-            } else if (model.provider === 'openai') {
-                groups['OpenAI'].push(model);
-            } else if (model.provider === 'openrouter') {
-                if (model.name.includes('Anthropic')) {
-                    groups['Anthropic'].push(model);
-                } else if (model.name.includes('DeepSeek')) {
-                    groups['DeepSeek'].push(model);
-                } else if (model.name.includes('Mistral')) {
-                    groups['Mistral'].push(model);
-                } else if (model.name.includes('NVIDIA')) {
-                    groups['NVIDIA'].push(model);
-                } else if (model.name.includes('xAI')) {
-                    groups['xAI'].push(model);
-                } else {
-                    groups['Other'].push(model);
-                }
+            if (model.provider === "local") groups["Local"].push(model);
+            else if (MOST_USED_MODELS.some(name => model.name === name)) groups["Most Used"].push(model);
+            else if (model.name.toLowerCase().includes("(free)")) groups["Free"].push(model);
+            else if (model.provider === "openai") groups["OpenAI"].push(model);
+            else if (model.provider === "openrouter") {
+                if (model.name.includes("Anthropic")) groups["Anthropic"].push(model);
+                else if (model.name.includes("DeepSeek")) groups["DeepSeek"].push(model);
+                else if (model.name.includes("Mistral")) groups["Mistral"].push(model);
+                else if (model.name.includes("NVIDIA")) groups["NVIDIA"].push(model);
+                else if (model.name.includes("xAI")) groups["xAI"].push(model);
+                else groups["Other"].push(model);
             }
         });
 
-        return Object.fromEntries(
-            Object.entries(groups).filter(([_, models]) => models.length > 0)
-        );
+        return Object.fromEntries(Object.entries(groups).filter(([_, models]) => models.length > 0));
     }, [availableModels]);
 
     const filteredModelGroups = useMemo(() => {
@@ -97,8 +84,8 @@ export const useModelSelection = ({ initialModels = [] }: UseModelSelectionProps
         const filtered: ModelsByProvider = {};
 
         Object.entries(modelGroups).forEach(([provider, models]) => {
-            const matched = models.filter(m =>
-                m.name.toLowerCase().includes(q) || m.provider.toLowerCase().includes(q)
+            const matched = models.filter(
+                m => m.name.toLowerCase().includes(q) || m.provider.toLowerCase().includes(q)
             );
             if (matched.length > 0) filtered[provider] = matched;
         });
@@ -165,7 +152,7 @@ export const useModelSelection = ({ initialModels = [] }: UseModelSelectionProps
             }
 
             if (defaultModels.length === 0) {
-                toast.error('No default models configured. Please set default models in AI Settings.');
+                toast.error("No default models configured. Please set default models in AI Settings.");
                 return;
             }
 
@@ -174,8 +161,8 @@ export const useModelSelection = ({ initialModels = [] }: UseModelSelectionProps
         });
 
         if (error) {
-            logger.error('Error loading default models:', error);
-            toast.error('Failed to load default models');
+            logger.error("Error loading default models:", error);
+            toast.error("Failed to load default models");
         }
     };
 
@@ -188,6 +175,6 @@ export const useModelSelection = ({ initialModels = [] }: UseModelSelectionProps
         filteredModelGroups,
         handleModelSelect,
         removeModel,
-        handleUseDefaultModels,
+        handleUseDefaultModels
     };
 };

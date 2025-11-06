@@ -1,22 +1,17 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router';
-import { Edit2, Plus, Download, Book } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useSingleSeriesQuery, useSeriesStoriesQuery } from '../hooks/useSeriesQuery';
-import { SeriesForm } from '../components/SeriesForm';
-import { StoryCard } from '@/features/stories/components/StoryCard';
-import type { Story } from '@/types/story';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { EditStoryDialog } from '@/features/stories/components/EditStoryDialog';
-import { storyExportService } from '@/services/storyExportService';
-import { SeriesExportService } from '@/services/export/SeriesExportService';
-import { downloadJSON } from '@/utils/jsonExportUtils';
-import { toast } from 'react-toastify';
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EditStoryDialog } from "@/features/stories/components/EditStoryDialog";
+import { StoryCard } from "@/features/stories/components/StoryCard";
+import { SeriesExportService } from "@/services/export/SeriesExportService";
+import { storyExportService } from "@/services/storyExportService";
+import type { Story } from "@/types/story";
+import { downloadJSON } from "@/utils/jsonExportUtils";
+import { Book, Download, Edit2, Plus } from "lucide-react";
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router";
+import { toast } from "react-toastify";
+import { SeriesForm } from "../components/SeriesForm";
+import { useSeriesStoriesQuery, useSingleSeriesQuery } from "../hooks/useSeriesQuery";
 
 const seriesExportService = new SeriesExportService();
 
@@ -44,12 +39,12 @@ const SeriesDashboard = () => {
 
         try {
             const exportData = await seriesExportService.exportSeries(seriesId);
-            const filename = `${series?.name || 'series'}-export.json`;
+            const filename = `${series?.name || "series"}-export.json`;
             downloadJSON(exportData, filename);
-            toast.success('Series exported successfully');
+            toast.success("Series exported successfully");
         } catch (error) {
-            console.error('Failed to export series:', error);
-            toast.error('Failed to export series');
+            console.error("Failed to export series:", error);
+            toast.error("Failed to export series");
         }
     };
 
@@ -61,9 +56,7 @@ const SeriesDashboard = () => {
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h1 className="text-3xl font-bold mb-2">{series.name}</h1>
-                    {series.description && (
-                        <p className="text-muted-foreground">{series.description}</p>
-                    )}
+                    {series.description && <p className="text-muted-foreground">{series.description}</p>}
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => navigate(`/series/${seriesId}/lorebook`)}>
@@ -84,7 +77,7 @@ const SeriesDashboard = () => {
             <div className="mb-4">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-semibold">Stories in Series</h2>
-                    <Button onClick={() => navigate('/stories', { state: { seriesId } })}>
+                    <Button onClick={() => navigate("/stories", { state: { seriesId } })}>
                         <Plus className="w-4 h-4 mr-2" />
                         New Story
                     </Button>
@@ -94,7 +87,7 @@ const SeriesDashboard = () => {
                     <div>Loading stories...</div>
                 ) : stories && stories.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {stories.map((story) => (
+                        {stories.map(story => (
                             <StoryCard
                                 key={story.id}
                                 story={story}
@@ -119,11 +112,7 @@ const SeriesDashboard = () => {
                 </DialogContent>
             </Dialog>
 
-            <EditStoryDialog
-                story={editingStory}
-                open={storyEditDialogOpen}
-                onOpenChange={setStoryEditDialogOpen}
-            />
+            <EditStoryDialog story={editingStory} open={storyEditDialogOpen} onOpenChange={setStoryEditDialogOpen} />
         </div>
     );
 };

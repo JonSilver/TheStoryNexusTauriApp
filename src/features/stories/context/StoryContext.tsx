@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, ReactNode, useContext, useState } from "react";
 
 interface StoryContextType {
     currentStoryId: string | null;
@@ -20,13 +20,15 @@ export function StoryProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <StoryContext.Provider value={{
-            currentStoryId,
-            currentChapterId,
-            setCurrentStoryId,
-            setCurrentChapterId,
-            resetContext
-        }}>
+        <StoryContext.Provider
+            value={{
+                currentStoryId,
+                currentChapterId,
+                setCurrentStoryId,
+                setCurrentChapterId,
+                resetContext
+            }}
+        >
             {children}
         </StoryContext.Provider>
     );
@@ -34,8 +36,7 @@ export function StoryProvider({ children }: { children: ReactNode }) {
 
 export function useStoryContext() {
     const context = useContext(StoryContext);
-    if (!context) {
-        throw new Error('useStoryContext must be used within a StoryProvider');
-    }
+    if (!context) throw new Error("useStoryContext must be used within a StoryProvider");
+
     return context;
-} 
+}

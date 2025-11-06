@@ -1,10 +1,10 @@
-import { useState, useCallback, useRef } from 'react';
-import { toast } from 'react-toastify';
-import { attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
-import { aiService } from '@/services/ai/AIService';
-import { useUpdateBrainstormMutation } from './useBrainstormQuery';
-import type { AIChat, ChatMessage } from '@/types/story';
+import { aiService } from "@/services/ai/AIService";
+import type { AIChat, ChatMessage } from "@/types/story";
+import { logger } from "@/utils/logger";
+import { attemptPromise } from "@jfdi/attempt";
+import { useCallback, useRef, useState, type RefObject } from "react";
+import { toast } from "react-toastify";
+import { useUpdateBrainstormMutation } from "./useBrainstormQuery";
 
 interface UseMessageEditingParams {
     selectedChat: AIChat;
@@ -15,7 +15,7 @@ interface UseMessageEditingParams {
 interface UseMessageEditingReturn {
     editingMessageId: string | null;
     editingContent: string;
-    editingTextareaRef: React.RefObject<HTMLTextAreaElement>;
+    editingTextareaRef: RefObject<HTMLTextAreaElement>;
     startEdit: (message: ChatMessage) => void;
     saveEdit: (messageId: string) => Promise<void>;
     cancelEdit: () => void;
@@ -25,7 +25,7 @@ interface UseMessageEditingReturn {
 export const useMessageEditing = ({
     selectedChat,
     streamingMessageId,
-    onChatUpdate,
+    onChatUpdate
 }: UseMessageEditingParams): UseMessageEditingReturn => {
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [editingContent, setEditingContent] = useState("");
@@ -33,68 +33,74 @@ export const useMessageEditing = ({
 
     const updateMutation = useUpdateBrainstormMutation();
 
-    const startEdit = useCallback((message: ChatMessage) => {
-        if (streamingMessageId === message.id) {
-            if (!confirm("This message is still being generated. Stop generation and edit?")) {
+    const startEdit = useCallback(
+        (message: ChatMessage) => {
+            if (streamingMessageId === message.id) {
+                if (!confirm("This message is still being generated. Stop generation and edit?")) return;
+
+                aiService.abortStream();
+            }
+            setEditingMessageId(message.id);
+            setEditingContent(message.content);
+        },
+        [streamingMessageId]
+    );
+
+    const saveEdit = useCallback(
+        async (messageId: string) => {
+            if (!editingContent.trim()) {
+                toast.error("Edited content cannot be empty");
                 return;
             }
-            aiService.abortStream();
-        }
-        setEditingMessageId(message.id);
-        setEditingContent(message.content);
-    }, [streamingMessageId]);
 
-    const saveEdit = useCallback(async (messageId: string) => {
-        if (!editingContent.trim()) {
-            toast.error("Edited content cannot be empty");
-            return;
-        }
+            const [error] = await attemptPromise(async () => {
+                const existingMsg = selectedChat.messages?.find(m => m.id === messageId);
+                if (!existingMsg) throw new Error("Message not found");
 
-        const [error] = await attemptPromise(async () => {
-            const existingMsg = selectedChat.messages?.find(m => m.id === messageId);
-            if (!existingMsg) {
-                throw new Error("Message not found");
-            }
+                const originalContent = existingMsg.originalContent ?? existingMsg.content;
+                const editedAt = new Date().toISOString();
 
-            const originalContent = existingMsg.originalContent ?? existingMsg.content;
-            const editedAt = new Date().toISOString();
+                const updatedMessages = selectedChat.messages?.map(msg =>
+                    msg.id === messageId
+                        ? {
+                              ...msg,
+                              content: editingContent,
+                              originalContent,
+                              editedAt,
+                              editedBy: "user" as const
+                          }
+                        : msg
+                );
 
-            const updatedMessages = selectedChat.messages?.map(msg =>
-                msg.id === messageId
-                    ? {
-                        ...msg,
-                        content: editingContent,
-                        originalContent,
-                        editedAt,
-                        editedBy: 'user' as const
-                    }
-                    : msg
-            );
-
-            await new Promise<void>((resolve, reject) => {
-                updateMutation.mutate({
-                    id: selectedChat.id,
-                    data: { messages: updatedMessages }
-                }, {
-                    onSuccess: (updatedChat) => {
-                        onChatUpdate(updatedChat);
-                        resolve();
-                    },
-                    onError: reject
+                await new Promise<void>((resolve, reject) => {
+                    updateMutation.mutate(
+                        {
+                            id: selectedChat.id,
+                            data: { messages: updatedMessages }
+                        },
+                        {
+                            onSuccess: updatedChat => {
+                                onChatUpdate(updatedChat);
+                                resolve();
+                            },
+                            onError: reject
+                        }
+                    );
                 });
             });
-        });
 
-        if (error) {
-            logger.error("Failed to save edit", error);
-            toast.error("Failed to save edit");
-            return;
-        }
+            if (error) {
+                logger.error("Failed to save edit", error);
+                toast.error("Failed to save edit");
+                return;
+            }
 
-        toast.success("Message edited");
-        setEditingMessageId(null);
-        setEditingContent("");
-    }, [editingContent, selectedChat, updateMutation, onChatUpdate]);
+            toast.success("Message edited");
+            setEditingMessageId(null);
+            setEditingContent("");
+        },
+        [editingContent, selectedChat, updateMutation, onChatUpdate]
+    );
 
     const cancelEdit = useCallback(() => {
         setEditingMessageId(null);
@@ -108,6 +114,6 @@ export const useMessageEditing = ({
         startEdit,
         saveEdit,
         cancelEdit,
-        setEditingContent,
+        setEditingContent
     };
 };

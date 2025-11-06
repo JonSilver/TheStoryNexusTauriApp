@@ -1,9 +1,9 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./dialog";
-import { ScrollArea } from "./scroll-area";
 import { PromptMessage } from "@/types/story";
+import { encode } from "gpt-tokenizer";
 import { Loader2 } from "lucide-react";
 import { useMemo } from "react";
-import { encode } from "gpt-tokenizer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./dialog";
+import { ScrollArea } from "./scroll-area";
 
 interface PromptPreviewDialogProps {
     open: boolean;
@@ -34,13 +34,7 @@ function countConversationTokens(messages: PromptMessage[]): number {
     return tokens;
 }
 
-export function PromptPreviewDialog({
-    open,
-    onOpenChange,
-    messages,
-    isLoading,
-    error
-}: PromptPreviewDialogProps) {
+export function PromptPreviewDialog({ open, onOpenChange, messages, isLoading, error }: PromptPreviewDialogProps) {
     // Calculate total token count for all messages
     const tokenCount = useMemo(() => {
         if (!messages) return 0;
@@ -66,9 +60,7 @@ export function PromptPreviewDialog({
                             <Loader2 className="h-8 w-8 animate-spin" />
                         </div>
                     ) : error ? (
-                        <div className="text-destructive">
-                            Error: {error}
-                        </div>
+                        <div className="text-destructive">Error: {error}</div>
                     ) : messages ? (
                         <div className="space-y-4">
                             {messages.map((message, index) => (
@@ -79,19 +71,15 @@ export function PromptPreviewDialog({
                                             {countTokens(message.content).toLocaleString()} tokens
                                         </span>
                                     </div>
-                                    <div className="whitespace-pre-wrap">
-                                        {message.content}
-                                    </div>
+                                    <div className="whitespace-pre-wrap">{message.content}</div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="text-muted-foreground">
-                            No preview available
-                        </div>
+                        <div className="text-muted-foreground">No preview available</div>
                     )}
                 </ScrollArea>
             </DialogContent>
         </Dialog>
     );
-} 
+}

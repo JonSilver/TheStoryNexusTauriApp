@@ -1,53 +1,49 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { seriesApi } from '@/services/api/client';
-import type { Series } from '@/types/story';
-import { toast } from 'react-toastify';
+import { seriesApi } from "@/services/api/client";
+import type { Series } from "@/types/story";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 // Query keys factory
 export const seriesKeys = {
-    all: ['series'] as const,
-    lists: () => [...seriesKeys.all, 'list'] as const,
+    all: ["series"] as const,
+    lists: () => [...seriesKeys.all, "list"] as const,
     list: () => [...seriesKeys.lists()] as const,
-    details: () => [...seriesKeys.all, 'detail'] as const,
+    details: () => [...seriesKeys.all, "detail"] as const,
     detail: (id: string) => [...seriesKeys.details(), id] as const,
-    stories: (id: string) => [...seriesKeys.detail(id), 'stories'] as const,
-    lorebook: (id: string) => [...seriesKeys.detail(id), 'lorebook'] as const,
+    stories: (id: string) => [...seriesKeys.detail(id), "stories"] as const,
+    lorebook: (id: string) => [...seriesKeys.detail(id), "lorebook"] as const
 };
 
 // Query: List all series
-export const useSeriesQuery = () => {
-    return useQuery({
+export const useSeriesQuery = () =>
+    useQuery({
         queryKey: seriesKeys.list(),
-        queryFn: seriesApi.getAll,
+        queryFn: seriesApi.getAll
     });
-};
 
 // Query: Single series by ID
-export const useSingleSeriesQuery = (id: string | undefined) => {
-    return useQuery({
+export const useSingleSeriesQuery = (id: string | undefined) =>
+    useQuery({
         queryKey: seriesKeys.detail(id!),
         queryFn: () => seriesApi.getById(id!),
-        enabled: !!id,
+        enabled: !!id
     });
-};
 
 // Query: Stories in series
-export const useSeriesStoriesQuery = (seriesId: string | undefined) => {
-    return useQuery({
+export const useSeriesStoriesQuery = (seriesId: string | undefined) =>
+    useQuery({
         queryKey: seriesKeys.stories(seriesId!),
         queryFn: () => seriesApi.getStories(seriesId!),
-        enabled: !!seriesId,
+        enabled: !!seriesId
     });
-};
 
 // Query: Series lorebook entries
-export const useSeriesLorebookQuery = (seriesId: string | undefined) => {
-    return useQuery({
+export const useSeriesLorebookQuery = (seriesId: string | undefined) =>
+    useQuery({
         queryKey: seriesKeys.lorebook(seriesId!),
         queryFn: () => seriesApi.getLorebook(seriesId!),
-        enabled: !!seriesId,
+        enabled: !!seriesId
     });
-};
 
 // Mutation: Create series
 export const useCreateSeriesMutation = () => {
@@ -58,11 +54,11 @@ export const useCreateSeriesMutation = () => {
         onSuccess: () => {
             // Invalidate series list
             queryClient.invalidateQueries({ queryKey: seriesKeys.lists() });
-            toast.success('Series created successfully');
+            toast.success("Series created successfully");
         },
         onError: (error: Error) => {
             toast.error(`Failed to create series: ${error.message}`);
-        },
+        }
     });
 };
 
@@ -71,17 +67,17 @@ export const useUpdateSeriesMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: Partial<Omit<Series, 'id' | 'createdAt'>> }) =>
+        mutationFn: ({ id, data }: { id: string; data: Partial<Omit<Series, "id" | "createdAt">> }) =>
             seriesApi.update(id, data),
         onSuccess: (_data, variables) => {
             // Invalidate specific series and list
             queryClient.invalidateQueries({ queryKey: seriesKeys.detail(variables.id) });
             queryClient.invalidateQueries({ queryKey: seriesKeys.lists() });
-            toast.success('Series updated successfully');
+            toast.success("Series updated successfully");
         },
         onError: (error: Error) => {
             toast.error(`Failed to update series: ${error.message}`);
-        },
+        }
     });
 };
 
@@ -94,11 +90,11 @@ export const useDeleteSeriesMutation = () => {
         onSuccess: () => {
             // Invalidate series list and stories list (orphaned stories update)
             queryClient.invalidateQueries({ queryKey: seriesKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: ['stories'] });
-            toast.success('Series deleted successfully');
+            queryClient.invalidateQueries({ queryKey: ["stories"] });
+            toast.success("Series deleted successfully");
         },
         onError: (error: Error) => {
             toast.error(`Failed to delete series: ${error.message}`);
-        },
+        }
     });
 };

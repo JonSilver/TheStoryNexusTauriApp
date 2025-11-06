@@ -1,13 +1,3 @@
-import { useState, useMemo } from "react";
-import { useDeleteLorebookMutation, useUpdateLorebookMutation } from "../hooks/useLorebookQuery";
-import { CreateEntryDialog } from "./CreateEntryDialog";
-import { LevelBadge } from "./LevelBadge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Search, EyeOff, Eye } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -16,13 +6,23 @@ import {
     AlertDialogDescription,
     AlertDialogFooter,
     AlertDialogHeader,
-    AlertDialogTitle,
+    AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import type { LorebookEntry } from "@/types/story";
-import { attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
+import { logger } from "@/utils/logger";
+import { attemptPromise } from "@jfdi/attempt";
+import { Edit, Eye, EyeOff, Search, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useDeleteLorebookMutation, useUpdateLorebookMutation } from "../hooks/useLorebookQuery";
+import { CreateEntryDialog } from "./CreateEntryDialog";
+import { LevelBadge } from "./LevelBadge";
 
 interface LorebookEntryListProps {
     entries: LorebookEntry[];
@@ -32,53 +32,59 @@ interface LorebookEntryListProps {
     contextStoryId?: string;
 }
 
-type SortOption = 'name' | 'category' | 'importance' | 'created';
+type SortOption = "name" | "category" | "importance" | "created";
 
-export function LorebookEntryList({ entries: allEntries, editable = true, showLevel = false, editableFilter, contextStoryId }: LorebookEntryListProps) {
+export function LorebookEntryList({
+    entries: allEntries,
+    editable = true,
+    showLevel = false,
+    editableFilter,
+    contextStoryId
+}: LorebookEntryListProps) {
     const deleteMutation = useDeleteLorebookMutation();
     const updateMutation = useUpdateLorebookMutation();
     const [searchTerm, setSearchTerm] = useState("");
-    const [sortBy, setSortBy] = useState<SortOption>('name');
+    const [sortBy, setSortBy] = useState<SortOption>("name");
     const [editingEntry, setEditingEntry] = useState<LorebookEntry | null>(null);
     const [deletingEntry, setDeletingEntry] = useState<LorebookEntry | null>(null);
     const [showDisabled, setShowDisabled] = useState(false);
 
     // Filter entries based on search term and disabled status
-    const filteredEntries = useMemo(() =>
-        allEntries.filter(entry => {
-            // Apply search filter
-            const searchMatch = !searchTerm || [
-                entry.name,
-                entry.description,
-                ...(entry.tags || [])
-            ].some(field =>
-                field?.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+    const filteredEntries = useMemo(
+        () =>
+            allEntries.filter(entry => {
+                // Apply search filter
+                const searchMatch =
+                    !searchTerm ||
+                    [entry.name, entry.description, ...(entry.tags || [])].some(field =>
+                        field?.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
 
-            // Apply disabled filter
-            const disabledMatch = showDisabled || !entry.isDisabled;
+                // Apply disabled filter
+                const disabledMatch = showDisabled || !entry.isDisabled;
 
-            return searchMatch && disabledMatch;
-        }),
+                return searchMatch && disabledMatch;
+            }),
         [allEntries, searchTerm, showDisabled]
     );
 
     // Sort entries
-    const sortedEntries = useMemo(() =>
-        [...filteredEntries].sort((a, b) => {
-            switch (sortBy) {
-                case 'name':
-                    return a.name.localeCompare(b.name);
-                case 'category':
-                    return a.category.localeCompare(b.category);
-                case 'importance':
-                    return (a.metadata?.importance || '').localeCompare(b.metadata?.importance || '');
-                case 'created':
-                    return b.createdAt.getTime() - a.createdAt.getTime();
-                default:
-                    return 0;
-            }
-        }),
+    const sortedEntries = useMemo(
+        () =>
+            [...filteredEntries].sort((a, b) => {
+                switch (sortBy) {
+                    case "name":
+                        return a.name.localeCompare(b.name);
+                    case "category":
+                        return a.category.localeCompare(b.category);
+                    case "importance":
+                        return (a.metadata?.importance || "").localeCompare(b.metadata?.importance || "");
+                    case "created":
+                        return b.createdAt.getTime() - a.createdAt.getTime();
+                    default:
+                        return 0;
+                }
+            }),
         [filteredEntries, sortBy]
     );
 
@@ -87,7 +93,7 @@ export function LorebookEntryList({ entries: allEntries, editable = true, showLe
             await deleteMutation.mutateAsync(entry.id);
         });
         if (error) {
-            logger.error('Failed to delete entry:', error);
+            logger.error("Failed to delete entry:", error);
             return;
         }
         setDeletingEntry(null);
@@ -100,9 +106,7 @@ export function LorebookEntryList({ entries: allEntries, editable = true, showLe
                 data: { isDisabled: !entry.isDisabled }
             });
         });
-        if (error) {
-            logger.error('Failed to update entry:', error);
-        }
+        if (error) logger.error("Failed to update entry:", error);
     };
 
     return (
@@ -113,7 +117,7 @@ export function LorebookEntryList({ entries: allEntries, editable = true, showLe
                     <Input
                         placeholder="Search entries..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={e => setSearchTerm(e.target.value)}
                         className="pl-8 border-2 border-gray-300 dark:border-gray-700"
                     />
                 </div>
@@ -125,7 +129,9 @@ export function LorebookEntryList({ entries: allEntries, editable = true, showLe
                             onCheckedChange={setShowDisabled}
                             className="border-2 border-gray-300 dark:border-gray-700 data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-800"
                         />
-                        <Label htmlFor="show-disabled" className="font-medium">Show Disabled</Label>
+                        <Label htmlFor="show-disabled" className="font-medium">
+                            Show Disabled
+                        </Label>
                     </div>
                     <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
                         <SelectTrigger className="w-[150px] border-2 border-gray-300 dark:border-gray-700">
@@ -151,7 +157,7 @@ export function LorebookEntryList({ entries: allEntries, editable = true, showLe
             )}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {sortedEntries.map((entry) => {
+                {sortedEntries.map(entry => {
                     const isEntryEditable = editableFilter ? editableFilter(entry) : editable;
                     return (
                         <Card
@@ -177,18 +183,10 @@ export function LorebookEntryList({ entries: allEntries, editable = true, showLe
                                                 <EyeOff className="h-4 w-4" />
                                             )}
                                         </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => setEditingEntry(entry)}
-                                        >
+                                        <Button variant="ghost" size="icon" onClick={() => setEditingEntry(entry)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => setDeletingEntry(entry)}
-                                        >
+                                        <Button variant="ghost" size="icon" onClick={() => setDeletingEntry(entry)}>
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -201,23 +199,24 @@ export function LorebookEntryList({ entries: allEntries, editable = true, showLe
                                         <Badge variant="outline">{entry.metadata.importance}</Badge>
                                     )}
                                     {entry.isDisabled && (
-                                        <Badge variant="outline" className="bg-destructive/10 text-destructive">Disabled</Badge>
+                                        <Badge variant="outline" className="bg-destructive/10 text-destructive">
+                                            Disabled
+                                        </Badge>
                                     )}
                                 </div>
                                 <div className="flex flex-wrap gap-1 mb-2">
-                                    {entry.tags && entry.tags.map((tag) => (
-                                        <Badge
-                                            key={tag}
-                                            variant="secondary"
-                                            className="bg-primary/10 text-xs px-2 py-0.5"
-                                        >
-                                            {tag}
-                                        </Badge>
-                                    ))}
+                                    {entry.tags &&
+                                        entry.tags.map(tag => (
+                                            <Badge
+                                                key={tag}
+                                                variant="secondary"
+                                                className="bg-primary/10 text-xs px-2 py-0.5"
+                                            >
+                                                {tag}
+                                            </Badge>
+                                        ))}
                                 </div>
-                                <p className="text-sm text-muted-foreground line-clamp-3">
-                                    {entry.description}
-                                </p>
+                                <p className="text-sm text-muted-foreground line-clamp-3">{entry.description}</p>
                             </CardContent>
                         </Card>
                     );
@@ -238,8 +237,8 @@ export function LorebookEntryList({ entries: allEntries, editable = true, showLe
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the entry
-                            "{deletingEntry?.name}".
+                            This action cannot be undone. This will permanently delete the entry "{deletingEntry?.name}
+                            ".
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -255,4 +254,4 @@ export function LorebookEntryList({ entries: allEntries, editable = true, showLe
             </AlertDialog>
         </div>
     );
-} 
+}

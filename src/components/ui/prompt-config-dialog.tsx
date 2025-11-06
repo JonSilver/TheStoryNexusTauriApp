@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./dialog";
-import { Button } from "./button";
-import { Plus } from "lucide-react";
-import { PromptsList } from "@/features/prompts/components/PromptList";
 import { PromptForm } from "@/features/prompts/components/PromptForm";
+import { PromptsList } from "@/features/prompts/components/PromptList";
 import type { Prompt } from "@/types/story";
+import { Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "./button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./dialog";
 
 interface PromptConfigDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    promptType: Prompt['promptType'];
+    promptType: Prompt["promptType"];
 }
 
 export const PromptConfigDialog = ({ open, onOpenChange, promptType }: PromptConfigDialogProps) => {
@@ -62,9 +62,7 @@ export const PromptConfigDialog = ({ open, onOpenChange, promptType }: PromptCon
                             New Prompt
                         </Button>
                     </div>
-                    <DialogDescription>
-                        Create, edit, and manage prompts for AI generation
-                    </DialogDescription>
+                    <DialogDescription>Create, edit, and manage prompts for AI generation</DialogDescription>
                 </DialogHeader>
 
                 <div className="flex-1 flex overflow-hidden">
@@ -80,7 +78,7 @@ export const PromptConfigDialog = ({ open, onOpenChange, promptType }: PromptCon
 
                     {/* Right content - Prompt form */}
                     <div className="flex-1 overflow-auto p-6">
-                        {(selectedPrompt || isCreating) ? (
+                        {selectedPrompt || isCreating ? (
                             <PromptForm
                                 prompt={selectedPrompt}
                                 onSave={handleSave}

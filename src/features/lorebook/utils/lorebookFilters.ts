@@ -1,5 +1,5 @@
-import type { LorebookEntry } from '@/types/story';
-import { normalizeString, stringEquals } from '@/utils/stringUtils';
+import type { LorebookEntry } from "@/types/story";
+import { normalizeString, stringEquals } from "@/utils/stringUtils";
 
 /**
  * Builds a tag map for efficient lorebook entry lookups.
@@ -8,9 +8,7 @@ import { normalizeString, stringEquals } from '@/utils/stringUtils';
 export const buildTagMap = (entries: LorebookEntry[]): Record<string, LorebookEntry> => {
     const tagMap: Record<string, LorebookEntry> = {};
 
-    if (!entries || !Array.isArray(entries)) {
-        return tagMap;
-    }
+    if (!entries || !Array.isArray(entries)) return tagMap;
 
     entries.forEach(entry => {
         if (!entry || entry.isDisabled) return;
@@ -18,23 +16,17 @@ export const buildTagMap = (entries: LorebookEntry[]): Record<string, LorebookEn
         const normalizedName = normalizeString(entry.name);
         tagMap[normalizedName] = entry;
 
-        if (!entry.tags || !Array.isArray(entry.tags)) {
-            return;
-        }
+        if (!entry.tags || !Array.isArray(entry.tags)) return;
 
         entry.tags.forEach(tag => {
             const normalizedTag = normalizeString(tag);
             tagMap[normalizedTag] = entry;
 
-            if (!normalizedTag.includes(' ')) {
-                return;
-            }
+            if (!normalizedTag.includes(" ")) return;
 
-            const words = normalizedTag.split(' ');
+            const words = normalizedTag.split(" ");
             words.forEach(word => {
-                if (entry.tags.some(t => stringEquals(t, word))) {
-                    tagMap[word] = entry;
-                }
+                if (entry.tags.some(t => stringEquals(t, word))) tagMap[word] = entry;
             });
         });
     });

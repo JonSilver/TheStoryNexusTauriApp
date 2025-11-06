@@ -1,13 +1,13 @@
-import { useParams } from 'react-router';
-import { useState } from 'react';
-import ChatList from '../components/ChatList';
-import ChatInterface from '../components/ChatInterface';
-import { useCreateBrainstormMutation } from '../hooks/useBrainstormQuery';
-import { MessageSquarePlus, AlertCircle, RefreshCcw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { AIChat } from '@/types/story';
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import type { AIChat } from "@/types/story";
+import { AlertCircle, MessageSquarePlus, RefreshCcw } from "lucide-react";
+import { useState } from "react";
+import { useParams } from "react-router";
+import ChatInterface from "../components/ChatInterface";
+import ChatList from "../components/ChatList";
+import { useCreateBrainstormMutation } from "../hooks/useBrainstormQuery";
 
 const ChatErrorFallback = (error: Error, resetError: () => void) => (
     <div className="flex items-center justify-center h-full p-4">
@@ -21,11 +21,7 @@ const ChatErrorFallback = (error: Error, resetError: () => void) => (
                         <RefreshCcw className="h-4 w-4 mr-2" />
                         Reset Chat
                     </Button>
-                    <Button
-                        onClick={() => window.location.reload()}
-                        variant="outline"
-                        size="sm"
-                    >
+                    <Button onClick={() => window.location.reload()} variant="outline" size="sm">
                         Reload Page
                     </Button>
                 </div>
@@ -39,50 +35,43 @@ export default function BrainstormPage() {
     const [selectedChat, setSelectedChat] = useState<AIChat | null>(null);
     const createMutation = useCreateBrainstormMutation();
 
-    if (!storyId) {
-        return <div>Story ID not found</div>;
-    }
+    if (!storyId) return <div>Story ID not found</div>;
 
     const handleCreateNewChat = () => {
-        createMutation.mutate({
-            id: crypto.randomUUID(),
-            storyId,
-            title: `New Chat ${new Date().toLocaleString()}`,
-            messages: [],
-            updatedAt: new Date(),
-        }, {
-            onSuccess: (newChat) => {
-                setSelectedChat(newChat);
+        createMutation.mutate(
+            {
+                id: crypto.randomUUID(),
+                storyId,
+                title: `New Chat ${new Date().toLocaleString()}`,
+                messages: [],
+                updatedAt: new Date()
+            },
+            {
+                onSuccess: newChat => {
+                    setSelectedChat(newChat);
+                }
             }
-        });
+        );
     };
 
     return (
         <div className="flex h-full">
-            <ChatList
-                storyId={storyId}
-                selectedChat={selectedChat}
-                onSelectChat={setSelectedChat}
-            />
+            <ChatList storyId={storyId} selectedChat={selectedChat} onSelectChat={setSelectedChat} />
             <div className="flex-1 h-full">
                 {selectedChat ? (
                     <ErrorBoundary fallback={ChatErrorFallback} resetKeys={[selectedChat.id]}>
-                        <ChatInterface
-                            storyId={storyId}
-                            selectedChat={selectedChat}
-                            onChatUpdate={setSelectedChat}
-                        />
+                        <ChatInterface storyId={storyId} selectedChat={selectedChat} onChatUpdate={setSelectedChat} />
                     </ErrorBoundary>
                 ) : (
                     <div className="flex items-center justify-center h-full flex-col gap-6 text-muted-foreground p-4">
                         <MessageSquarePlus className="h-16 w-16 text-muted-foreground/50" />
                         <div className="text-center max-w-md">
                             <h3 className="text-xl font-semibold mb-2">No Chat Selected</h3>
-                            <p className="mb-6">Select an existing chat from the sidebar or create a new one to start brainstorming ideas for your story.</p>
-                            <Button
-                                onClick={handleCreateNewChat}
-                                className="flex items-center gap-2"
-                            >
+                            <p className="mb-6">
+                                Select an existing chat from the sidebar or create a new one to start brainstorming
+                                ideas for your story.
+                            </p>
+                            <Button onClick={handleCreateNewChat} className="flex items-center gap-2">
                                 <MessageSquarePlus className="h-4 w-4" />
                                 Create New Chat
                             </Button>
@@ -92,4 +81,4 @@ export default function BrainstormPage() {
             </div>
         </div>
     );
-} 
+}

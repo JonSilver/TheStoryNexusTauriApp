@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import type { Chapter } from "@/types/story";
+import { Save } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "../../../components/ui/button";
 import { Textarea } from "../../../components/ui/textarea";
 import { useUpdateChapterMutation } from "../hooks/useChaptersQuery";
-import { Save } from "lucide-react";
-import type { Chapter } from "@/types/story";
 
 interface ChapterOutlineProps {
     chapter: Chapter;
@@ -15,11 +15,8 @@ export function ChapterOutline({ chapter }: ChapterOutlineProps) {
 
     // Load outline content when chapter changes
     useEffect(() => {
-        if (chapter?.outline?.content) {
-            setOutlineContent(chapter.outline.content);
-        } else {
-            setOutlineContent("");
-        }
+        if (chapter?.outline?.content) setOutlineContent(chapter.outline.content);
+        else setOutlineContent("");
     }, [chapter]);
 
     const handleSave = async () => {
@@ -54,10 +51,10 @@ export function ChapterOutline({ chapter }: ChapterOutlineProps) {
                     className="h-full min-h-[200px] resize-none"
                     placeholder="Enter your chapter outline here..."
                     value={outlineContent}
-                    onChange={(e) => setOutlineContent(e.target.value)}
+                    onChange={e => setOutlineContent(e.target.value)}
                     disabled={!chapter}
                 />
             </div>
         </div>
     );
-} 
+}

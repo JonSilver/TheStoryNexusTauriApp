@@ -1,7 +1,7 @@
-import { PromptContext } from '@/types/story';
-import { IVariableResolver, IVariableResolverRegistry } from './types';
-import { attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
+import { PromptContext } from "@/types/story";
+import { logger } from "@/utils/logger";
+import { attemptPromise } from "@jfdi/attempt";
+import { IVariableResolver, IVariableResolverRegistry } from "./types";
 
 export class VariableResolverRegistry implements IVariableResolverRegistry {
     private resolvers = new Map<string, IVariableResolver>();
@@ -12,9 +12,7 @@ export class VariableResolverRegistry implements IVariableResolverRegistry {
 
     registerAlias(alias: string, targetName: string): void {
         const target = this.resolvers.get(targetName);
-        if (target) {
-            this.resolvers.set(alias, target);
-        }
+        if (target) this.resolvers.set(alias, target);
     }
 
     async resolve(name: string, context: PromptContext, ...params: string[]): Promise<string> {
@@ -24,9 +22,7 @@ export class VariableResolverRegistry implements IVariableResolverRegistry {
             return `[Unknown variable: ${name}]`;
         }
 
-        const [error, result] = await attemptPromise(() =>
-            resolver.resolve(context, ...params)
-        );
+        const [error, result] = await attemptPromise(() => resolver.resolve(context, ...params));
 
         if (error) {
             logger.error(`Error resolving variable ${name}:`, error);

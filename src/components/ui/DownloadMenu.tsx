@@ -1,18 +1,14 @@
-import { Download } from "lucide-react";
-import { Button } from "./button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "./dropdown-menu";
-import { toast } from "react-toastify";
 import { downloadChapter, downloadStory } from "@/utils/exportUtils";
-import { attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
+import { logger } from "@/utils/logger";
+import { attemptPromise } from "@jfdi/attempt";
+import { Download } from "lucide-react";
+import type { MouseEvent } from "react";
+import { toast } from "react-toastify";
+import { Button } from "./button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./dropdown-menu";
 
 interface DownloadMenuProps {
-    type: 'story' | 'chapter';
+    type: "story" | "chapter";
     id: string;
     variant?: "outline" | "ghost" | "link" | "default" | "destructive" | "secondary";
     size?: "default" | "sm" | "lg" | "icon";
@@ -28,28 +24,25 @@ export function DownloadMenu({
     size = "icon",
     showIcon = true,
     label = "Download",
-    className = "",
+    className = ""
 }: DownloadMenuProps) {
-    const handleDownload = async (format: 'html' | 'text', e: React.MouseEvent) => {
+    const handleDownload = async (format: "html" | "text", e: MouseEvent) => {
         e.stopPropagation();
         const [error] = await attemptPromise(async () => {
-            if (type === 'story') {
-                await downloadStory(id, format);
-            } else {
-                await downloadChapter(id, format);
-            }
+            if (type === "story") await downloadStory(id, format);
+            else await downloadChapter(id, format);
         });
         if (error) {
             logger.error(`Failed to download ${type}:`, error);
             toast.error(`Failed to download ${type}`, {
                 position: "bottom-center",
-                autoClose: 2000,
+                autoClose: 2000
             });
             return;
         }
-        toast.success(`${type === 'story' ? 'Story' : 'Chapter'} downloaded as ${format.toUpperCase()}`, {
+        toast.success(`${type === "story" ? "Story" : "Chapter"} downloaded as ${format.toUpperCase()}`, {
             position: "bottom-center",
-            autoClose: 2000,
+            autoClose: 2000
         });
     };
 
@@ -62,13 +55,9 @@ export function DownloadMenu({
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={(e) => handleDownload('html', e)}>
-                    Download as HTML
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => handleDownload('text', e)}>
-                    Download as Text
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={e => handleDownload("html", e)}>Download as HTML</DropdownMenuItem>
+                <DropdownMenuItem onClick={e => handleDownload("text", e)}>Download as Text</DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
     );
-} 
+}

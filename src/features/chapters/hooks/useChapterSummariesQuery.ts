@@ -1,4 +1,4 @@
-import { chaptersApi } from '@/services/api/client';
+import { chaptersApi } from "@/services/api/client";
 
 /**
  * Utility function to fetch chapter summaries imperatively (non-hook).
@@ -22,9 +22,9 @@ export const fetchChapterSummaries = async (
 
     return relevantChapters
         .sort((a, b) => a.order - b.order)
-        .map(ch => ch.summary || '')
+        .map(ch => ch.summary || "")
         .filter(summary => summary.length > 0)
-        .join('\n\n');
+        .join("\n\n");
 };
 
 /**
@@ -39,9 +39,9 @@ export const fetchAllChapterSummaries = async (storyId: string): Promise<string>
 
     return chapters
         .sort((a, b) => a.order - b.order)
-        .map(ch => ch.summary || '')
+        .map(ch => ch.summary || "")
         .filter(summary => summary.length > 0)
-        .join('\n\n');
+        .join("\n\n");
 };
 
 /**
@@ -53,5 +53,5 @@ export const fetchAllChapterSummaries = async (storyId: string): Promise<string>
  */
 export const fetchChapterSummary = async (chapterId: string): Promise<string> => {
     const chapter = await chaptersApi.getById(chapterId);
-    return chapter?.summary || '';
+    return chapter?.summary || "";
 };

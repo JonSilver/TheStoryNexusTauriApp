@@ -1,1 +1,1 @@
-export * from './useSeriesQuery';
+export * from "./useSeriesQuery";

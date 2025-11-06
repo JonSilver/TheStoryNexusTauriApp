@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useUpdateBrainstormMutation } from './useBrainstormQuery';
-import type { Prompt, AllowedModel } from '@/types/story';
+import type { AllowedModel, Prompt } from "@/types/story";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useUpdateBrainstormMutation } from "./useBrainstormQuery";
 
 interface UsePromptSelectionReturn {
     selectedPrompt: Prompt | null;
@@ -43,18 +43,21 @@ export const usePromptSelection = (
         }
     }, [chatId, lastUsedPromptId, lastUsedModelId, prompts, hasLoadedInitial]);
 
-    const selectPrompt = useCallback((prompt: Prompt, model: AllowedModel) => {
-        setSelectedPrompt(prompt);
-        setSelectedModel(model);
+    const selectPrompt = useCallback(
+        (prompt: Prompt, model: AllowedModel) => {
+            setSelectedPrompt(prompt);
+            setSelectedModel(model);
 
-        updateMutation.mutate({
-            id: chatId,
-            data: {
-                lastUsedPromptId: prompt.id,
-                lastUsedModelId: model.id
-            }
-        });
-    }, [chatId, updateMutation]);
+            updateMutation.mutate({
+                id: chatId,
+                data: {
+                    lastUsedPromptId: prompt.id,
+                    lastUsedModelId: model.id
+                }
+            });
+        },
+        [chatId, updateMutation]
+    );
 
     const stablePrompt = useMemo(() => selectedPrompt, [selectedPrompt]);
     const stableModel = useMemo(() => selectedModel, [selectedModel]);
@@ -63,6 +66,6 @@ export const usePromptSelection = (
         selectedPrompt: stablePrompt,
         selectedModel: stableModel,
         selectPrompt,
-        isLoading: updateMutation.isPending,
+        isLoading: updateMutation.isPending
     };
 };

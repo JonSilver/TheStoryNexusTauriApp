@@ -1,22 +1,19 @@
-import { useEffect, useState } from "react";
-import { Story } from "@/types/story";
-import { useUpdateStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
-import { useSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
-
     DialogDescription,
     DialogFooter,
     DialogHeader,
-    DialogTitle,
+    DialogTitle
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-
+import { useSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
+import { useUpdateStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
+import { Story } from "@/types/story";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface EditStoryDialogProps {
     story: Story | null;
@@ -43,24 +40,27 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
         }
     }, [story]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!story) return;
 
-        updateStoryMutation.mutate({
-            id: story.id,
-            data: {
-                title,
-                author,
-                language,
-                synopsis,
-                seriesId,
-            }
-        }, {
-            onSuccess: () => {
-                onOpenChange(false);
+        updateStoryMutation.mutate(
+            {
+                id: story.id,
+                data: {
+                    title,
+                    author,
+                    language,
+                    synopsis,
+                    seriesId
+                }
             },
-        });
+            {
+                onSuccess: () => {
+                    onOpenChange(false);
+                }
+            }
+        );
     };
 
     return (
@@ -69,9 +69,7 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
                         <DialogTitle>Edit Story</DialogTitle>
-                        <DialogDescription>
-                            Make changes to your story details here.
-                        </DialogDescription>
+                        <DialogDescription>Make changes to your story details here.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
@@ -79,7 +77,7 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
                             <Input
                                 id="edit-title"
                                 value={title}
-                                onChange={(e) => setTitle(e.target.value)}
+                                onChange={e => setTitle(e.target.value)}
                                 placeholder="Enter story title"
                                 required
                             />
@@ -89,7 +87,7 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
                             <Input
                                 id="edit-author"
                                 value={author}
-                                onChange={(e) => setAuthor(e.target.value)}
+                                onChange={e => setAuthor(e.target.value)}
                                 placeholder="Enter author name"
                                 required
                             />
@@ -113,15 +111,15 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
                         <div className="grid gap-2">
                             <Label htmlFor="edit-series">Series (optional)</Label>
                             <Select
-                                value={seriesId || 'none'}
-                                onValueChange={(value) => setSeriesId(value === 'none' ? undefined : value)}
+                                value={seriesId || "none"}
+                                onValueChange={value => setSeriesId(value === "none" ? undefined : value)}
                             >
                                 <SelectTrigger id="edit-series">
                                     <SelectValue placeholder="Select series" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none">None</SelectItem>
-                                    {seriesList.map((series) => (
+                                    {seriesList.map(series => (
                                         <SelectItem key={series.id} value={series.id}>
                                             {series.name}
                                         </SelectItem>
@@ -137,7 +135,7 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
                             <Input
                                 id="edit-synopsis"
                                 value={synopsis}
-                                onChange={(e) => setSynopsis(e.target.value)}
+                                onChange={e => setSynopsis(e.target.value)}
                                 placeholder="Enter a brief synopsis (optional)"
                             />
                         </div>
@@ -149,4 +147,4 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
             </DialogContent>
         </Dialog>
     );
-} 
+}

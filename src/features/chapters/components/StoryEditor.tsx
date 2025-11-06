@@ -1,10 +1,5 @@
-import { useState } from "react";
-import { BookOpen, Tags, Maximize, Minimize, User, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import EmbeddedPlayground from "@/Lexical/lexical-playground/src/EmbeddedPlayground";
-import { MatchedTagEntries } from "@/features/chapters/components/MatchedTagEntries";
-import { ChapterOutline } from "./ChapterOutline";
-import { ChapterPOVEditor } from "@/features/chapters/components/ChapterPOVEditor";
+import { DownloadMenu } from "@/components/ui/DownloadMenu";
 import {
     Drawer,
     DrawerClose,
@@ -12,18 +7,18 @@ import {
     DrawerDescription,
     DrawerFooter,
     DrawerHeader,
-    DrawerTitle,
+    DrawerTitle
 } from "@/components/ui/drawer";
-import { useStoryContext } from "@/features/stories/context/StoryContext";
-import { DownloadMenu } from "@/components/ui/DownloadMenu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ChapterNotesEditor } from "@/features/chapters/components/ChapterNotesEditor";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-} from "@/components/ui/sheet";
+import { ChapterPOVEditor } from "@/features/chapters/components/ChapterPOVEditor";
+import { MatchedTagEntries } from "@/features/chapters/components/MatchedTagEntries";
 import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
+import { useStoryContext } from "@/features/stories/context/StoryContext";
+import EmbeddedPlayground from "@/Lexical/lexical-playground/src/EmbeddedPlayground";
+import { BookOpen, Maximize, Minimize, StickyNote, Tags, User } from "lucide-react";
+import { useState } from "react";
+import { ChapterOutline } from "./ChapterOutline";
 
 type DrawerType = "matchedTags" | "chapterOutline" | "chapterPOV" | "chapterNotes" | null;
 
@@ -55,8 +50,8 @@ export function StoryEditor() {
     return (
         <div className="h-full flex">
             {/* Main Editor Area */}
-            <div className={`flex-1 flex justify-center ${isMaximized ? '' : 'px-4'}`}>
-                <div className={`h-full flex flex-col ${isMaximized ? 'w-full' : 'max-w-[1024px] w-full'}`}>
+            <div className={`flex-1 flex justify-center ${isMaximized ? "" : "px-4"}`}>
+                <div className={`h-full flex flex-col ${isMaximized ? "w-full" : "max-w-[1024px] w-full"}`}>
                     <EmbeddedPlayground maximizeButton={maximizeButton} />
                 </div>
             </div>
@@ -117,13 +112,11 @@ export function StoryEditor() {
             </div>
 
             {/* Matched Tags Drawer */}
-            <Drawer open={openDrawer === "matchedTags"} onOpenChange={(open) => !open && setOpenDrawer(null)}>
+            <Drawer open={openDrawer === "matchedTags"} onOpenChange={open => !open && setOpenDrawer(null)}>
                 <DrawerContent className="max-h-[80vh]">
                     <DrawerHeader>
                         <DrawerTitle>Matched Tag Entries</DrawerTitle>
-                        <DrawerDescription>
-                            Lorebook entries that match tags in your current chapter.
-                        </DrawerDescription>
+                        <DrawerDescription>Lorebook entries that match tags in your current chapter.</DrawerDescription>
                     </DrawerHeader>
                     <div className="px-4 overflow-y-auto max-h-[60vh]">
                         <MatchedTagEntries />
@@ -137,13 +130,11 @@ export function StoryEditor() {
             </Drawer>
 
             {/* Chapter Outline Drawer */}
-            <Drawer open={openDrawer === "chapterOutline"} onOpenChange={(open) => !open && setOpenDrawer(null)}>
+            <Drawer open={openDrawer === "chapterOutline"} onOpenChange={open => !open && setOpenDrawer(null)}>
                 <DrawerContent className="max-h-[80vh]">
                     <DrawerHeader>
                         <DrawerTitle>Chapter Outline</DrawerTitle>
-                        <DrawerDescription>
-                            Outline and notes for your current chapter.
-                        </DrawerDescription>
+                        <DrawerDescription>Outline and notes for your current chapter.</DrawerDescription>
                     </DrawerHeader>
                     <div className="px-4 overflow-y-auto max-h-[60vh]">
                         {currentChapter && <ChapterOutline chapter={currentChapter} />}
@@ -157,7 +148,7 @@ export function StoryEditor() {
             </Drawer>
 
             {/* Chapter POV Drawer */}
-            <Drawer open={openDrawer === "chapterPOV"} onOpenChange={(open) => !open && setOpenDrawer(null)}>
+            <Drawer open={openDrawer === "chapterPOV"} onOpenChange={open => !open && setOpenDrawer(null)}>
                 <DrawerContent className="max-h-[80vh]">
                     <DrawerHeader>
                         <DrawerTitle>Edit Chapter POV</DrawerTitle>
@@ -166,7 +157,9 @@ export function StoryEditor() {
                         </DrawerDescription>
                     </DrawerHeader>
                     <div className="px-4 overflow-y-auto max-h-[60vh]">
-                        {currentChapter && <ChapterPOVEditor chapter={currentChapter} onClose={() => setOpenDrawer(null)} />}
+                        {currentChapter && (
+                            <ChapterPOVEditor chapter={currentChapter} onClose={() => setOpenDrawer(null)} />
+                        )}
                     </div>
                     <DrawerFooter>
                         <DrawerClose asChild>
@@ -177,16 +170,15 @@ export function StoryEditor() {
             </Drawer>
 
             {/* Replace the Chapter Notes Drawer with this Sheet */}
-            <Sheet open={openDrawer === "chapterNotes"} onOpenChange={(open) => !open && setOpenDrawer(null)}>
-                <SheetContent
-                    side="right"
-                    className="h-[100vh] min-w-[800px]"
-                >
+            <Sheet open={openDrawer === "chapterNotes"} onOpenChange={open => !open && setOpenDrawer(null)}>
+                <SheetContent side="right" className="h-[100vh] min-w-[800px]">
                     <SheetHeader>
                         <SheetTitle>Scribble</SheetTitle>
                     </SheetHeader>
                     <div className="overflow-y-auto h-[100vh]">
-                        {currentChapter && <ChapterNotesEditor chapter={currentChapter} onClose={() => setOpenDrawer(null)} />}
+                        {currentChapter && (
+                            <ChapterNotesEditor chapter={currentChapter} onClose={() => setOpenDrawer(null)} />
+                        )}
                     </div>
                 </SheetContent>
             </Sheet>

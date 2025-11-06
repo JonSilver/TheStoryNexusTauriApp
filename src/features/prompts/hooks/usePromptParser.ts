@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
-import { useLorebookContext } from '@/features/lorebook/context/LorebookContext';
-import { createPromptParser } from '../services/promptParser';
-import type { PromptParserConfig, ParsedPrompt } from '@/types/story';
+import { useLorebookContext } from "@/features/lorebook/context/LorebookContext";
+import type { ParsedPrompt, PromptParserConfig } from "@/types/story";
+import { useCallback } from "react";
+import { createPromptParser } from "../services/promptParser";
 
 /**
  * Hook that provides prompt parsing with automatic lorebook context injection.
@@ -10,10 +10,13 @@ import type { PromptParserConfig, ParsedPrompt } from '@/types/story';
 export function usePromptParser() {
     const { entries } = useLorebookContext();
 
-    const parsePrompt = useCallback(async (config: PromptParserConfig): Promise<ParsedPrompt> => {
-        const parser = createPromptParser({ entries });
-        return parser.parse(config);
-    }, [entries]);
+    const parsePrompt = useCallback(
+        async (config: PromptParserConfig): Promise<ParsedPrompt> => {
+            const parser = createPromptParser({ entries });
+            return parser.parse(config);
+        },
+        [entries]
+    );
 
     return { parsePrompt };
 }

@@ -1,18 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
-import { aiService } from '@/services/ai/AIService';
-import type { AIModel } from '@/types/story';
+import { aiService } from "@/services/ai/AIService";
+import type { AIModel } from "@/types/story";
+import { useQuery } from "@tanstack/react-query";
 
 export const availableModelsKeys = {
-    all: ['ai', 'models'] as const,
+    all: ["ai", "models"] as const
 };
 
-export const useAvailableModels = () => {
-    return useQuery<AIModel[]>({
+export const useAvailableModels = () =>
+    useQuery<AIModel[]>({
         queryKey: availableModelsKeys.all,
         queryFn: async () => {
             await aiService.initialize();
             return aiService.getAvailableModels();
         },
-        staleTime: 5 * 60 * 1000,
+        staleTime: 5 * 60 * 1000
     });
-};
