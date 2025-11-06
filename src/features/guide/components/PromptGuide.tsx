@@ -23,9 +23,15 @@ export default function PromptGuide() {
             <div>
                 <h2 className="text-2xl font-bold mb-4">Prompt Guide</h2>
                 <p className="text-muted-foreground mb-6">
-                    Creating effective prompts is essential for getting the best results from AI generation in your story. This guide will help you understand how to create, customize,
-                    and use prompts effectively in The Story Nexus. There are 6 system prompts automatically created for you, they cannot be deleted or edited but can be cloned.
+                    Creating effective prompts is essential for getting the best results from AI generation in your story. This guide will help you understand how to create, customise,
+                    and use prompts effectively in The Story Nexus.
                 </p>
+                <Alert>
+                    <AlertTitle>System Prompts &amp; Prompt Scope</AlertTitle>
+                    <AlertDescription>
+                        There are 6 system prompts automatically created for you. They cannot be deleted or edited but can be cloned. Custom prompts you create are story-specific and available only within that story. To reuse prompts across stories, export and import them via the Prompts Manager.
+                    </AlertDescription>
+                </Alert>
             </div>
 
             <Tabs defaultValue="overview" className="w-full">

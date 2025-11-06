@@ -45,12 +45,79 @@ export default function LorebookGuide() {
 
                 <TabsContent value="overview" className="space-y-6">
                     <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Understanding Lorebook Levels</h3>
+                        <p>
+                            The Story Nexus uses a hierarchical lorebook system with three levels, allowing you to share world-building across multiple stories or keep it specific to individual projects.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-base">
+                                        <BookOpen className="h-4 w-4 text-primary" />
+                                        Global Lorebook
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-2">
+                                    <p className="text-sm">
+                                        Accessible across all series and stories. Use for universal world-building elements, writing style references, or frequently used concepts.
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Example: Magic system rules, world geography, universal lore
+                                    </p>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-base">
+                                        <BookOpen className="h-4 w-4 text-primary" />
+                                        Series Lorebook
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-2">
+                                    <p className="text-sm">
+                                        Shared by all stories within a series. Perfect for recurring characters, locations, and plot elements that span multiple stories.
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Example: Main characters, key locations, series timeline
+                                    </p>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-base">
+                                        <BookOpen className="h-4 w-4 text-primary" />
+                                        Story Lorebook
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-2">
+                                    <p className="text-sm">
+                                        Specific to one story only. Use for story-unique characters, plot-specific locations, and elements that don't appear elsewhere.
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Example: Story-exclusive characters, unique items, specific events
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <Alert className="mt-4">
+                            <AlertTitle>How Inheritance Works</AlertTitle>
+                            <AlertDescription>
+                                When working on a story, you have access to all three levels: story-specific entries, series entries (if part of a series), and global entries. The AI automatically uses context from all accessible levels when generating content.
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+
+                    <div className="space-y-4">
                         <h3 className="text-xl font-semibold">What is a Lorebook?</h3>
                         <p>
-                            A Lorebook is a powerful organizational tool that helps you keep track of all the important elements in your story's world. It serves as a central repository for characters, locations, items, events, and other story elements.
+                            A Lorebook is a powerful organisational tool that helps you keep track of all the important elements in your story's world. It serves as a central repository for characters, locations, items, events, and other story elements.
                         </p>
                         <p>
-                            The Lorebook in The Story Nexus is designed to not only help you organize your story elements but also to integrate them seamlessly with the AI writing process.
+                            The Lorebook in The Story Nexus is designed to not only help you organise your story elements but also to integrate them seamlessly with the AI writing process.
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -181,12 +248,12 @@ export default function LorebookGuide() {
                     </div>
 
                     <div className="flex justify-center mt-6">
-                        <Link to="/dashboard/:storyId/lorebook">
-                            <Button className="gap-2">
-                                Open Lorebook
-                                <ExternalLink className="h-4 w-4" />
-                            </Button>
-                        </Link>
+                        <Alert>
+                            <AlertTitle>Accessing the Lorebook</AlertTitle>
+                            <AlertDescription>
+                                Navigate to your story or series dashboard and click the "Lorebook" tab in the navigation menu to access your lorebook entries.
+                            </AlertDescription>
+                        </Alert>
                     </div>
                 </TabsContent>
 
@@ -200,13 +267,27 @@ export default function LorebookGuide() {
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 1: Access the Lorebook</h4>
                             <p>
-                                Navigate to your story dashboard and click on the "Lorebook" tab in the navigation menu.
+                                You can access the lorebook from multiple locations depending on what level you want to create entries at:
                             </p>
-                            <div className="flex items-center gap-2 my-2">
-                                <BookOpen className="h-5 w-5 text-primary" />
-                                <span className="text-sm text-muted-foreground">
-                                    Path: Dashboard → [Your Story] → Lorebook
-                                </span>
+                            <div className="space-y-2 ml-4">
+                                <div className="flex items-start gap-2">
+                                    <BookOpen className="h-5 w-5 text-primary mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-medium">From Story Dashboard</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Dashboard → [Your Story] → Lorebook (access to global, series, and story levels)
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <BookOpen className="h-5 w-5 text-primary mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-medium">From Series Dashboard</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Series → [Your Series] → Lorebook (access to global and series levels)
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -230,6 +311,18 @@ export default function LorebookGuide() {
                                     Complete the following fields in the dialog:
                                 </p>
                                 <ul className="list-disc list-inside space-y-2 ml-4">
+                                    <li>
+                                        <strong>Level:</strong> Choose the scope for this entry
+                                        <p className="text-sm text-muted-foreground ml-6">
+                                            Global (accessible everywhere), Series (shared within series), or Story (specific to one story)
+                                        </p>
+                                    </li>
+                                    <li>
+                                        <strong>Series/Story:</strong> If Level is Series or Story, select which series or story
+                                        <p className="text-sm text-muted-foreground ml-6">
+                                            When creating from a story/series context, this is pre-filled automatically
+                                        </p>
+                                    </li>
                                     <li>
                                         <strong>Name:</strong> The name of your entry (e.g., "Harry Potter")
                                         <p className="text-sm text-muted-foreground ml-6">
@@ -393,6 +486,41 @@ export default function LorebookGuide() {
                         </div>
 
                         <div className="space-y-4 mt-6">
+                            <h4 className="text-lg font-medium">Understanding Level Badges</h4>
+                            <div className="space-y-2">
+                                <p className="text-sm">
+                                    Each lorebook entry displays a badge indicating its level (Global, Series, or Story). These badges help you quickly identify which scope an entry belongs to.
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                                    <div className="border rounded-lg p-3 bg-card">
+                                        <Badge variant="outline" className="mb-2">Global</Badge>
+                                        <p className="text-xs text-muted-foreground">
+                                            Available everywhere
+                                        </p>
+                                    </div>
+                                    <div className="border rounded-lg p-3 bg-card">
+                                        <Badge variant="outline" className="mb-2">Series</Badge>
+                                        <p className="text-xs text-muted-foreground">
+                                            Shared within series
+                                        </p>
+                                    </div>
+                                    <div className="border rounded-lg p-3 bg-card">
+                                        <Badge variant="outline" className="mb-2">Story</Badge>
+                                        <p className="text-xs text-muted-foreground">
+                                            Story-specific only
+                                        </p>
+                                    </div>
+                                </div>
+                                <Alert className="mt-3">
+                                    <AlertTitle>Viewing Inherited Entries</AlertTitle>
+                                    <AlertDescription>
+                                        When viewing a story's lorebook, you'll see entries from all accessible levels (global, series if applicable, and story). Each entry's badge shows its origin level.
+                                    </AlertDescription>
+                                </Alert>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Enabling and Disabling Entries</h4>
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -478,6 +606,12 @@ export default function LorebookGuide() {
                                         </p>
                                     </li>
                                     <li>
+                                        The system searches across all accessible levels (global, series if applicable, and story)
+                                        <p className="text-sm text-muted-foreground ml-6">
+                                            Hierarchical matching ensures the AI has access to all relevant world-building from every scope
+                                        </p>
+                                    </li>
+                                    <li>
                                         The descriptions from these entries are included in the context sent to the AI
                                         <p className="text-sm text-muted-foreground ml-6">
                                             This helps the AI understand your characters, locations, and other story elements
@@ -493,9 +627,9 @@ export default function LorebookGuide() {
                             </div>
 
                             <Alert className="mt-4 bg-primary/10 border-primary">
-                                <AlertTitle>Pro Tip</AlertTitle>
+                                <AlertTitle>Hierarchical Context</AlertTitle>
                                 <AlertDescription>
-                                    For best results, create detailed Lorebook entries for all major story elements and make sure to mention them by name in your writing to ensure they're matched and included in the AI context.
+                                    The AI automatically uses context from all lorebook levels you have access to. This means series-wide characters and world-building are always available alongside story-specific details, ensuring consistency across your interconnected narratives.
                                 </AlertDescription>
                             </Alert>
                         </div>
