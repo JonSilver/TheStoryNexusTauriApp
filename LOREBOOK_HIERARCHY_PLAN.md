@@ -160,165 +160,41 @@ export interface StoryExport {
 
 ### New Series Routes (`server/routes/series.ts`)
 
-Use CRUD factory pattern:
-```typescript
-import { createCrudRouter } from '../lib/crud.js';
-import { db, schema } from '../db/client.js';
+Use CRUD factory with custom routes in `customRoutes` callback:
 
-export default createCrudRouter({
-  table: schema.series,
-  name: 'Series',
-  customRoutes: (router, { asyncHandler }) => {
-    // GET /series/:id/stories - Get all stories in series
-    router.get('/:id/stories', asyncHandler(async (req, res) => {
-      const stories = await db.select()
-        .from(schema.stories)
-        .where(eq(schema.stories.seriesId, req.params.id));
-      res.json(stories);
-    }));
+**Standard CRUD (provided by factory):**
+- `GET /series`, `GET /series/:id`, `POST /series`, `PUT /series/:id`
 
-    // GET /series/:id/lorebook - Get series-level lorebook entries
-    router.get('/:id/lorebook', asyncHandler(async (req, res) => {
-      const entries = await db.select()
-        .from(schema.lorebookEntries)
-        .where(and(
-          eq(schema.lorebookEntries.level, 'series'),
-          eq(schema.lorebookEntries.scopeId, req.params.id)
-        ));
-      res.json(entries);
-    }));
-
-    // DELETE /series/:id - Delete series with cleanup
-    router.delete('/:id', asyncHandler(async (req, res) => {
-      const seriesId = req.params.id;
-
-      // Orphan stories (set seriesId to null)
-      await db.update(schema.stories)
-        .set({ seriesId: null })
-        .where(eq(schema.stories.seriesId, seriesId));
-
-      // Delete series-level lorebook entries
-      await db.delete(schema.lorebookEntries)
-        .where(and(
-          eq(schema.lorebookEntries.level, 'series'),
-          eq(schema.lorebookEntries.scopeId, seriesId)
-        ));
-
-      // Delete series
-      await db.delete(schema.series)
-        .where(eq(schema.series.id, seriesId));
-
-      res.json({ success: true });
-    }));
-  }
-});
-```
-
-Standard CRUD routes provided by factory:
-- `GET /series` - Get all series
-- `GET /series/:id` - Get single series
-- `POST /series` - Create series
-- `PUT /series/:id` - Update series
+**Custom routes to add:**
+- `GET /series/:id/stories` - Fetch stories where `seriesId = :id`
+- `GET /series/:id/lorebook` - Fetch entries where `level='series'` and `scopeId = :id`
+- `DELETE /series/:id` - Override to:
+  1. Orphan stories (set `seriesId = null`)
+  2. Delete series-level lorebook entries
+  3. Delete series itself
 
 ### Modified Lorebook Routes (`server/routes/lorebook.ts`)
 
-Add level-based queries:
-```typescript
-import { createCrudRouter } from '../lib/crud.js';
-import { db, schema } from '../db/client.js';
-import { eq, and, or } from 'drizzle-orm';
+Add custom routes for level-based queries:
+- `GET /lorebook/global` - Where `level='global'`
+- `GET /lorebook/series/:seriesId` - Where `level='series'` and `scopeId = seriesId`
+- `GET /lorebook/story/:storyId` - Where `level='story'` and `scopeId = storyId`
+- `GET /lorebook/story/:storyId/hierarchical` - Fetch story, check `seriesId`, return global + series (if applicable) + story entries using `or()` conditions
+- `PUT /lorebook/:id/promote` - Update `level` and `scopeId` fields
 
-export default createCrudRouter({
-  table: schema.lorebookEntries,
-  name: 'Lorebook Entry',
-  customRoutes: (router, { asyncHandler }) => {
-    // GET /lorebook/global - Get all global entries
-    router.get('/global', asyncHandler(async (req, res) => {
-      const entries = await db.select()
-        .from(schema.lorebookEntries)
-        .where(eq(schema.lorebookEntries.level, 'global'));
-      res.json(entries);
-    }));
+**CRITICAL:** Default `GET /lorebook` returns ALL entries (massive dump). Either override or document not to use.
 
-    // GET /lorebook/series/:seriesId - Get series-level entries
-    router.get('/series/:seriesId', asyncHandler(async (req, res) => {
-      const entries = await db.select()
-        .from(schema.lorebookEntries)
-        .where(and(
-          eq(schema.lorebookEntries.level, 'series'),
-          eq(schema.lorebookEntries.scopeId, req.params.seriesId)
-        ));
-      res.json(entries);
-    }));
+**CRITICAL:** Promote endpoint must validate `targetScopeId` references exist:
+- If `targetLevel='series'`, verify series exists
+- If `targetLevel='story'`, verify story exists
+- Otherwise creates orphaned entries
 
-    // GET /lorebook/story/:storyId - Get story-level entries
-    router.get('/story/:storyId', asyncHandler(async (req, res) => {
-      const entries = await db.select()
-        .from(schema.lorebookEntries)
-        .where(and(
-          eq(schema.lorebookEntries.level, 'story'),
-          eq(schema.lorebookEntries.scopeId, req.params.storyId)
-        ));
-      res.json(entries);
-    }));
+### Modified Story Routes (`server/routes/stories.ts`)
 
-    // GET /lorebook/story/:storyId/hierarchical - Get all inherited entries
-    router.get('/story/:storyId/hierarchical', asyncHandler(async (req, res) => {
-      const storyId = req.params.storyId;
-
-      // Get story to check series membership
-      const [story] = await db.select()
-        .from(schema.stories)
-        .where(eq(schema.stories.id, storyId));
-
-      if (!story) {
-        res.status(404).json({ error: 'Story not found' });
-        return;
-      }
-
-      // Build query for global + series (if applicable) + story entries
-      const conditions = [
-        eq(schema.lorebookEntries.level, 'global'),
-        and(
-          eq(schema.lorebookEntries.level, 'story'),
-          eq(schema.lorebookEntries.scopeId, storyId)
-        )
-      ];
-
-      if (story.seriesId) {
-        conditions.push(
-          and(
-            eq(schema.lorebookEntries.level, 'series'),
-            eq(schema.lorebookEntries.scopeId, story.seriesId)
-          )
-        );
-      }
-
-      const entries = await db.select()
-        .from(schema.lorebookEntries)
-        .where(or(...conditions));
-
-      res.json(entries);
-    }));
-
-    // PUT /lorebook/:id/promote - Promote entry to higher level
-    router.put('/:id/promote', asyncHandler(async (req, res) => {
-      const { targetLevel, targetScopeId } = req.body;
-
-      const updated = await db.update(schema.lorebookEntries)
-        .set({ level: targetLevel, scopeId: targetScopeId })
-        .where(eq(schema.lorebookEntries.id, req.params.id))
-        .returning();
-
-      res.json(updated[0]);
-    }));
-  }
-});
-```
-
-### Modified Story Routes
-
-No changes needed - CRUD factory handles series assignment via `PUT /stories/:id` with `seriesId` field.
+**CRITICAL:** Override DELETE to clean up lorebook entries:
+- Query and delete entries where `level='story'` and `scopeId = storyId`
+- THEN delete story (which cascades chapters, aiChats, etc via FK)
+- Without this, story deletion orphans lorebook entries (no FK cascade on lorebook)
 
 ---
 
@@ -326,175 +202,28 @@ No changes needed - CRUD factory handles series assignment via `PUT /stories/:id
 
 ### New: Series Query Hooks (`src/features/series/hooks/useSeriesQuery.ts`)
 
-```typescript
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { seriesApi } from '@/services/api/client';
-
-// Query keys
-const seriesKeys = {
-    all: ['series'] as const,
-    detail: (id: string) => ['series', id] as const,
-    stories: (id: string) => ['series', id, 'stories'] as const,
-    lorebook: (id: string) => ['series', id, 'lorebook'] as const,
-};
-
-// Fetch all series
-export const useSeriesQuery = () => {
-    return useQuery({
-        queryKey: seriesKeys.all,
-        queryFn: seriesApi.getAll,
-    });
-};
-
-// Fetch single series
-export const useSingleSeriesQuery = (id: string) => {
-    return useQuery({
-        queryKey: seriesKeys.detail(id),
-        queryFn: () => seriesApi.getById(id),
-        enabled: !!id,
-    });
-};
-
-// Fetch stories in series
-export const useSeriesStoriesQuery = (seriesId: string) => {
-    return useQuery({
-        queryKey: seriesKeys.stories(seriesId),
-        queryFn: () => seriesApi.getStories(seriesId),
-        enabled: !!seriesId,
-    });
-};
-
-// Create series mutation
-export const useCreateSeriesMutation = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: seriesApi.create,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: seriesKeys.all });
-            toast.success('Series created successfully');
-        },
-    });
-};
-
-// Update series mutation
-export const useUpdateSeriesMutation = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: Partial<Series> }) =>
-            seriesApi.update(id, data),
-        onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: seriesKeys.all });
-            queryClient.invalidateQueries({ queryKey: seriesKeys.detail(variables.id) });
-            toast.success('Series updated successfully');
-        },
-    });
-};
-
-// Delete series mutation
-export const useDeleteSeriesMutation = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: seriesApi.delete,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: seriesKeys.all });
-            queryClient.invalidateQueries({ queryKey: ['stories'] }); // Stories may have changed
-            toast.success('Series deleted successfully');
-        },
-    });
-};
-```
+Follow existing pattern from `useStoriesQuery.ts`:
+- Query keys: `all`, `detail(id)`, `stories(id)`, `lorebook(id)`
+- Queries: `useSeriesQuery`, `useSingleSeriesQuery`, `useSeriesStoriesQuery`
+- Mutations: `useCreateSeriesMutation`, `useUpdateSeriesMutation`, `useDeleteSeriesMutation`
+- Cache invalidation: series mutations invalidate series + stories queries
 
 ### Modified: Lorebook Query Hooks (`src/features/lorebook/hooks/useLorebookQuery.ts`)
 
-Add level-based queries:
-```typescript
-// Query keys
-const lorebookKeys = {
-    all: ['lorebook'] as const,
-    global: ['lorebook', 'global'] as const,
-    series: (seriesId: string) => ['lorebook', 'series', seriesId] as const,
-    story: (storyId: string) => ['lorebook', 'story', storyId] as const,
-    hierarchical: (storyId: string) => ['lorebook', 'hierarchical', storyId] as const,
-    detail: (id: string) => ['lorebook', id] as const,
-};
+Add level-based queries following existing pattern:
+- New query keys: `global`, `series(id)`, `story(id)`, `hierarchical(id)`
+- New queries: `useGlobalLorebookQuery`, `useSeriesLorebookQuery`, `useStoryLorebookQuery`, `useHierarchicalLorebookQuery`
+- New mutation: `usePromoteLorebookMutation` (invalidates all lorebook queries on success)
 
-// Fetch global lorebook entries
-export const useGlobalLorebookQuery = () => {
-    return useQuery({
-        queryKey: lorebookKeys.global,
-        queryFn: () => lorebookApi.getGlobal(),
-    });
-};
-
-// Fetch series-level lorebook entries
-export const useSeriesLorebookQuery = (seriesId: string) => {
-    return useQuery({
-        queryKey: lorebookKeys.series(seriesId),
-        queryFn: () => lorebookApi.getBySeries(seriesId),
-        enabled: !!seriesId,
-    });
-};
-
-// Fetch story-level lorebook entries
-export const useStoryLorebookQuery = (storyId: string) => {
-    return useQuery({
-        queryKey: lorebookKeys.story(storyId),
-        queryFn: () => lorebookApi.getByStory(storyId),
-        enabled: !!storyId,
-    });
-};
-
-// Fetch hierarchical (global + series + story) entries
-export const useHierarchicalLorebookQuery = (storyId: string) => {
-    return useQuery({
-        queryKey: lorebookKeys.hierarchical(storyId),
-        queryFn: () => lorebookApi.getHierarchical(storyId),
-        enabled: !!storyId,
-    });
-};
-
-// Promote/demote lorebook entry
-export const usePromoteLorebookMutation = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ id, targetLevel, targetScopeId }: {
-            id: string;
-            targetLevel: 'global' | 'series' | 'story';
-            targetScopeId?: string;
-        }) => lorebookApi.promote(id, targetLevel, targetScopeId),
-        onSuccess: () => {
-            // Invalidate all lorebook queries as entry may have moved
-            queryClient.invalidateQueries({ queryKey: lorebookKeys.all });
-            toast.success('Entry promoted successfully');
-        },
-    });
-};
-```
+**CRITICAL:** `useHierarchicalLorebookQuery` is what prompt context should use - gets global + series + story in one call.
 
 ### API Client Updates (`src/services/api/client.ts`)
 
-Add series and updated lorebook API methods:
-```typescript
-export const seriesApi = {
-    getAll: () => api.get<Series[]>('/series'),
-    getById: (id: string) => api.get<Series>(`/series/${id}`),
-    getStories: (seriesId: string) => api.get<Story[]>(`/series/${seriesId}/stories`),
-    getLorebook: (seriesId: string) => api.get<LorebookEntry[]>(`/series/${seriesId}/lorebook`),
-    create: (data: Omit<Series, 'id' | 'createdAt'>) => api.post<Series>('/series', data),
-    update: (id: string, data: Partial<Series>) => api.put<Series>(`/series/${id}`, data),
-    delete: (id: string) => api.delete(`/series/${id}`),
-};
+Add `seriesApi` object (pattern: `getAll`, `getById`, `getStories`, `getLorebook`, `create`, `update`, `delete`)
 
-export const lorebookApi = {
-    // ... existing methods
-    getGlobal: () => api.get<LorebookEntry[]>('/lorebook/global'),
-    getBySeries: (seriesId: string) => api.get<LorebookEntry[]>(`/lorebook/series/${seriesId}`),
-    getByStory: (storyId: string) => api.get<LorebookEntry[]>(`/lorebook/story/${storyId}`),
-    getHierarchical: (storyId: string) => api.get<LorebookEntry[]>(`/lorebook/story/${storyId}/hierarchical`),
-    promote: (id: string, targetLevel: string, targetScopeId?: string) =>
-        api.put<LorebookEntry>(`/lorebook/${id}/promote`, { targetLevel, targetScopeId }),
-};
-```
+Extend `lorebookApi` with:
+- `getGlobal()`, `getBySeries(seriesId)`, `getByStory(storyId)`, `getHierarchical(storyId)`
+- `promote(id, targetLevel, targetScopeId?)`
 
 ---
 
@@ -709,32 +438,21 @@ npm run db:generate  # or: drizzle-kit generate:sqlite
 
 This creates a new migration file in `server/db/migrations/`.
 
-**Step 3: Write data migration SQL**
-Edit the generated migration file to include data transformation:
-```sql
--- Add series table (auto-generated by Drizzle)
-CREATE TABLE series (...);
+**Step 3: Edit migration SQL**
 
--- Add seriesId column to stories
-ALTER TABLE stories ADD COLUMN seriesId TEXT;
-CREATE INDEX story_series_id_idx ON stories(seriesId);
+**CRITICAL:** SQLite doesn't support `DROP COLUMN`. Must recreate table:
 
--- Migrate lorebookEntries
--- 1. Add new columns
-ALTER TABLE lorebookEntries ADD COLUMN level TEXT NOT NULL DEFAULT 'story';
-ALTER TABLE lorebookEntries ADD COLUMN scopeId TEXT;
+1. Create series table (auto-generated)
+2. Add `seriesId` to stories table
+3. Recreate lorebookEntries table:
+   - Create `lorebookEntries_new` with new schema (`level`, `scopeId`, no `storyId`)
+   - `INSERT INTO lorebookEntries_new SELECT ..., 'story' as level, storyId as scopeId ...`
+   - Drop old table, rename new table
+   - Recreate all indices
 
--- 2. Copy storyId to scopeId for existing entries
-UPDATE lorebookEntries SET scopeId = storyId WHERE storyId IS NOT NULL;
-
--- 3. Drop old storyId column (after verification)
-ALTER TABLE lorebookEntries DROP COLUMN storyId;
-
--- 4. Create new indices
-CREATE INDEX lorebook_level_idx ON lorebookEntries(level);
-CREATE INDEX lorebook_scope_id_idx ON lorebookEntries(scopeId);
-CREATE INDEX lorebook_level_scope_idx ON lorebookEntries(level, scopeId);
-```
+**Safer alternative:** Add `level`/`scopeId` columns, keep `storyId` initially, migrate in two steps:
+- Migration 1: Add new columns, populate, add indices
+- Migration 2 (later): Drop `storyId` via table recreation once verified working
 
 **Step 4: Run migration**
 ```bash
@@ -746,81 +464,15 @@ npm run db:migrate  # or: drizzle-kit push:sqlite
 npm run db:studio  # Open Drizzle Studio to inspect migrated data
 ```
 
-### Cascade Deletion (Application Logic)
+### Cascade Deletion (Covered in Routes Section)
 
-No database cascade constraints on lorebook entries (to allow flexible level/scope management). Deletion logic handled in custom routes:
+No database FK cascade constraints on lorebook entries. Deletion handled in custom DELETE routes (see Server Routes section above).
 
-**Story deletion:**
-```typescript
-// In custom DELETE route override
-await db.delete(schema.lorebookEntries)
-  .where(and(
-    eq(schema.lorebookEntries.level, 'story'),
-    eq(schema.lorebookEntries.scopeId, storyId)
-  ));
-// Then delete story itself
-await db.delete(schema.stories).where(eq(schema.stories.id, storyId));
-```
+### Promotion/Demotion
 
-**Series deletion:**
-```typescript
-// Orphan stories
-await db.update(schema.stories)
-  .set({ seriesId: null })
-  .where(eq(schema.stories.seriesId, seriesId));
-
-// Delete series-level lorebook entries
-await db.delete(schema.lorebookEntries)
-  .where(and(
-    eq(schema.lorebookEntries.level, 'series'),
-    eq(schema.lorebookEntries.scopeId, seriesId)
-  ));
-
-// Delete series
-await db.delete(schema.series).where(eq(schema.series.id, seriesId));
-```
-
-### Promotion/Demotion Operations
-
-Handled via dedicated API endpoint (`PUT /lorebook/:id/promote`):
-
-**Server-side:**
-```typescript
-router.put('/:id/promote', asyncHandler(async (req, res) => {
-  const { targetLevel, targetScopeId } = req.body;
-
-  const updated = await db.update(schema.lorebookEntries)
-    .set({ level: targetLevel, scopeId: targetScopeId })
-    .where(eq(schema.lorebookEntries.id, req.params.id))
-    .returning();
-
-  res.json(updated[0]);
-}));
-```
-
-**Frontend usage:**
-```typescript
-const promoteMutation = usePromoteLorebookMutation();
-
-// Promote to series
-promoteMutation.mutate({
-  id: entryId,
-  targetLevel: 'series',
-  targetScopeId: seriesId
-});
-
-// Promote to global
-promoteMutation.mutate({
-  id: entryId,
-  targetLevel: 'global',
-  targetScopeId: undefined
-});
-```
-
-**Benefits:**
-- Single API call changes level and scope
-- TanStack Query handles cache invalidation automatically
-- Easy to add UI buttons: "Promote to Series", "Make Global", etc.
+Single endpoint `PUT /lorebook/:id/promote` updates `level` and `scopeId` in one operation.
+- TanStack Query mutation invalidates all lorebook caches on success
+- UI shows buttons: "Promote to Series", "Promote to Global", "Demote to Story"
 
 ### Import/Export
 
@@ -888,6 +540,52 @@ Features:
     └── hooks/
         └── useStoriesQuery.ts (EXISTING: no changes needed)
 ```
+
+---
+
+## Critical Implementation Issues
+
+### 1. Zod Validation Schemas Missing
+
+Plan doesn't define validation schemas for:
+- `Series` type (name, description validation)
+- Modified `LorebookEntry` (level/scopeId constraint validation)
+- Promote request body (`targetLevel`, `targetScopeId`)
+
+Current codebase uses Zod extensively (`src/schemas/entities.ts`). Add schemas following existing patterns.
+
+### 2. Prompt Parsing Integration Unclear
+
+PromptParser currently runs server-side during AI generation. Plan says "use hierarchical endpoint" but doesn't clarify integration point.
+
+**Resolution needed:**
+- Which server route fetches hierarchical entries for prompt context?
+- Does generation endpoint call hierarchical API or query DB directly?
+- Scene beat generation, continue writing, brainstorm - all need updating
+
+### 3. Existing Lorebook Code Assumes `storyId`
+
+Multiple features assume required `storyId` field on lorebook entries:
+- Lexical LorebookTagPlugin (tag autocomplete)
+- Tag matching logic in chapter/scene beat context
+- Scene beat custom context selection
+- Export/import code
+
+Plan changes `storyId` to optional `scopeId`. **Must comprehensively update all lorebook references.**
+
+### 4. Race Conditions & Transactions
+
+Promotion endpoint has no transaction wrapping. Possible race: promote to series → series deleted mid-operation → orphaned entry.
+
+Consider wrapping multi-step operations (series deletion, promotion) in transactions.
+
+### 5. Migration Complexity
+
+SQLite table recreation is error-prone. Consider safer two-step migration:
+1. Add `level`/`scopeId`, keep `storyId`, populate, verify
+2. Later: drop `storyId` via table recreation
+
+Allows rollback if issues found.
 
 ---
 
