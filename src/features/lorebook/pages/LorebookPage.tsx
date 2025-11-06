@@ -96,14 +96,6 @@ export default function LorebookPage() {
         event.target.value = '';
     };
 
-    if (error) {
-        return (
-            <div className="p-4">
-                <p className="text-destructive">Error loading lorebook: {error.message}</p>
-            </div>
-        );
-    }
-
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
