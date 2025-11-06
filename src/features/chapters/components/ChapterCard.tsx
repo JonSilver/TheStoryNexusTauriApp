@@ -54,8 +54,6 @@ interface ChapterCardProps {
 
 type POVType = "First Person" | "Third Person Limited" | "Third Person Omniscient";
 
-const a = 1;
-
 interface EditChapterForm {
     title: string;
     povCharacter?: string;
@@ -108,9 +106,7 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
 
     // Adjust textarea height when expanded or summary changes
     useLayoutEffect(() => {
-        if (isExpanded) {
-            adjustTextareaHeight();
-        }
+        if (isExpanded) adjustTextareaHeight();
     }, [isExpanded, adjustTextareaHeight]);
 
     // Save expanded state to localStorage
@@ -341,9 +337,8 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
                                     defaultValue={chapter.povType || "Third Person Omniscient"}
                                     onValueChange={value => {
                                         form.setValue("povType", value as POVType);
-                                        if (value === "Third Person Omniscient") {
+                                        if (value === "Third Person Omniscient")
                                             form.setValue("povCharacter", undefined);
-                                        }
                                     }}
                                 >
                                     <SelectTrigger id="povType">
