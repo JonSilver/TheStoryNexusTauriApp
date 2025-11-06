@@ -156,3 +156,7 @@ Format:
    "prompts": [ /* array of prompt objects */ ]
 }
 ```
+
+# Roadmap/TODO
+
+- [ ] Replace the component-based guide with markdown-driven documentation presented by a small set of components.
