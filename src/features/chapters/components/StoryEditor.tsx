@@ -177,7 +177,7 @@ export function StoryEditor() {
                     </SheetHeader>
                     <div className="overflow-y-auto h-[100vh]">
                         {currentChapter && (
-                            <ChapterNotesEditor chapter={currentChapter} onClose={() => setOpenDrawer(null)} />
+                            <ChapterNotesEditor key={currentChapter.id} chapter={currentChapter} onClose={() => setOpenDrawer(null)} />
                         )}
                     </div>
                 </SheetContent>
