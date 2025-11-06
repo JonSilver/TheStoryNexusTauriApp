@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { Edit2, Plus, Download } from 'lucide-react';
+import { Edit2, Plus, Download, Book } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSingleSeriesQuery, useSeriesStoriesQuery } from '../hooks/useSeriesQuery';
 import { SeriesForm } from '../components/SeriesForm';
@@ -66,6 +66,10 @@ const SeriesDashboard = () => {
                     )}
                 </div>
                 <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => navigate(`/series/${seriesId}/lorebook`)}>
+                        <Book className="w-4 h-4 mr-2" />
+                        Lorebook
+                    </Button>
                     <Button variant="outline" onClick={handleExportSeries}>
                         <Download className="w-4 h-4 mr-2" />
                         Export Series

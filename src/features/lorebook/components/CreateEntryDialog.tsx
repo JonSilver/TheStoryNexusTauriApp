@@ -35,6 +35,7 @@ interface CreateEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   storyId?: string;
+  seriesId?: string;
   entry?: LorebookEntry;
   defaultCategory?: LorebookCategory;
 }
@@ -63,6 +64,7 @@ export function CreateEntryDialog({
   open,
   onOpenChange,
   storyId,
+  seriesId,
   entry,
   defaultCategory,
 }: CreateEntryDialogProps) {
@@ -74,11 +76,13 @@ export function CreateEntryDialog({
   const { data: story } = useStoryQuery(storyId || '');
   const { data: seriesList } = useSeriesQuery();
 
+  // Determine default level based on context
+  const defaultLevel: LorebookLevel = entry?.level || (seriesId ? 'series' : 'story');
+  const defaultScopeId = entry?.scopeId || (seriesId || storyId);
+
   // Level and scope state
-  const [selectedLevel, setSelectedLevel] = useState<LorebookLevel>(entry?.level || 'story');
-  const [selectedScopeId, setSelectedScopeId] = useState<string | undefined>(
-    entry?.scopeId || (selectedLevel === 'story' ? storyId : story?.seriesId)
-  );
+  const [selectedLevel, setSelectedLevel] = useState<LorebookLevel>(defaultLevel);
+  const [selectedScopeId, setSelectedScopeId] = useState<string | undefined>(defaultScopeId);
 
   // Initial form state in a separate constant for reuse
   const initialFormState = {

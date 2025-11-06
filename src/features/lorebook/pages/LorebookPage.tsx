@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router";
 import {
     useHierarchicalLorebookQuery,
+    useSeriesLorebookQuery,
     lorebookKeys,
 } from "../hooks/useLorebookQuery";
 import { CreateEntryDialog } from "../components/CreateEntryDialog";
@@ -31,16 +32,18 @@ const CATEGORIES: LorebookCategory[] = [
 ];
 
 export default function LorebookPage() {
-    const { storyId } = useParams<{ storyId: string }>();
+    const { storyId, seriesId } = useParams<{ storyId?: string; seriesId?: string }>();
     const queryClient = useQueryClient();
 
     const [selectedCategory, setSelectedCategory] = useState<LorebookCategory>('character');
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-    // Always fetch hierarchical entries when in story context
-    const { data: hierarchicalEntries, isLoading, error } = useHierarchicalLorebookQuery(storyId);
+    // Fetch appropriate entries based on context
+    const { data: storyEntries, isLoading: storyLoading } = useHierarchicalLorebookQuery(storyId);
+    const { data: seriesEntries, isLoading: seriesLoading } = useSeriesLorebookQuery(seriesId);
 
-    const entries = hierarchicalEntries || [];
+    const entries = storyId ? (storyEntries || []) : (seriesEntries || []);
+    const isLoading = storyId ? storyLoading : seriesLoading;
 
     // Filter by category
     const entriesByCategory = entries.filter((e) => e.category === selectedCategory);
@@ -180,6 +183,7 @@ export default function LorebookPage() {
                 open={isCreateDialogOpen}
                 onOpenChange={setIsCreateDialogOpen}
                 storyId={storyId}
+                seriesId={seriesId}
                 defaultCategory={selectedCategory}
             />
         </div>
