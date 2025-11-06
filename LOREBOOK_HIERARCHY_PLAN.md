@@ -53,21 +53,9 @@ export const stories = sqliteTable('stories', {
 - `seriesId?: string` - References series.id, sets to null when series deleted
 
 ### Modified `lorebookEntries` table
-Change from story-only to level-based with unified scope reference:
+Change from story-only to level-based with unified scope reference.
 
-**Current schema:**
-```typescript
-export const lorebookEntries = sqliteTable('lorebookEntries', {
-    id: text('id').primaryKey(),
-    storyId: text('storyId').notNull().references(() => stories.id, { onDelete: 'cascade' }),
-    // ... other fields
-}, (table) => ({
-    storyIdIdx: index('lorebook_story_id_idx').on(table.storyId),
-    // ... other indices
-}));
-```
-
-**New schema:**
+**Target schema (Phase 2 final state):**
 ```typescript
 export const lorebookEntries = sqliteTable('lorebookEntries', {
     id: text('id').primaryKey(),
@@ -102,8 +90,7 @@ export const lorebookEntries = sqliteTable('lorebookEntries', {
 - Simpler validation logic
 - No cascade constraints needed (application handles deletion logic)
 
-### Migration
-Use Drizzle Kit to generate migration SQL. See "Implementation Notes" section below for migration details.
+**Note:** Two-phase migration used to reach this schema. Phase 1 keeps `storyId` alongside new fields for safety. See Migration Strategy section.
 
 ---
 
@@ -426,43 +413,131 @@ if (level === 'story') {
 }
 ```
 
-### Migration Strategy (Drizzle)
+### Migration Strategy (Two-Phase)
 
-**Step 1: Update schema in `server/db/schema.ts`**
-Add series table and modify stories/lorebookEntries tables as shown in "Database Schema Changes" section.
+Using two-phase migration to avoid SQLite `DROP COLUMN` complexity and allow verification between phases.
 
-**Step 2: Generate migration**
-```bash
-npm run db:generate  # or: drizzle-kit generate:sqlite
+---
+
+#### **Phase 1: Add New Fields (Keep storyId)**
+
+**Schema changes (`server/db/schema.ts`):**
+
+```typescript
+// New series table
+export const series = sqliteTable('series', {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    description: text('description'),
+    createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+    isDemo: integer('isDemo', { mode: 'boolean' }),
+}, (table) => ({
+    nameIdx: index('series_name_idx').on(table.name),
+    createdAtIdx: index('series_created_at_idx').on(table.createdAt),
+}));
+
+// Modified stories - add seriesId
+export const stories = sqliteTable('stories', {
+    // ... existing fields
+    seriesId: text('seriesId').references(() => series.id, { onDelete: 'set null' }),
+    // ...
+}, (table) => ({
+    // ... existing indices
+    seriesIdIdx: index('story_series_id_idx').on(table.seriesId),
+}));
+
+// Modified lorebookEntries - add level/scopeId, KEEP storyId temporarily
+export const lorebookEntries = sqliteTable('lorebookEntries', {
+    id: text('id').primaryKey(),
+    storyId: text('storyId').notNull(),  // KEEP for now
+    level: text('level').notNull().default('story'),  // NEW
+    scopeId: text('scopeId'),  // NEW
+    // ... rest of fields unchanged
+}, (table) => ({
+    storyIdIdx: index('lorebook_story_id_idx').on(table.storyId),  // Keep existing
+    levelIdx: index('lorebook_level_idx').on(table.level),  // NEW
+    scopeIdIdx: index('lorebook_scope_id_idx').on(table.scopeId),  // NEW
+    levelScopeIdx: index('lorebook_level_scope_idx').on(table.level, table.scopeId),  // NEW
+    // ... other indices
+}));
 ```
 
-This creates a new migration file in `server/db/migrations/`.
-
-**Step 3: Edit migration SQL**
-
-**CRITICAL:** SQLite doesn't support `DROP COLUMN`. Must recreate table:
-
-1. Create series table (auto-generated)
-2. Add `seriesId` to stories table
-3. Recreate lorebookEntries table:
-   - Create `lorebookEntries_new` with new schema (`level`, `scopeId`, no `storyId`)
-   - `INSERT INTO lorebookEntries_new SELECT ..., 'story' as level, storyId as scopeId ...`
-   - Drop old table, rename new table
-   - Recreate all indices
-
-**Safer alternative:** Add `level`/`scopeId` columns, keep `storyId` initially, migrate in two steps:
-- Migration 1: Add new columns, populate, add indices
-- Migration 2 (later): Drop `storyId` via table recreation once verified working
-
-**Step 4: Run migration**
+**Generate migration:**
 ```bash
-npm run db:migrate  # or: drizzle-kit push:sqlite
+npm run db:generate
 ```
 
-**Step 5: Verify**
-```bash
-npm run db:studio  # Open Drizzle Studio to inspect migrated data
+**Edit generated migration SQL to add data transformation:**
+```sql
+-- Series table (auto-generated) ✓
+CREATE TABLE series (...);
+
+-- Stories seriesId (auto-generated) ✓
+ALTER TABLE stories ADD COLUMN seriesId TEXT;
+CREATE INDEX story_series_id_idx ON stories(seriesId);
+
+-- Lorebook new columns (auto-generated) ✓
+ALTER TABLE lorebookEntries ADD COLUMN level TEXT NOT NULL DEFAULT 'story';
+ALTER TABLE lorebookEntries ADD COLUMN scopeId TEXT;
+CREATE INDEX lorebook_level_idx ON lorebookEntries(level);
+CREATE INDEX lorebook_scope_id_idx ON lorebookEntries(scopeId);
+CREATE INDEX lorebook_level_scope_idx ON lorebookEntries(level, scopeId);
+
+-- Data transformation (MANUALLY ADD) ✓
+UPDATE lorebookEntries SET scopeId = storyId, level = 'story' WHERE storyId IS NOT NULL;
 ```
+
+**Run migration:**
+```bash
+npm run db:migrate
+```
+
+**Deploy Phase 1:**
+- Application works with both storyId (for old code) and level/scopeId (for new code)
+- Verify all entries have correct level='story' and scopeId populated
+- Test all features work with new fields
+
+---
+
+#### **Phase 2: Remove storyId (Later Release)**
+
+Once Phase 1 verified and all code updated to use `level`/`scopeId`:
+
+**Schema changes:**
+```typescript
+// lorebookEntries - remove storyId
+export const lorebookEntries = sqliteTable('lorebookEntries', {
+    id: text('id').primaryKey(),
+    // storyId removed
+    level: text('level').notNull(),
+    scopeId: text('scopeId'),
+    // ... rest unchanged
+}, (table) => ({
+    // storyIdIdx removed
+    levelIdx: index('lorebook_level_idx').on(table.level),
+    scopeIdIdx: index('lorebook_scope_id_idx').on(table.scopeId),
+    levelScopeIdx: index('lorebook_level_scope_idx').on(table.level, table.scopeId),
+    // ... other indices
+}));
+```
+
+**Generate migration:**
+```bash
+npm run db:generate
+```
+
+Drizzle generates table recreation SQL (SQLite's way of dropping columns).
+
+**Run migration:**
+```bash
+npm run db:migrate
+```
+
+**Benefits of two-phase:**
+- Safe rollback if issues found in Phase 1
+- Verify data transformation before committing
+- Drizzle handles versioning automatically
+- Users get migrations in sequence regardless of when they update
 
 ### Cascade Deletion (Covered in Routes Section)
 
@@ -578,14 +653,6 @@ Plan changes `storyId` to optional `scopeId`. **Must comprehensively update all 
 Promotion endpoint has no transaction wrapping. Possible race: promote to series → series deleted mid-operation → orphaned entry.
 
 Consider wrapping multi-step operations (series deletion, promotion) in transactions.
-
-### 5. Migration Complexity
-
-SQLite table recreation is error-prone. Consider safer two-step migration:
-1. Add `level`/`scopeId`, keep `storyId`, populate, verify
-2. Later: drop `storyId` via table recreation
-
-Allows rollback if issues found.
 
 ---
 
