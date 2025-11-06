@@ -12,10 +12,19 @@
         "plugin:prettier/recommended"
     ],
     "parser": "@typescript-eslint/parser",
-    "plugins": ["react", "react-hooks", "@typescript-eslint", "prettier"],
+    "plugins": ["react", "react-hooks", "react-hooks-addons", "@typescript-eslint", "prettier"],
     "rules": {
         "prettier/prettier": "warn",
-        "react/react-in-jsx-scope": "off"
+        "react/react-in-jsx-scope": "off",
+        "semi": [1, "always"],
+        "no-undef": "error",
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": "warn",
+        "react-hooks-addons/no-unused-deps": "warn",
+        "no-template-curly-in-string": "off",
+        "no-useless-escape": "warn",
+        "no-unused-vars": "warn",
+        "@typescript-eslint/no-unused-vars": "warn"
     },
     "settings": {
         "react": { "version": "detect" }
