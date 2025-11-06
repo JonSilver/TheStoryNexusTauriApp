@@ -25,7 +25,8 @@
         "no-useless-escape": "warn",
         "no-unused-vars": "warn",
         "@typescript-eslint/no-unused-vars": "warn",
-        "curly": ["warn", "multi-or-nest"]
+        "curly": ["warn", "multi-or-nest"],
+        "arrow-body-style": ["warn", "as-needed"]
     },
     "settings": {
         "react": { "version": "detect" }
