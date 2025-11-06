@@ -146,7 +146,6 @@ export interface Note extends BaseEntity {
 export type LorebookLevel = 'global' | 'series' | 'story';
 
 export interface LorebookEntry extends BaseEntity {
-    storyId: string; // Keep temporarily (Phase 1)
     level: LorebookLevel;
     scopeId?: string; // seriesId when level='series', storyId when level='story'
     name: string;

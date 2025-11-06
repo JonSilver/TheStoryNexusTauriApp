@@ -103,7 +103,6 @@ export const aiSettings = sqliteTable('aiSettings', {
 // Lorebook Entries table
 export const lorebookEntries = sqliteTable('lorebookEntries', {
     id: text('id').primaryKey(),
-    storyId: text('storyId').notNull().references(() => stories.id, { onDelete: 'cascade' }),
     level: text('level').notNull().default('story'),
     scopeId: text('scopeId'),
     name: text('name').notNull(),
@@ -115,7 +114,6 @@ export const lorebookEntries = sqliteTable('lorebookEntries', {
     createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
     isDemo: integer('isDemo', { mode: 'boolean' }),
 }, (table) => ({
-    storyIdIdx: index('lorebook_story_id_idx').on(table.storyId),
     levelIdx: index('lorebook_level_idx').on(table.level),
     scopeIdIdx: index('lorebook_scope_id_idx').on(table.scopeId),
     levelScopeIdx: index('lorebook_level_scope_idx').on(table.level, table.scopeId),

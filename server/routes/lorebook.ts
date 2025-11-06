@@ -98,17 +98,21 @@ export default createCrudRouter({
       res.json(entries.map(transform));
     }));
 
-    // Existing category and tag routes
+    // Existing category and tag routes (using level/scopeId now)
     router.get('/story/:storyId/category/:category', asyncHandler(async (req, res) => {
       const rows = await db.select().from(table).where(and(
-        eq(table.storyId, req.params.storyId),
+        eq(table.level, 'story'),
+        eq(table.scopeId, req.params.storyId),
         eq(table.category, req.params.category)
       ));
       res.json(rows.map(transform));
     }));
 
     router.get('/story/:storyId/tag/:tag', asyncHandler(async (req, res) => {
-      const rows = await db.select().from(table).where(eq(table.storyId, req.params.storyId));
+      const rows = await db.select().from(table).where(and(
+        eq(table.level, 'story'),
+        eq(table.scopeId, req.params.storyId)
+      ));
       const filtered = rows.map(transform).filter((entry: any) =>
         (entry.tags as string[]).includes(req.params.tag)
       );
@@ -133,7 +137,6 @@ export default createCrudRouter({
         id: req.body.id || crypto.randomUUID(),
         level: level || 'story',
         scopeId: scopeId || null,
-        storyId: level === 'story' ? scopeId : '', // Temporary for Phase 1 compatibility
         name,
         description,
         category,
@@ -166,13 +169,6 @@ export default createCrudRouter({
       }
 
       const { id, createdAt, ...updates } = req.body;
-
-      // Update storyId for Phase 1 compatibility if level is being set to 'story'
-      if (updates.level === 'story' && updates.scopeId) {
-        updates.storyId = updates.scopeId;
-      } else if (updates.level && updates.level !== 'story') {
-        updates.storyId = '';
-      }
 
       const result = await db.update(table).set(updates).where(eq(table.id, req.params.id)).returning();
       const updated = Array.isArray(result) ? result[0] : result;

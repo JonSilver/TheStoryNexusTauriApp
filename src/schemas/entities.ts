@@ -171,7 +171,6 @@ const relationshipSchema = z.object({
 });
 
 const lorebookEntrySchema = baseEntitySchema.extend({
-  storyId: z.string().uuid(), // Keep temporarily (Phase 1)
   level: lorebookLevelSchema,
   scopeId: z.string().uuid().optional(),
   name: z.string().min(1, 'Entry name is required'),
