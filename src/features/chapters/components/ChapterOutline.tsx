@@ -1,6 +1,6 @@
 import type { Chapter } from "@/types/story";
 import { Save } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "../../../components/ui/button";
 import { Textarea } from "../../../components/ui/textarea";
 import { useUpdateChapterMutation } from "../hooks/useChaptersQuery";
@@ -10,14 +10,8 @@ interface ChapterOutlineProps {
 }
 
 export function ChapterOutline({ chapter }: ChapterOutlineProps) {
-    const [outlineContent, setOutlineContent] = useState("");
+    const [outlineContent, setOutlineContent] = useState(chapter?.outline?.content || "");
     const updateChapterMutation = useUpdateChapterMutation();
-
-    // Load outline content when chapter changes
-    useEffect(() => {
-        if (chapter?.outline?.content) setOutlineContent(chapter.outline.content);
-        else setOutlineContent("");
-    }, [chapter]);
 
     const handleSave = async () => {
         if (!chapter) return;

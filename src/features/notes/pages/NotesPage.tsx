@@ -18,7 +18,7 @@ export default function NotesPage() {
         <div className="h-full flex">
             <NoteList storyId={storyId} selectedNoteId={selectedNoteId} onSelectNote={handleSelectNote} />
             <div className="flex-1">
-                <NoteEditor selectedNoteId={selectedNoteId} />
+                <NoteEditor key={selectedNoteId} selectedNoteId={selectedNoteId} />
             </div>
         </div>
     );

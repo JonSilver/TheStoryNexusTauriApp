@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { Chapter, ChapterNotes } from "@/types/story";
 import debounce from "lodash/debounce";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Editor from "react-simple-wysiwyg";
 import { useUpdateChapterMutation } from "../hooks/useChaptersQuery";
 
@@ -16,8 +16,8 @@ export function ChapterNotesEditor({ chapter, onClose: _onClose }: ChapterNotesE
     const [lastSavedContent, setLastSavedContent] = useState("");
 
     // Create a debounced save function
-    const debouncedSave = useCallback(
-        debounce(async (newContent: string) => {
+    const debouncedSave = useMemo(
+        () => debounce(async (newContent: string) => {
             if (!chapter) return;
 
             const notes: ChapterNotes = {
@@ -37,7 +37,7 @@ export function ChapterNotesEditor({ chapter, onClose: _onClose }: ChapterNotesE
                 }
             );
         }, 1000),
-        [chapter]
+        [chapter, updateChapterMutation]
     );
 
     useEffect(() => {

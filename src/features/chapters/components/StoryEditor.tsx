@@ -137,7 +137,7 @@ export function StoryEditor() {
                         <DrawerDescription>Outline and notes for your current chapter.</DrawerDescription>
                     </DrawerHeader>
                     <div className="px-4 overflow-y-auto max-h-[60vh]">
-                        {currentChapter && <ChapterOutline chapter={currentChapter} />}
+                        {currentChapter && <ChapterOutline key={currentChapter.id} chapter={currentChapter} />}
                     </div>
                     <DrawerFooter>
                         <DrawerClose asChild>

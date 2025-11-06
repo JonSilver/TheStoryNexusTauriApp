@@ -24,6 +24,16 @@ const getPromptTypeLabel = (type: Prompt["promptType"]) => {
     return labels[type];
 };
 
+// Define order for prompt types to display
+const promptTypeOrder: Prompt["promptType"][] = [
+    "scene_beat",
+    "continue_writing",
+    "selection_specific",
+    "gen_summary",
+    "brainstorm",
+    "other"
+];
+
 export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, filterByType }: PromptsListProps) {
     const { data: prompts = [], isLoading } = usePromptsQuery({ includeSystem: true });
     const deletePromptMutation = useDeletePromptMutation();
@@ -86,16 +96,6 @@ export function PromptsList({ onPromptSelect, selectedPromptId, onPromptDelete, 
         },
         {} as Record<Prompt["promptType"], Prompt[]>
     );
-
-    // Define order for prompt types to display
-    const promptTypeOrder: Prompt["promptType"][] = [
-        "scene_beat",
-        "continue_writing",
-        "selection_specific",
-        "gen_summary",
-        "brainstorm",
-        "other"
-    ];
 
     return (
         <div className="h-full overflow-auto">

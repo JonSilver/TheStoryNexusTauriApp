@@ -28,10 +28,6 @@ export const useModelSelection = ({ initialModels = [] }: UseModelSelectionProps
     const [selectedModels, setSelectedModels] = useState<AllowedModel[]>(initialModels);
     const [modelSearch, setModelSearch] = useState("");
 
-    useEffect(() => {
-        loadAvailableModels();
-    }, []);
-
     const loadAvailableModels = async () => {
         const [error, models] = await attemptPromise(async () => {
             await aiService.initialize();
@@ -44,6 +40,10 @@ export const useModelSelection = ({ initialModels = [] }: UseModelSelectionProps
         }
         setAvailableModels(models);
     };
+
+    useEffect(() => {
+        loadAvailableModels();
+    }, []);
 
     const modelGroups = useMemo(() => {
         const groups: ModelsByProvider = {

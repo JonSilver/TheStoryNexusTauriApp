@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
 import { useUpdateStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
 import { Story } from "@/types/story";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 interface EditStoryDialogProps {
     story: Story | null;
@@ -22,23 +22,13 @@ interface EditStoryDialogProps {
 }
 
 export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogProps) {
-    const [title, setTitle] = useState("");
-    const [author, setAuthor] = useState("");
-    const [language, setLanguage] = useState("English");
-    const [synopsis, setSynopsis] = useState("");
-    const [seriesId, setSeriesId] = useState<string | undefined>(undefined);
+    const [title, setTitle] = useState(story?.title || "");
+    const [author, setAuthor] = useState(story?.author || "");
+    const [language, setLanguage] = useState(story?.language || "English");
+    const [synopsis, setSynopsis] = useState(story?.synopsis || "");
+    const [seriesId, setSeriesId] = useState<string | undefined>(story?.seriesId);
     const updateStoryMutation = useUpdateStoryMutation();
     const { data: seriesList = [] } = useSeriesQuery();
-
-    useEffect(() => {
-        if (story) {
-            setTitle(story.title);
-            setAuthor(story.author);
-            setLanguage(story.language);
-            setSynopsis(story.synopsis || "");
-            setSeriesId(story.seriesId);
-        }
-    }, [story]);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();

@@ -17,16 +17,12 @@ export const usePromptSelection = (
 ): UsePromptSelectionReturn => {
     const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
     const [selectedModel, setSelectedModel] = useState<AllowedModel | null>(null);
-    const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
+    const [loadedChatId, setLoadedChatId] = useState<string | null>(null);
 
     const updateMutation = useUpdateBrainstormMutation();
 
     useEffect(() => {
-        setHasLoadedInitial(false);
-    }, [chatId]);
-
-    useEffect(() => {
-        if (!hasLoadedInitial && lastUsedPromptId && prompts.length > 0) {
+        if (loadedChatId !== chatId && lastUsedPromptId && prompts.length > 0) {
             const lastPrompt = prompts.find(p => p.id === lastUsedPromptId);
 
             if (lastPrompt && lastPrompt.allowedModels.length > 0) {
@@ -39,9 +35,9 @@ export const usePromptSelection = (
                 setSelectedPrompt(lastPrompt);
                 setSelectedModel(modelToUse);
             }
-            setHasLoadedInitial(true);
+            setLoadedChatId(chatId);
         }
-    }, [chatId, lastUsedPromptId, lastUsedModelId, prompts, hasLoadedInitial]);
+    }, [chatId, lastUsedPromptId, lastUsedModelId, prompts, loadedChatId]);
 
     const selectPrompt = useCallback(
         (prompt: Prompt, model: AllowedModel) => {
