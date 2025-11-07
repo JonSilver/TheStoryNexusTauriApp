@@ -27,7 +27,7 @@ RUN npm ci --production
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/server/db/migrations ./server/db/migrations
+COPY --from=builder /app/server/db/migrations ./dist/server/db/migrations
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
