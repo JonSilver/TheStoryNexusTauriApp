@@ -33,7 +33,7 @@ RUN npm ci --production
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/server/db/migrations ./dist/server/db/migrations
+COPY --from=builder /app/server/db/migrations ./dist/server/server/db/migrations
 
 # Debug: Check what was copied
 RUN ls -la dist/ && ls -la dist/server/ || echo "No server dir in production"
