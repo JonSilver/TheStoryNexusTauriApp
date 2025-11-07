@@ -6,7 +6,8 @@
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
         "types": ["node"],
-        "noEmit": false
+        "noEmit": false,
+        "allowImportingTsExtensions": false
     },
     "include": ["./**/*", "../src/data/systemPrompts.ts", "../src/types/story.ts"],
     "exclude": ["node_modules"]
