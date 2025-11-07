@@ -2,11 +2,21 @@
 
 A powerful AI-driven story writing web application built with Express, React, and TypeScript.
 
-Based on work started by Vijaykumar Bhattacharji; now extensively rewritten, reworked and reimagined.
-
 ## Overview
 
 The Story Nexus is a local-first web application designed for writers who want to leverage AI to enhance their creative writing process. It provides a comprehensive environment for creating, organizing, and developing stories with the assistance of AI-powered tools. Run it on your local machine or deploy it via Docker to access from any device on your network.
+
+## The Road to Here
+
+Based on work started by Vijaykumar Bhattacharji; now extensively rewritten, reworked and reimagined.
+
+I wasn't happy with the IndexedDB-based database because I couldn't share data between devices, and I wanted a more robust backend architecture. So I rewrote the backend using Express.js and SQLite with Drizzle ORM.
+
+I didn't like Tauri because I wanted a web app that could run on any device without installing a desktop app, and possibly from a Docker container on my home server. So it was goodbye Tauri.
+
+The code quality has been improved significantly too, and I'm gradually ripping out custom code in favor of established libraries and patterns.
+
+I'm also in the process of reworking the UI/UX to be more of a writer's workspace.
 
 ## Key Features
 
