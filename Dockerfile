@@ -17,6 +17,9 @@ COPY . .
 # Build application (frontend + backend)
 RUN npm run build
 
+# Debug: Check what was built
+RUN ls -la dist/ && ls -la dist/server/ || echo "No server dir"
+
 # Production stage
 FROM node:20-alpine
 
@@ -31,6 +34,9 @@ RUN npm ci --production
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server/db/migrations ./dist/server/db/migrations
+
+# Debug: Check what was copied
+RUN ls -la dist/ && ls -la dist/server/ || echo "No server dir in production"
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
