@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { AIChat } from "@/types/story";
+import { randomUUID } from "@/utils/crypto";
 import { ChevronLeft, ChevronRight, Edit2, Plus, Trash2 } from "lucide-react";
 import { useState, type MouseEvent } from "react";
 import {
@@ -33,7 +34,7 @@ export default function ChatList({ storyId, selectedChat, onSelectChat }: ChatLi
     const handleCreateNewChat = () => {
         createMutation.mutate(
             {
-                id: crypto.randomUUID(),
+                id: randomUUID(),
                 storyId,
                 title: `New Chat ${new Date().toLocaleString()}`,
                 messages: [],

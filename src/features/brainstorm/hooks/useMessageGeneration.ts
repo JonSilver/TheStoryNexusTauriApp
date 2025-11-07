@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import { attemptPromise } from "@jfdi/attempt";
 import { logger } from "@/utils/logger";
+import { randomUUID } from "@/utils/crypto";
 import { aiService } from "@/services/ai/AIService";
 import { useGenerateWithPrompt } from "@/features/ai/hooks/useGenerateWithPrompt";
 import { useCreateBrainstormMutation, useUpdateBrainstormMutation } from "./useBrainstormQuery";
@@ -59,7 +60,7 @@ export const useMessageGeneration = ({
                 }
 
                 const userMessage: ChatMessage = {
-                    id: crypto.randomUUID(),
+                    id: randomUUID(),
                     role: "user",
                     content: input.trim(),
                     timestamp: new Date()
@@ -74,7 +75,7 @@ export const useMessageGeneration = ({
                             userMessage.content.substring(0, 40) + (userMessage.content.length > 40 ? "..." : "");
 
                         const newChat = {
-                            id: crypto.randomUUID(),
+                            id: randomUUID(),
                             storyId,
                             title: newTitle,
                             messages: [userMessage],
@@ -103,7 +104,7 @@ export const useMessageGeneration = ({
                 }
 
                 const assistantMessage: ChatMessage = {
-                    id: crypto.randomUUID(),
+                    id: randomUUID(),
                     role: "assistant",
                     content: "",
                     timestamp: new Date()

@@ -2,6 +2,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { AIChat } from "@/types/story";
+import { randomUUID } from "@/utils/crypto";
 import { AlertCircle, MessageSquarePlus, RefreshCcw } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
@@ -40,7 +41,7 @@ export default function BrainstormPage() {
     const handleCreateNewChat = () => {
         createMutation.mutate(
             {
-                id: crypto.randomUUID(),
+                id: randomUUID(),
                 storyId,
                 title: `New Chat ${new Date().toLocaleString()}`,
                 messages: [],

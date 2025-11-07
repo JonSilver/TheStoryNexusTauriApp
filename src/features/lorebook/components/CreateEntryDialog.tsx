@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
 import { useStoryQuery } from "@/features/stories/hooks/useStoriesQuery";
 import type { LorebookEntry } from "@/types/story";
+import { randomUUID } from "@/utils/crypto";
 import { attemptPromise } from "@jfdi/attempt";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState, type FormEvent } from "react";
@@ -130,7 +131,7 @@ export function CreateEntryDialog({
                 });
             } else {
                 await createMutation.mutateAsync({
-                    id: crypto.randomUUID(),
+                    id: randomUUID(),
                     ...dataToSubmit,
                     storyId: storyId || selectedScopeId || ""
                 } as Omit<LorebookEntry, "createdAt">);

@@ -1,12 +1,13 @@
 import { scenebeatsApi } from "@/services/api/client";
 import { SceneBeat } from "@/types/story";
+import { randomUUID } from "@/utils/crypto";
 
 export const sceneBeatService = {
     /**
      * Create a new SceneBeat
      */
     async createSceneBeat(data: Omit<SceneBeat, "id" | "createdAt">): Promise<string> {
-        const sceneBeat = await scenebeatsApi.create({ id: crypto.randomUUID(), ...data });
+        const sceneBeat = await scenebeatsApi.create({ id: randomUUID(), ...data });
         return sceneBeat.id;
     },
 
