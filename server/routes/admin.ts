@@ -3,6 +3,7 @@ import express from "express";
 import multer from "multer";
 import { db, schema } from "../db/client.js";
 
+type ImportedSeries = typeof schema.series.$inferSelect;
 type ImportedStory = typeof schema.stories.$inferSelect;
 type ImportedChapter = typeof schema.chapters.$inferSelect;
 type ImportedPrompt = typeof schema.prompts.$inferSelect;
@@ -18,6 +19,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100
 router.get("/export", async (_, res) => {
     const [error, tables] = await attemptPromise(() =>
         Promise.all([
+            db.select().from(schema.series),
             db.select().from(schema.stories),
             db.select().from(schema.chapters),
             db.select().from(schema.prompts),
@@ -35,11 +37,11 @@ router.get("/export", async (_, res) => {
         return;
     }
 
-    const [stories, chapters, prompts, lorebookEntries, aiChats, sceneBeats, notes, aiSettings] = tables;
+    const [series, stories, chapters, prompts, lorebookEntries, aiChats, sceneBeats, notes, aiSettings] = tables;
     res.json({
         version: "1.0",
         exportedAt: new Date().toISOString(),
-        tables: { stories, chapters, prompts, lorebookEntries, aiChats, sceneBeats, notes, aiSettings }
+        tables: { series, stories, chapters, prompts, lorebookEntries, aiChats, sceneBeats, notes, aiSettings }
     });
 });
 
@@ -73,7 +75,16 @@ router.post("/import", upload.single("file"), async (req, res) => {
         await db.delete(schema.chapters);
         await db.delete(schema.prompts);
         await db.delete(schema.stories);
+        await db.delete(schema.series);
         await db.delete(schema.aiSettings);
+
+        if (tables.series?.length) {
+            await Promise.all(
+                tables.series.map((s: ImportedSeries) =>
+                    db.insert(schema.series).values({ ...s, createdAt: new Date(s.createdAt) })
+                )
+            );
+        }
 
         if (tables.stories?.length) {
             await Promise.all(
@@ -160,6 +171,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
     res.json({
         success: true,
         imported: {
+            series: tables.series?.length || 0,
             stories: tables.stories?.length || 0,
             chapters: tables.chapters?.length || 0,
             prompts: tables.prompts?.length || 0,
