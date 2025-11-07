@@ -49,4 +49,4 @@ ENV NODE_ENV=production
 ENV DATABASE_PATH=/app/data/storynexus.db
 
 # Start server
-CMD ["node", "dist/server/index.js"]
+CMD ["node", "dist/server/server/index.js"]
