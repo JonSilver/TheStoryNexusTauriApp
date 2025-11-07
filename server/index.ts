@@ -1,8 +1,13 @@
 import express from "express";
 import cors from "cors";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { runMigrations } from "./db/migrate.js";
 import { seedSystemPrompts } from "./db/seedSystemPrompts.js";
+
+// ES module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Import routes
 import storiesRouter from "./routes/stories.js";
