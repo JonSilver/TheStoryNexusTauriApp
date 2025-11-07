@@ -1,8 +1,13 @@
 import express from "express";
 import cors from "cors";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { runMigrations } from "./db/migrate.js";
 import { seedSystemPrompts } from "./db/seedSystemPrompts.js";
+
+// ES module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Import routes
 import storiesRouter from "./routes/stories.js";
@@ -52,21 +57,21 @@ app.use("/api/scenebeats", scenebeatsRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/admin", adminRouter);
 
-// Serve static files in production
-if (NODE_ENV === "production") {
-    const staticPath = path.join(__dirname, "../dist/client");
-    app.use(express.static(staticPath));
-
-    // Serve index.html for all non-API routes (SPA routing)
-    app.get("*", (_, res) => {
-        res.sendFile(path.join(staticPath, "index.html"));
-    });
-}
-
 // Health check
 app.get("/api/health", (_, res) => {
     res.json({ status: "ok" });
 });
+
+// Serve static files in production
+if (NODE_ENV === "production") {
+    const staticPath = path.join(__dirname, "../../client");
+    app.use(express.static(staticPath));
+
+    // Serve index.html for all non-API routes (SPA routing)
+    app.use((_req, res) => {
+        res.sendFile(path.join(staticPath, "index.html"));
+    });
+}
 
 // Error handling middleware
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
