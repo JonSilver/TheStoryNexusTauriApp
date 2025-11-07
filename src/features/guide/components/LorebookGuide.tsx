@@ -1,4 +1,3 @@
-import { Link } from "react-router";
 import {
     BookOpen,
     Tag,
@@ -16,10 +15,8 @@ import {
     EyeOff,
     Plus,
     Edit,
-    Trash2,
-    ExternalLink
+    Trash2
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
