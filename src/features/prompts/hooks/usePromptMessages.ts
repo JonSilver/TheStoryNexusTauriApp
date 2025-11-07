@@ -1,4 +1,5 @@
 import type { PromptMessage } from "@/types/story";
+import { randomUUID } from "@/utils/crypto";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
@@ -6,7 +7,7 @@ type MessageWithId = PromptMessage & { _id: string };
 
 const createMessageWithId = (message: PromptMessage): MessageWithId => ({
     ...message,
-    _id: crypto.randomUUID()
+    _id: randomUUID()
 });
 
 interface UsePromptMessagesProps {

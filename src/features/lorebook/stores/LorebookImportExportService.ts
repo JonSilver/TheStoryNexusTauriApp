@@ -1,6 +1,7 @@
 import { lorebookExportSchema, parseJSON } from "@/schemas/entities";
 import { lorebookApi } from "@/services/api/client";
 import type { LorebookEntry } from "@/types/story";
+import { randomUUID } from "@/utils/crypto";
 import { downloadJSON } from "@/utils/jsonExportUtils";
 import { logger } from "@/utils/logger";
 import { attemptPromise } from "@jfdi/attempt";
@@ -32,7 +33,7 @@ export class LorebookImportExportService {
         for (const entry of result.data.entries) {
             const newEntryData = {
                 ...entry,
-                id: crypto.randomUUID(),
+                id: randomUUID(),
                 level: "story" as const,
                 scopeId: targetStoryId
             };

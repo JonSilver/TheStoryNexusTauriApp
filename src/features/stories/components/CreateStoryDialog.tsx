@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
 import { useCreateStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
+import { randomUUID } from "@/utils/crypto";
 import { PlusCircle } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
@@ -30,7 +31,7 @@ export function CreateStoryDialog() {
         e.preventDefault();
         createStoryMutation.mutate(
             {
-                id: crypto.randomUUID(),
+                id: randomUUID(),
                 title,
                 author,
                 language,

@@ -3,6 +3,7 @@ import express from "express";
 import multer from "multer";
 import { db, schema } from "../db/client.js";
 
+type ImportedSeries = typeof schema.series.$inferSelect;
 type ImportedStory = typeof schema.stories.$inferSelect;
 type ImportedChapter = typeof schema.chapters.$inferSelect;
 type ImportedPrompt = typeof schema.prompts.$inferSelect;
@@ -18,6 +19,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100
 router.get("/export", async (_, res) => {
     const [error, tables] = await attemptPromise(() =>
         Promise.all([
+            db.select().from(schema.series),
             db.select().from(schema.stories),
             db.select().from(schema.chapters),
             db.select().from(schema.prompts),
@@ -35,11 +37,11 @@ router.get("/export", async (_, res) => {
         return;
     }
 
-    const [stories, chapters, prompts, lorebookEntries, aiChats, sceneBeats, notes, aiSettings] = tables;
+    const [series, stories, chapters, prompts, lorebookEntries, aiChats, sceneBeats, notes, aiSettings] = tables;
     res.json({
         version: "1.0",
         exportedAt: new Date().toISOString(),
-        tables: { stories, chapters, prompts, lorebookEntries, aiChats, sceneBeats, notes, aiSettings }
+        tables: { series, stories, chapters, prompts, lorebookEntries, aiChats, sceneBeats, notes, aiSettings }
     });
 });
 
@@ -49,23 +51,56 @@ router.post("/import", upload.single("file"), async (req, res) => {
         return;
     }
 
+    console.log("[Import] Starting database import...");
+
     const [parseError, jsonData] = await attemptPromise(() =>
         Promise.resolve(JSON.parse(req.file!.buffer.toString("utf-8")))
     );
 
     if (parseError) {
+        console.error("[Import] JSON parse failed:", parseError);
         res.status(400).json({ error: "Invalid JSON file", details: parseError.message });
         return;
     }
 
     if (!jsonData.version || !jsonData.tables) {
-        res.status(400).json({ error: "Invalid import file format" });
+        console.error("[Import] Invalid format - missing version or tables");
+        res.status(400).json({ error: "Invalid import file format - missing version or tables property" });
         return;
     }
 
     const { tables } = jsonData;
+    console.log("[Import] File parsed. Tables found:", Object.keys(tables));
 
-    const [error] = await attemptPromise(async () => {
+    const importTable = async (
+        tableName: string,
+        tableSchema: any,
+        data: any[] | undefined,
+        transform: (item: any) => any
+    ) => {
+        if (!data || data.length === 0) {
+            console.log(`[Import] Skipping ${tableName} - no data`);
+            return 0;
+        }
+
+        console.log(`[Import] Importing ${data.length} ${tableName} records...`);
+        const [error] = await attemptPromise(async () => {
+            for (const item of data) {
+                await db.insert(tableSchema).values(transform(item));
+            }
+        });
+
+        if (error) {
+            console.error(`[Import] Failed to import ${tableName}:`, error);
+            throw new Error(`Failed to import ${tableName}: ${error.message}`);
+        }
+
+        console.log(`[Import] ✓ Imported ${data.length} ${tableName}`);
+        return data.length;
+    };
+
+    const [error, counts] = await attemptPromise(async () => {
+        console.log("[Import] Clearing existing data...");
         await db.delete(schema.sceneBeats);
         await db.delete(schema.notes);
         await db.delete(schema.lorebookEntries);
@@ -73,102 +108,90 @@ router.post("/import", upload.single("file"), async (req, res) => {
         await db.delete(schema.chapters);
         await db.delete(schema.prompts);
         await db.delete(schema.stories);
+        await db.delete(schema.series);
         await db.delete(schema.aiSettings);
+        console.log("[Import] ✓ Cleared existing data");
 
-        if (tables.stories?.length) {
-            await Promise.all(
-                tables.stories.map((story: ImportedStory) =>
-                    db.insert(schema.stories).values({ ...story, createdAt: new Date(story.createdAt) })
-                )
-            );
-        }
-
-        if (tables.chapters?.length) {
-            await Promise.all(
-                tables.chapters.map((chapter: ImportedChapter) =>
-                    db.insert(schema.chapters).values({ ...chapter, createdAt: new Date(chapter.createdAt) })
-                )
-            );
-        }
-
-        if (tables.prompts?.length) {
-            await Promise.all(
-                tables.prompts.map((prompt: ImportedPrompt) =>
-                    db.insert(schema.prompts).values({ ...prompt, createdAt: new Date(prompt.createdAt) })
-                )
-            );
-        }
-
-        if (tables.lorebookEntries?.length) {
-            await Promise.all(
-                tables.lorebookEntries.map((entry: ImportedLorebookEntry) =>
-                    db.insert(schema.lorebookEntries).values({ ...entry, createdAt: new Date(entry.createdAt) })
-                )
-            );
-        }
-
-        if (tables.aiChats?.length) {
-            await Promise.all(
-                tables.aiChats.map((chat: ImportedAiChat) =>
-                    db.insert(schema.aiChats).values({
-                        ...chat,
-                        createdAt: new Date(chat.createdAt),
-                        updatedAt: chat.updatedAt ? new Date(chat.updatedAt) : undefined
-                    })
-                )
-            );
-        }
-
-        if (tables.sceneBeats?.length) {
-            await Promise.all(
-                tables.sceneBeats.map((sceneBeat: ImportedSceneBeat) =>
-                    db.insert(schema.sceneBeats).values({ ...sceneBeat, createdAt: new Date(sceneBeat.createdAt) })
-                )
-            );
-        }
-
-        if (tables.notes?.length) {
-            await Promise.all(
-                tables.notes.map((note: ImportedNote) =>
-                    db.insert(schema.notes).values({
-                        ...note,
-                        createdAt: new Date(note.createdAt),
-                        updatedAt: new Date(note.updatedAt)
-                    })
-                )
-            );
-        }
-
-        if (tables.aiSettings?.length) {
-            await Promise.all(
-                tables.aiSettings.map((setting: ImportedAiSetting) =>
-                    db.insert(schema.aiSettings).values({
-                        ...setting,
-                        createdAt: new Date(setting.createdAt)
-                    })
-                )
-            );
-        }
+        return {
+            series: await importTable(
+                "series",
+                schema.series,
+                tables.series,
+                (s: ImportedSeries) => ({ ...s, createdAt: new Date(s.createdAt) })
+            ),
+            stories: await importTable(
+                "stories",
+                schema.stories,
+                tables.stories,
+                (s: ImportedStory) => ({ ...s, createdAt: new Date(s.createdAt) })
+            ),
+            chapters: await importTable(
+                "chapters",
+                schema.chapters,
+                tables.chapters,
+                (c: ImportedChapter) => ({ ...c, createdAt: new Date(c.createdAt) })
+            ),
+            prompts: await importTable(
+                "prompts",
+                schema.prompts,
+                tables.prompts,
+                (p: ImportedPrompt) => ({ ...p, createdAt: new Date(p.createdAt) })
+            ),
+            lorebookEntries: await importTable(
+                "lorebookEntries",
+                schema.lorebookEntries,
+                tables.lorebookEntries,
+                (e: ImportedLorebookEntry) => ({ ...e, createdAt: new Date(e.createdAt) })
+            ),
+            aiChats: await importTable(
+                "aiChats",
+                schema.aiChats,
+                tables.aiChats,
+                (c: ImportedAiChat) => ({
+                    ...c,
+                    createdAt: new Date(c.createdAt),
+                    updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined
+                })
+            ),
+            sceneBeats: await importTable(
+                "sceneBeats",
+                schema.sceneBeats,
+                tables.sceneBeats,
+                (s: ImportedSceneBeat) => ({ ...s, createdAt: new Date(s.createdAt) })
+            ),
+            notes: await importTable(
+                "notes",
+                schema.notes,
+                tables.notes,
+                (n: ImportedNote) => ({
+                    ...n,
+                    createdAt: new Date(n.createdAt),
+                    updatedAt: new Date(n.updatedAt)
+                })
+            ),
+            aiSettings: await importTable(
+                "aiSettings",
+                schema.aiSettings,
+                tables.aiSettings,
+                (s: ImportedAiSetting) => ({
+                    ...s,
+                    createdAt: new Date(s.createdAt),
+                    lastModelsFetch: s.lastModelsFetch ? new Date(s.lastModelsFetch) : undefined
+                })
+            )
+        };
     });
 
     if (error) {
-        console.error("Error importing database:", error);
+        console.error("[Import] Import failed:", error);
         res.status(500).json({ error: "Failed to import database", details: error.message });
         return;
     }
 
+    console.log("[Import] ✓ Import completed successfully");
     res.json({
         success: true,
-        imported: {
-            stories: tables.stories?.length || 0,
-            chapters: tables.chapters?.length || 0,
-            prompts: tables.prompts?.length || 0,
-            lorebookEntries: tables.lorebookEntries?.length || 0,
-            aiChats: tables.aiChats?.length || 0,
-            sceneBeats: tables.sceneBeats?.length || 0,
-            notes: tables.notes?.length || 0,
-            aiSettings: tables.aiSettings?.length || 0
-        }
+        imported: counts
     });
 });
 
