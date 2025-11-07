@@ -1,5 +1,5 @@
-import { PromptParserConfig, PromptContext } from '@/types/story';
-import { chaptersApi } from '@/services/api/client';
+import { PromptParserConfig, PromptContext } from "@/types/story";
+import { chaptersApi } from "@/services/api/client";
 
 export class ContextBuilder {
     constructor() {}
@@ -16,7 +16,7 @@ export class ContextBuilder {
             currentChapter,
             matchedEntries: config.matchedEntries,
             povCharacter: config.povCharacter || currentChapter?.povCharacter,
-            povType: config.povType || currentChapter?.povType || 'Third Person Omniscient',
+            povType: config.povType || currentChapter?.povType || "Third Person Omniscient",
             additionalContext: config.additionalContext || {}
         };
     }

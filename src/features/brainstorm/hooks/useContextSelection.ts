@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import type { LorebookEntry } from '@/types/story';
+import { useState, useCallback } from "react";
+import type { LorebookEntry } from "@/types/story";
 
 interface UseContextSelectionReturn {
     includeFullContext: boolean;
@@ -41,17 +41,11 @@ export const useContextSelection = (): UseContextSelectionReturn => {
     }, []);
 
     const toggleSummary = useCallback((id: string) => {
-        setSelectedSummaries(prev =>
-            prev.includes(id)
-                ? prev.filter(summaryId => summaryId !== id)
-                : [...prev, id]
-        );
+        setSelectedSummaries(prev => (prev.includes(id) ? prev.filter(summaryId => summaryId !== id) : [...prev, id]));
     }, []);
 
     const addItem = useCallback((item: LorebookEntry) => {
-        setSelectedItems(prev =>
-            prev.some(i => i.id === item.id) ? prev : [...prev, item]
-        );
+        setSelectedItems(prev => (prev.some(i => i.id === item.id) ? prev : [...prev, item]));
     }, []);
 
     const removeItem = useCallback((id: string) => {
@@ -59,9 +53,7 @@ export const useContextSelection = (): UseContextSelectionReturn => {
     }, []);
 
     const addChapterContent = useCallback((id: string) => {
-        setSelectedChapterContent(prev =>
-            prev.includes(id) ? prev : [...prev, id]
-        );
+        setSelectedChapterContent(prev => (prev.includes(id) ? prev : [...prev, id]));
     }, []);
 
     const removeChapterContent = useCallback((id: string) => {
@@ -87,6 +79,6 @@ export const useContextSelection = (): UseContextSelectionReturn => {
         removeItem,
         addChapterContent,
         removeChapterContent,
-        clearSelections,
+        clearSelections
     };
 };

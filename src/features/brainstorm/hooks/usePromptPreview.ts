@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
-import { usePromptParser } from '@/features/prompts/hooks/usePromptParser';
-import { attemptPromise } from '@jfdi/attempt';
-import { toast } from 'react-toastify';
-import is from '@sindresorhus/is';
-import type { PromptMessage, PromptParserConfig } from '@/types/story';
+import { useState, useCallback } from "react";
+import { usePromptParser } from "@/features/prompts/hooks/usePromptParser";
+import { attemptPromise } from "@jfdi/attempt";
+import { toast } from "react-toastify";
+import is from "@sindresorhus/is";
+import type { PromptMessage, PromptParserConfig } from "@/types/story";
 
 interface UsePromptPreviewReturn {
     showPreview: boolean;
@@ -22,34 +22,35 @@ export const usePromptPreview = (): UsePromptPreviewReturn => {
 
     const { parsePrompt } = usePromptParser();
 
-    const openPreview = useCallback(async (config: PromptParserConfig) => {
-        setPreviewLoading(true);
-        setPreviewError(null);
-        setPreviewMessages(undefined);
+    const openPreview = useCallback(
+        async (config: PromptParserConfig) => {
+            setPreviewLoading(true);
+            setPreviewError(null);
+            setPreviewMessages(undefined);
 
-        const [error, parsedPrompt] = await attemptPromise(async () =>
-            parsePrompt(config)
-        );
+            const [error, parsedPrompt] = await attemptPromise(async () => parsePrompt(config));
 
-        if (error) {
-            const errorMessage = is.error(error) ? error.message : String(error);
-            setPreviewError(errorMessage);
+            if (error) {
+                const errorMessage = is.error(error) ? error.message : String(error);
+                setPreviewError(errorMessage);
+                setPreviewLoading(false);
+                toast.error(`Error previewing prompt: ${errorMessage}`);
+                return;
+            }
+
+            if (parsedPrompt.error) {
+                setPreviewError(parsedPrompt.error);
+                setPreviewLoading(false);
+                toast.error(`Error parsing prompt: ${parsedPrompt.error}`);
+                return;
+            }
+
+            setPreviewMessages(parsedPrompt.messages);
+            setShowPreview(true);
             setPreviewLoading(false);
-            toast.error(`Error previewing prompt: ${errorMessage}`);
-            return;
-        }
-
-        if (parsedPrompt.error) {
-            setPreviewError(parsedPrompt.error);
-            setPreviewLoading(false);
-            toast.error(`Error parsing prompt: ${parsedPrompt.error}`);
-            return;
-        }
-
-        setPreviewMessages(parsedPrompt.messages);
-        setShowPreview(true);
-        setPreviewLoading(false);
-    }, [parsePrompt]);
+        },
+        [parsePrompt]
+    );
 
     const closePreview = useCallback(() => {
         setShowPreview(false);
@@ -61,6 +62,6 @@ export const usePromptPreview = (): UsePromptPreviewReturn => {
         previewLoading,
         previewError,
         openPreview,
-        closePreview,
+        closePreview
     };
 };

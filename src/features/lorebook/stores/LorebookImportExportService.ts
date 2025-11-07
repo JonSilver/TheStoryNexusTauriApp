@@ -7,7 +7,7 @@ import { attemptPromise } from "@jfdi/attempt";
 
 export class LorebookImportExportService {
     static exportEntries(entries: LorebookEntry[], storyId: string): void {
-        const entriesToExport = entries.filter(entry => entry.level === 'story' && entry.scopeId === storyId);
+        const entriesToExport = entries.filter(entry => entry.level === "story" && entry.scopeId === storyId);
 
         const exportData = {
             version: "1.0",
@@ -33,7 +33,7 @@ export class LorebookImportExportService {
             const newEntryData = {
                 ...entry,
                 id: crypto.randomUUID(),
-                level: 'story' as const,
+                level: "story" as const,
                 scopeId: targetStoryId
             };
 

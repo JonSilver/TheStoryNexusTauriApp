@@ -126,7 +126,12 @@ export default function Home() {
                     </div>
                 )}
 
-                <EditStoryDialog key={editingStory?.id} story={editingStory} open={editDialogOpen} onOpenChange={setEditDialogOpen} />
+                <EditStoryDialog
+                    key={editingStory?.id}
+                    story={editingStory}
+                    open={editDialogOpen}
+                    onOpenChange={setEditDialogOpen}
+                />
             </div>
         </div>
     );

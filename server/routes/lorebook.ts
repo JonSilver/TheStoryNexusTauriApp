@@ -10,7 +10,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 
 type LorebookRow = typeof schema.lorebookEntries.$inferSelect;
 
-interface TransformedLorebookEntry extends Omit<LorebookRow, 'tags' | 'metadata'> {
+interface TransformedLorebookEntry extends Omit<LorebookRow, "tags" | "metadata"> {
     tags: unknown;
     metadata: unknown;
 }
@@ -124,7 +124,7 @@ export default createCrudRouter({
                     .where(and(eq(table.level, "story"), eq(table.scopeId, req.params.storyId)));
                 const filtered = rows
                     .map(transform)
-                    .filter((entry) => Array.isArray(entry.tags) && entry.tags.includes(req.params.tag));
+                    .filter(entry => Array.isArray(entry.tags) && entry.tags.includes(req.params.tag));
                 res.json(filtered);
             })
         );

@@ -5,7 +5,7 @@ import { parseJson } from "../lib/json.js";
 
 type PromptRow = typeof schema.prompts.$inferSelect;
 
-interface TransformedPrompt extends Omit<PromptRow, 'messages' | 'allowedModels'> {
+interface TransformedPrompt extends Omit<PromptRow, "messages" | "allowedModels"> {
     messages: unknown;
     allowedModels: unknown;
 }

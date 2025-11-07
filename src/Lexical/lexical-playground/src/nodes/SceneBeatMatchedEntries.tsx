@@ -1,20 +1,11 @@
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { ChevronRight, Edit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
-import { CreateEntryDialog } from '@/features/lorebook/components/CreateEntryDialog';
-import { useStoryContext } from '@/features/stories/context/StoryContext';
-import { LorebookEntry } from '@/types/story';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronRight, Edit } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { CreateEntryDialog } from "@/features/lorebook/components/CreateEntryDialog";
+import { useStoryContext } from "@/features/stories/context/StoryContext";
+import { LorebookEntry } from "@/types/story";
 
 interface SceneBeatMatchedEntriesProps {
     open: boolean;
@@ -22,11 +13,7 @@ interface SceneBeatMatchedEntriesProps {
     matchedEntries: Set<LorebookEntry>;
 }
 
-export function SceneBeatMatchedEntries({
-    open,
-    onOpenChange,
-    matchedEntries
-}: SceneBeatMatchedEntriesProps) {
+export function SceneBeatMatchedEntries({ open, onOpenChange, matchedEntries }: SceneBeatMatchedEntriesProps) {
     const { currentStoryId } = useStoryContext();
     const [openStates, setOpenStates] = useState<Record<string, boolean>>({});
     const [editingEntry, setEditingEntry] = useState<LorebookEntry | null>(null);
@@ -40,14 +27,14 @@ export function SceneBeatMatchedEntries({
     const handleEdit = (entry: LorebookEntry) => {
         setEditingEntry({
             ...entry,
-            level: entry.level || 'story',
-            scopeId: entry.level === 'story' ? currentStoryId : entry.scopeId,
+            level: entry.level || "story",
+            scopeId: entry.level === "story" ? currentStoryId : entry.scopeId,
             metadata: {
-                importance: entry.metadata?.importance || 'minor',
-                status: entry.metadata?.status || 'active',
-                type: entry.metadata?.type || '',
+                importance: entry.metadata?.importance || "minor",
+                status: entry.metadata?.status || "active",
+                type: entry.metadata?.type || "",
                 relationships: entry.metadata?.relationships || [],
-                customFields: entry.metadata?.customFields || {},
+                customFields: entry.metadata?.customFields || {}
             }
         });
     };
@@ -59,11 +46,11 @@ export function SceneBeatMatchedEntries({
                     <DialogTitle>Scene Beat Matched Entries</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-2">
-                    {Array.from(matchedEntries).map((entry) => (
+                    {Array.from(matchedEntries).map(entry => (
                         <Collapsible
                             key={entry.id}
                             open={openStates[entry.id]}
-                            onOpenChange={(isOpen) => handleOpenChange(entry.id, isOpen)}
+                            onOpenChange={isOpen => handleOpenChange(entry.id, isOpen)}
                         >
                             <div className="flex items-center gap-2">
                                 <CollapsibleTrigger className="flex flex-1 items-center gap-2 w-full text-left p-2 hover:bg-accent rounded-lg">
@@ -74,7 +61,7 @@ export function SceneBeatMatchedEntries({
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        onClick={(e) => {
+                                        onClick={e => {
                                             e.stopPropagation();
                                             handleEdit(entry);
                                         }}
@@ -87,7 +74,7 @@ export function SceneBeatMatchedEntries({
                             <CollapsibleContent className="p-2 text-sm space-y-2">
                                 <div>
                                     <span className="font-semibold">Tags: </span>
-                                    {entry.tags.join(', ')}
+                                    {entry.tags.join(", ")}
                                 </div>
                                 <div>
                                     <span className="font-semibold">Description: </span>
@@ -101,7 +88,7 @@ export function SceneBeatMatchedEntries({
                 {editingEntry && (
                     <CreateEntryDialog
                         open={!!editingEntry}
-                        onOpenChange={(open) => !open && setEditingEntry(null)}
+                        onOpenChange={open => !open && setEditingEntry(null)}
                         storyId={currentStoryId}
                         entry={editingEntry}
                     />
@@ -109,4 +96,4 @@ export function SceneBeatMatchedEntries({
             </DialogContent>
         </Dialog>
     );
-} 
+}

@@ -1,8 +1,8 @@
-import { AIModel, AIProvider, PromptMessage } from '@/types/story';
-import { IAIProvider } from './IAIProvider';
-import { attemptPromise } from '@jfdi/attempt';
-import { API_URLS } from '@/constants/urls';
-import { logger } from '@/utils/logger';
+import { AIModel, AIProvider, PromptMessage } from "@/types/story";
+import { IAIProvider } from "./IAIProvider";
+import { attemptPromise } from "@jfdi/attempt";
+import { API_URLS } from "@/constants/urls";
+import { logger } from "@/utils/logger";
 
 export class LocalAIProvider implements IAIProvider {
     private apiUrl: string;
@@ -20,43 +20,47 @@ export class LocalAIProvider implements IAIProvider {
     async fetchModels(): Promise<AIModel[]> {
         logger.info(`[LocalAIProvider] Fetching models from: ${this.apiUrl}`);
 
-        const [fetchError, response] = await attemptPromise(() =>
-            fetch(`${this.apiUrl}/models`)
-        );
+        const [fetchError, response] = await attemptPromise(() => fetch(`${this.apiUrl}/models`));
 
         if (fetchError || !response) {
-            logger.warn('[LocalAIProvider] Failed to fetch models:', fetchError);
-            return [{
-                id: 'local',
-                name: 'Local Model',
-                provider: 'local',
-                contextLength: 16384,
-                enabled: true
-            }];
+            logger.warn("[LocalAIProvider] Failed to fetch models:", fetchError);
+            return [
+                {
+                    id: "local",
+                    name: "Local Model",
+                    provider: "local",
+                    contextLength: 16384,
+                    enabled: true
+                }
+            ];
         }
 
         if (!response.ok) {
             logger.error(`[LocalAIProvider] Failed to fetch models: ${response.status}`);
-            return [{
-                id: 'local',
-                name: 'Local Model',
-                provider: 'local',
-                contextLength: 16384,
-                enabled: true
-            }];
+            return [
+                {
+                    id: "local",
+                    name: "Local Model",
+                    provider: "local",
+                    contextLength: 16384,
+                    enabled: true
+                }
+            ];
         }
 
         const [jsonError, result] = await attemptPromise(() => response.json());
 
         if (jsonError || !result) {
-            logger.warn('[LocalAIProvider] Failed to parse models:', jsonError);
-            return [{
-                id: 'local',
-                name: 'Local Model',
-                provider: 'local',
-                contextLength: 16384,
-                enabled: true
-            }];
+            logger.warn("[LocalAIProvider] Failed to parse models:", jsonError);
+            return [
+                {
+                    id: "local",
+                    name: "Local Model",
+                    provider: "local",
+                    contextLength: 16384,
+                    enabled: true
+                }
+            ];
         }
 
         logger.info(`[LocalAIProvider] Received ${result.data.length} models`);
@@ -64,7 +68,7 @@ export class LocalAIProvider implements IAIProvider {
         const models = result.data.map((model: { id: string }) => ({
             id: `local/${model.id}`,
             name: model.id,
-            provider: 'local' as AIProvider,
+            provider: "local" as AIProvider,
             contextLength: 16384,
             enabled: true
         }));
@@ -79,11 +83,11 @@ export class LocalAIProvider implements IAIProvider {
         maxTokens: number,
         signal?: AbortSignal
     ): Promise<Response> {
-        const modelId = model.replace('local/', '');
+        const modelId = model.replace("local/", "");
 
         return await fetch(`${this.apiUrl}/chat/completions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 model: modelId,
                 messages,

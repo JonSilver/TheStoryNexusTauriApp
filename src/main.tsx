@@ -30,57 +30,54 @@ const SeriesDashboard = lazy(() => import("./features/series/pages/SeriesDashboa
 
 // Loading fallback component
 const PageLoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-pulse text-muted-foreground">Loading...</div>
-  </div>
+    <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+    </div>
 );
 // biome-ignore lint/style/noNonNullAssertion: <explanation>
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <QueryProvider>
-        <ThemeProvider defaultTheme="dark" storageKey="app-theme">
-          <BrowserRouter>
-            <StoryProvider>
-              <Suspense fallback={<PageLoadingFallback />}>
-              <Routes>
-                {/* Landing page */}
-                <Route path="/" element={<App />} />
+    <React.StrictMode>
+        <ErrorBoundary>
+            <QueryProvider>
+                <ThemeProvider defaultTheme="dark" storageKey="app-theme">
+                    <BrowserRouter>
+                        <StoryProvider>
+                            <Suspense fallback={<PageLoadingFallback />}>
+                                <Routes>
+                                    {/* Landing page */}
+                                    <Route path="/" element={<App />} />
 
-                {/* Routes with MainLayout */}
-                <Route element={<MainLayout />}>
-                  {/* Stories section */}
-                  <Route path="/stories" element={<Home />} />
-                  {/* Series section */}
-                  <Route path="/series" element={<SeriesListPage />} />
-                  <Route path="/series/:seriesId" element={<SeriesDashboard />} />
-                  <Route path="/series/:seriesId/lorebook" element={<LorebookPage />} />
-                  {/* AI Settings */}
-                  <Route path="/ai-settings" element={<AISettingsPage />} />
-                  {/* Guide */}
-                  <Route path="/guide" element={<GuidePage />} />
-                </Route>
+                                    {/* Routes with MainLayout */}
+                                    <Route element={<MainLayout />}>
+                                        {/* Stories section */}
+                                        <Route path="/stories" element={<Home />} />
+                                        {/* Series section */}
+                                        <Route path="/series" element={<SeriesListPage />} />
+                                        <Route path="/series/:seriesId" element={<SeriesDashboard />} />
+                                        <Route path="/series/:seriesId/lorebook" element={<LorebookPage />} />
+                                        {/* AI Settings */}
+                                        <Route path="/ai-settings" element={<AISettingsPage />} />
+                                        {/* Guide */}
+                                        <Route path="/guide" element={<GuidePage />} />
+                                    </Route>
 
-                {/* Story Dashboard */}
-                <Route path="/dashboard/:storyId" element={<StoryDashboard />}>
-                  <Route path="chapters" element={<Chapters />} />
-                  <Route
-                    path="chapters/:chapterId"
-                    element={<ChapterEditorPage />}
-                  />
-                  <Route path="prompts" element={<PromptsPage />} />
-                  <Route path="lorebook" element={<LorebookPage />} />
-                  <Route path="brainstorm" element={<BrainstormPage />} />
-                  <Route path="notes" element={<NotesPage />} />
-                </Route>
-              </Routes>
-            </Suspense>
-            </StoryProvider>
-            <ToastContainer />
-          </BrowserRouter>
-        </ThemeProvider>
-      </QueryProvider>
-    </ErrorBoundary>
-  </React.StrictMode>
+                                    {/* Story Dashboard */}
+                                    <Route path="/dashboard/:storyId" element={<StoryDashboard />}>
+                                        <Route path="chapters" element={<Chapters />} />
+                                        <Route path="chapters/:chapterId" element={<ChapterEditorPage />} />
+                                        <Route path="prompts" element={<PromptsPage />} />
+                                        <Route path="lorebook" element={<LorebookPage />} />
+                                        <Route path="brainstorm" element={<BrainstormPage />} />
+                                        <Route path="notes" element={<NotesPage />} />
+                                    </Route>
+                                </Routes>
+                            </Suspense>
+                        </StoryProvider>
+                        <ToastContainer />
+                    </BrowserRouter>
+                </ThemeProvider>
+            </QueryProvider>
+        </ErrorBoundary>
+    </React.StrictMode>
 );

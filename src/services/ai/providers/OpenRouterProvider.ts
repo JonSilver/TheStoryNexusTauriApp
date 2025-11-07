@@ -1,10 +1,10 @@
-import OpenAI from 'openai';
-import { AIModel, AIProvider, PromptMessage } from '@/types/story';
-import { IAIProvider } from './IAIProvider';
-import { attemptPromise } from '@jfdi/attempt';
-import { API_URLS } from '@/constants/urls';
-import { wrapOpenAIStream } from '../streamUtils';
-import { logger } from '@/utils/logger';
+import OpenAI from "openai";
+import { AIModel, AIProvider, PromptMessage } from "@/types/story";
+import { IAIProvider } from "./IAIProvider";
+import { attemptPromise } from "@jfdi/attempt";
+import { API_URLS } from "@/constants/urls";
+import { wrapOpenAIStream } from "../streamUtils";
+import { logger } from "@/utils/logger";
 
 interface OpenRouterModelResponse {
     id: string;
@@ -31,47 +31,43 @@ export class OpenRouterProvider implements IAIProvider {
             apiKey,
             dangerouslyAllowBrowser: true,
             defaultHeaders: {
-                'HTTP-Referer': API_URLS.DEV_REFERER,
-                'X-Title': 'Story Forge Desktop',
+                "HTTP-Referer": API_URLS.DEV_REFERER,
+                "X-Title": "Story Forge Desktop"
             }
         });
     }
 
     async fetchModels(): Promise<AIModel[]> {
         if (!this.client) {
-            logger.warn('[OpenRouterProvider] Client not initialized');
+            logger.warn("[OpenRouterProvider] Client not initialized");
             return [];
         }
 
-        logger.info('[OpenRouterProvider] Fetching models');
+        logger.info("[OpenRouterProvider] Fetching models");
 
-        const [fetchError, response] = await attemptPromise(() =>
-            fetch(`${API_URLS.OPENROUTER_BASE}/models`)
-        );
+        const [fetchError, response] = await attemptPromise(() => fetch(`${API_URLS.OPENROUTER_BASE}/models`));
 
         if (fetchError || !response) {
-            logger.error('[OpenRouterProvider] Error fetching models:', fetchError);
+            logger.error("[OpenRouterProvider] Error fetching models:", fetchError);
             return [];
         }
 
         if (!response.ok) {
-            logger.error('[OpenRouterProvider] Failed to fetch OpenRouter models');
+            logger.error("[OpenRouterProvider] Failed to fetch OpenRouter models");
             return [];
         }
 
-        const [jsonError, result] = await attemptPromise<OpenRouterModelsResponse>(() =>
-            response.json()
-        );
+        const [jsonError, result] = await attemptPromise<OpenRouterModelsResponse>(() => response.json());
 
         if (jsonError || !result) {
-            logger.error('[OpenRouterProvider] Error parsing models:', jsonError);
+            logger.error("[OpenRouterProvider] Error parsing models:", jsonError);
             return [];
         }
 
         const models: AIModel[] = result.data.map((model: OpenRouterModelResponse) => ({
             id: model.id,
             name: model.name || model.id,
-            provider: 'openrouter' as AIProvider,
+            provider: "openrouter" as AIProvider,
             contextLength: model.context_length || 4096,
             enabled: true
         }));
@@ -88,16 +84,19 @@ export class OpenRouterProvider implements IAIProvider {
         signal?: AbortSignal
     ): Promise<Response> {
         if (!this.client) {
-            throw new Error('OpenRouter client not initialized');
+            throw new Error("OpenRouter client not initialized");
         }
 
-        const stream = await this.client.chat.completions.create({
-            model,
-            messages: messages.map(m => ({ role: m.role, content: m.content })),
-            temperature,
-            max_tokens: maxTokens,
-            stream: true
-        }, { signal });
+        const stream = await this.client.chat.completions.create(
+            {
+                model,
+                messages: messages.map(m => ({ role: m.role, content: m.content })),
+                temperature,
+                max_tokens: maxTokens,
+                stream: true
+            },
+            { signal }
+        );
 
         return wrapOpenAIStream(stream);
     }

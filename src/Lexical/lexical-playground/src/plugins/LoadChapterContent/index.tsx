@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { useChapterQuery } from '@/features/chapters/hooks/useChaptersQuery';
-import { useStoryContext } from '@/features/stories/context/StoryContext';
-import { attempt } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
+import { useEffect, useState } from "react";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { useChapterQuery } from "@/features/chapters/hooks/useChaptersQuery";
+import { useStoryContext } from "@/features/stories/context/StoryContext";
+import { attempt } from "@jfdi/attempt";
+import { logger } from "@/utils/logger";
 
 export function LoadChapterContentPlugin(): null {
     const [editor] = useLexicalComposerContext();
     const { currentChapterId } = useStoryContext();
-    const { data: currentChapter } = useChapterQuery(currentChapterId || '');
+    const { data: currentChapter } = useChapterQuery(currentChapterId || "");
     const [hasLoaded, setHasLoaded] = useState(false);
 
     // Reset hasLoaded when chapter changes
@@ -30,15 +30,19 @@ export function LoadChapterContentPlugin(): null {
                     setHasLoaded(true);
                 });
                 if (error) {
-                    logger.error('LoadChapterContent - Failed to load content:', error);
+                    logger.error("LoadChapterContent - Failed to load content:", error);
 
                     // Only in case of error, try to create an empty editor state
                     const [recoveryError] = attempt(() => {
-                        editor.setEditorState(editor.parseEditorState('{"root":{"children":[{"children":[],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1}],"direction":"ltr","format":"","indent":0,"type":"root","version":1}}'));
+                        editor.setEditorState(
+                            editor.parseEditorState(
+                                '{"root":{"children":[{"children":[],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1}],"direction":"ltr","format":"","indent":0,"type":"root","version":1}}'
+                            )
+                        );
                         setHasLoaded(true);
                     });
                     if (recoveryError) {
-                        logger.error('LoadChapterContent - Recovery failed:', recoveryError);
+                        logger.error("LoadChapterContent - Recovery failed:", recoveryError);
                     }
                 }
             });

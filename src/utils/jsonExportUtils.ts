@@ -4,10 +4,10 @@
  */
 
 export interface ExportData {
-  version: string;
-  type: string;
-  exportedAt?: string;
-  [key: string]: unknown;
+    version: string;
+    type: string;
+    exportedAt?: string;
+    [key: string]: unknown;
 }
 
 /**
@@ -25,25 +25,22 @@ export interface ExportData {
  * }, 'prompts-export-2025-01-15.json');
  * ```
  */
-export const downloadJSON = (
-  data: ExportData,
-  filename: string
-): void => {
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+export const downloadJSON = (data: ExportData, filename: string): void => {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
 
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
 
-  // Temporarily add to DOM for Firefox compatibility
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+    // Temporarily add to DOM for Firefox compatibility
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 
-  // Clean up the blob URL
-  URL.revokeObjectURL(url);
+    // Clean up the blob URL
+    URL.revokeObjectURL(url);
 };
 
 /**
@@ -62,17 +59,14 @@ export const downloadJSON = (
  * }, 'prompts-export-2025-01-15.json');
  * ```
  */
-export const downloadJSONDataURI = (
-  data: ExportData,
-  filename: string
-): void => {
-  const dataStr = JSON.stringify(data, null, 2);
-  const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
+export const downloadJSONDataURI = (data: ExportData, filename: string): void => {
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
 
-  const a = document.createElement('a');
-  a.href = dataUri;
-  a.download = filename;
-  a.click();
+    const a = document.createElement("a");
+    a.href = dataUri;
+    a.download = filename;
+    a.click();
 };
 
 /**
@@ -88,10 +82,7 @@ export const downloadJSONDataURI = (
  * generateExportFilename('lorebook', 'txt'); // 'lorebook-2025-01-15.txt'
  * ```
  */
-export const generateExportFilename = (
-  prefix: string,
-  extension = 'json'
-): string => {
-  const timestamp = new Date().toISOString().slice(0, 10);
-  return `${prefix}-${timestamp}.${extension}`;
+export const generateExportFilename = (prefix: string, extension = "json"): string => {
+    const timestamp = new Date().toISOString().slice(0, 10);
+    return `${prefix}-${timestamp}.${extension}`;
 };

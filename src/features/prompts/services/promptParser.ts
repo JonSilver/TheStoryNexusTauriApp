@@ -1,14 +1,8 @@
-import {
-    PromptMessage,
-    PromptParserConfig,
-    ParsedPrompt,
-    PromptContext,
-    LorebookEntry,
-} from '@/types/story';
-import is from '@sindresorhus/is';
-import { ContextBuilder } from './ContextBuilder';
-import { attemptPromise } from '@jfdi/attempt';
-import { promptsApi } from '@/services/api/client';
+import { PromptMessage, PromptParserConfig, ParsedPrompt, PromptContext, LorebookEntry } from "@/types/story";
+import is from "@sindresorhus/is";
+import { ContextBuilder } from "./ContextBuilder";
+import { attemptPromise } from "@jfdi/attempt";
+import { promptsApi } from "@/services/api/client";
 import {
     VariableResolverRegistry,
     LorebookFormatter,
@@ -36,9 +30,9 @@ import {
     SceneBeatResolver,
     ChatHistoryResolver,
     UserInputResolver,
-    BrainstormContextResolver,
-} from './resolvers';
-import { logger } from '@/utils/logger';
+    BrainstormContextResolver
+} from "./resolvers";
+import { logger } from "@/utils/logger";
 
 export interface PromptParserDependencies {
     entries: LorebookEntry[];
@@ -62,59 +56,55 @@ export class PromptParser {
         const { entries } = this.dependencies;
 
         // Chapter resolvers
-        registry.register('summaries', new ChapterSummariesResolver());
-        registry.register('previous_words', new PreviousWordsResolver());
-        registry.register('chapter_content', new ChapterContentResolver());
-        registry.register('chapter_outline', new ChapterOutlineResolver());
-        registry.register('chapter_data', new ChapterDataResolver());
+        registry.register("summaries", new ChapterSummariesResolver());
+        registry.register("previous_words", new PreviousWordsResolver());
+        registry.register("chapter_content", new ChapterContentResolver());
+        registry.register("chapter_outline", new ChapterOutlineResolver());
+        registry.register("chapter_data", new ChapterDataResolver());
 
         // Lorebook resolvers - pass entries as dependency
-        registry.register('matched_entries_chapter', new MatchedEntriesChapterResolver(this.formatter));
-        registry.register('lorebook_chapter_matched_entries', new MatchedEntriesChapterResolver(this.formatter));
-        registry.register('lorebook_data', new MatchedEntriesChapterResolver(this.formatter));
-        registry.register('lorebook_scenebeat_matched_entries', new SceneBeatMatchedEntriesResolver(this.formatter));
-        registry.register('all_entries', new AllEntriesResolver(this.formatter, entries));
-        registry.register('character', new CharacterResolver(this.formatter, entries));
-        registry.register('all_characters', new AllCharactersResolver(this.formatter, entries));
-        registry.register('all_locations', new AllLocationsResolver(this.formatter, entries));
-        registry.register('all_items', new AllItemsResolver(this.formatter, entries));
-        registry.register('all_events', new AllEventsResolver(this.formatter, entries));
-        registry.register('all_notes', new AllNotesResolver(this.formatter, entries));
-        registry.register('all_synopsis', new AllSynopsisResolver(this.formatter, entries));
-        registry.register('all_starting_scenarios', new AllStartingScenariosResolver(this.formatter, entries));
-        registry.register('all_timelines', new AllTimelinesResolver(this.formatter, entries));
-        registry.register('scenebeat_context', new SceneBeatContextResolver(this.formatter, entries));
+        registry.register("matched_entries_chapter", new MatchedEntriesChapterResolver(this.formatter));
+        registry.register("lorebook_chapter_matched_entries", new MatchedEntriesChapterResolver(this.formatter));
+        registry.register("lorebook_data", new MatchedEntriesChapterResolver(this.formatter));
+        registry.register("lorebook_scenebeat_matched_entries", new SceneBeatMatchedEntriesResolver(this.formatter));
+        registry.register("all_entries", new AllEntriesResolver(this.formatter, entries));
+        registry.register("character", new CharacterResolver(this.formatter, entries));
+        registry.register("all_characters", new AllCharactersResolver(this.formatter, entries));
+        registry.register("all_locations", new AllLocationsResolver(this.formatter, entries));
+        registry.register("all_items", new AllItemsResolver(this.formatter, entries));
+        registry.register("all_events", new AllEventsResolver(this.formatter, entries));
+        registry.register("all_notes", new AllNotesResolver(this.formatter, entries));
+        registry.register("all_synopsis", new AllSynopsisResolver(this.formatter, entries));
+        registry.register("all_starting_scenarios", new AllStartingScenariosResolver(this.formatter, entries));
+        registry.register("all_timelines", new AllTimelinesResolver(this.formatter, entries));
+        registry.register("scenebeat_context", new SceneBeatContextResolver(this.formatter, entries));
 
         // Metadata resolvers
-        registry.register('pov', new PoVResolver());
-        registry.register('selected_text', new SelectedTextResolver());
-        registry.register('selection', new SelectedTextResolver());
-        registry.register('story_language', new StoryLanguageResolver());
-        registry.register('scenebeat', new SceneBeatResolver());
+        registry.register("pov", new PoVResolver());
+        registry.register("selected_text", new SelectedTextResolver());
+        registry.register("selection", new SelectedTextResolver());
+        registry.register("story_language", new StoryLanguageResolver());
+        registry.register("scenebeat", new SceneBeatResolver());
 
         // Brainstorm resolvers - pass entries as dependency
-        registry.register('chat_history', new ChatHistoryResolver());
-        registry.register('user_input', new UserInputResolver());
-        registry.register('brainstorm_context', new BrainstormContextResolver(this.formatter, entries));
+        registry.register("chat_history", new ChatHistoryResolver());
+        registry.register("user_input", new UserInputResolver());
+        registry.register("brainstorm_context", new BrainstormContextResolver(this.formatter, entries));
 
         return registry;
     }
 
     async parse(config: PromptParserConfig): Promise<ParsedPrompt> {
-        const [promptError, prompt] = await attemptPromise(() =>
-            promptsApi.getById(config.promptId)
-        );
+        const [promptError, prompt] = await attemptPromise(() => promptsApi.getById(config.promptId));
 
         if (promptError || !prompt) {
             return {
                 messages: [],
-                error: promptError?.message || 'Prompt not found'
+                error: promptError?.message || "Prompt not found"
             };
         }
 
-        const [contextError, context] = await attemptPromise(() =>
-            this.contextBuilder.buildContext(config)
-        );
+        const [contextError, context] = await attemptPromise(() => this.contextBuilder.buildContext(config));
 
         if (contextError) {
             return {
@@ -123,9 +113,7 @@ export class PromptParser {
             };
         }
 
-        const [parseError, parsedMessages] = await attemptPromise(() =>
-            this.parseMessages(prompt.messages, context)
-        );
+        const [parseError, parsedMessages] = await attemptPromise(() => this.parseMessages(prompt.messages, context));
 
         if (parseError) {
             return {
@@ -138,14 +126,16 @@ export class PromptParser {
     }
 
     private async parseMessages(messages: PromptMessage[], context: PromptContext): Promise<PromptMessage[]> {
-        return Promise.all(messages.map(async message => ({
-            ...message,
-            content: await this.parseContent(message.content, context)
-        })));
+        return Promise.all(
+            messages.map(async message => ({
+                ...message,
+                content: await this.parseContent(message.content, context)
+            }))
+        );
     }
 
     private async parseContent(content: string, context: PromptContext): Promise<string> {
-        const withoutComments = content.replace(/\/\*[\s\S]*?\*\//g, '');
+        const withoutComments = content.replace(/\/\*[\s\S]*?\*\//g, "");
 
         const functionRegex = /\{\{(\w+)\((.*?)\)\}\}/g;
         const matches = Array.from(withoutComments.matchAll(functionRegex));
@@ -154,52 +144,57 @@ export class PromptParser {
             const acc = await accPromise;
             const [fullMatch, func, args] = match;
 
-            if (func === 'previous_words') {
-                const resolved = await this.registry.resolve('previous_words', context, args.trim());
+            if (func === "previous_words") {
+                const resolved = await this.registry.resolve("previous_words", context, args.trim());
                 return acc.replace(fullMatch, resolved);
             }
-            if (func === 'chapter_data') {
-                const resolved = await this.registry.resolve('chapter_data', context, args.trim());
+            if (func === "chapter_data") {
+                const resolved = await this.registry.resolve("chapter_data", context, args.trim());
                 return acc.replace(fullMatch, resolved);
             }
             return acc;
         }, Promise.resolve(withoutComments));
 
-        const hasSpecialCombination = withFunctionsResolved.includes('{{matched_entries_chapter}}') &&
-            withFunctionsResolved.includes('{{additional_scenebeat_context}}');
+        const hasSpecialCombination =
+            withFunctionsResolved.includes("{{matched_entries_chapter}}") &&
+            withFunctionsResolved.includes("{{additional_scenebeat_context}}");
 
         const withVariablesResolved = hasSpecialCombination
             ? await this.parseSpecialCombination(withFunctionsResolved, context)
             : await this.parseRegularVariables(withFunctionsResolved, context);
 
-        return withVariablesResolved.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+        return withVariablesResolved.replace(/\n\s*\n\s*\n/g, "\n\n").trim();
     }
 
     private async parseSpecialCombination(content: string, context: PromptContext): Promise<string> {
         const matchedEntries = this.getMatchedEntriesFormatted(context);
         const additionalContext = this.getAdditionalContextFormatted(context);
 
-        const combinedResult = [matchedEntries, additionalContext]
-            .filter(Boolean)
-            .join('\n\n');
+        const combinedResult = [matchedEntries, additionalContext].filter(Boolean).join("\n\n");
 
         return content
-            .replace(/\{\{matched_entries_chapter\}\}[\s\n]*\{\{[\s\n]*additional_scenebeat_context[\s\n]*\}\}/g, combinedResult)
-            .replace(/\{\{[\s\n]*additional_scenebeat_context[\s\n]*\}\}[\s\n]*\{\{matched_entries_chapter\}\}/g, combinedResult)
-            .replace(/\{\{matched_entries_chapter\}\}/g, '')
-            .replace(/\{\{[\s\n]*additional_scenebeat_context[\s\n]*\}\}/g, '');
+            .replace(
+                /\{\{matched_entries_chapter\}\}[\s\n]*\{\{[\s\n]*additional_scenebeat_context[\s\n]*\}\}/g,
+                combinedResult
+            )
+            .replace(
+                /\{\{[\s\n]*additional_scenebeat_context[\s\n]*\}\}[\s\n]*\{\{matched_entries_chapter\}\}/g,
+                combinedResult
+            )
+            .replace(/\{\{matched_entries_chapter\}\}/g, "")
+            .replace(/\{\{[\s\n]*additional_scenebeat_context[\s\n]*\}\}/g, "");
     }
 
     private getMatchedEntriesFormatted(context: PromptContext): string {
         if (!context.chapterMatchedEntries || context.chapterMatchedEntries.size === 0) {
-            return '';
+            return "";
         }
 
         const entries = Array.from(context.chapterMatchedEntries);
         const sorted = entries.sort((a, b) => {
-            const importanceOrder = { 'major': 0, 'minor': 1, 'background': 2 };
-            const aImportance = a.metadata?.importance || 'background';
-            const bImportance = b.metadata?.importance || 'background';
+            const importanceOrder = { major: 0, minor: 1, background: 2 };
+            const aImportance = a.metadata?.importance || "background";
+            const bImportance = b.metadata?.importance || "background";
             return importanceOrder[aImportance] - importanceOrder[bImportance];
         });
 
@@ -209,7 +204,7 @@ export class PromptParser {
     private getAdditionalContextFormatted(context: PromptContext): string {
         const selectedItems = context.additionalContext?.selectedItems;
         if (!selectedItems || !is.array(selectedItems) || selectedItems.length === 0) {
-            return '';
+            return "";
         }
 
         const selectedItemIds = selectedItems as string[];
@@ -221,7 +216,7 @@ export class PromptParser {
 
         const uniqueEntries = entries.filter(entry => !existingEntryIds.has(entry.id));
 
-        return uniqueEntries.length > 0 ? this.formatter.formatEntries(uniqueEntries) : '';
+        return uniqueEntries.length > 0 ? this.formatter.formatEntries(uniqueEntries) : "";
     }
 
     private async parseRegularVariables(content: string, context: PromptContext): Promise<string> {
@@ -231,26 +226,26 @@ export class PromptParser {
         return await matches.reduce(async (accPromise, match) => {
             const acc = await accPromise;
             const [fullMatch, variable] = match;
-            const [varName, ...params] = variable.trim().split(' ');
+            const [varName, ...params] = variable.trim().split(" ");
 
-            if (varName === 'scenebeat' && context.scenebeat) {
+            if (varName === "scenebeat" && context.scenebeat) {
                 return acc.replace(fullMatch, context.scenebeat);
             }
 
-            if (varName.startsWith('all_') && this.registry.has(varName)) {
+            if (varName.startsWith("all_") && this.registry.has(varName)) {
                 const resolved = await this.registry.resolve(varName, context);
                 return acc.replace(fullMatch, resolved);
             }
 
-            if (varName === 'character' && params.length > 0) {
-                const characterName = params.join(' ');
-                const resolved = await this.registry.resolve('character', context, characterName);
+            if (varName === "character" && params.length > 0) {
+                const characterName = params.join(" ");
+                const resolved = await this.registry.resolve("character", context, characterName);
                 return acc.replace(fullMatch, resolved);
             }
 
             if (this.registry.has(varName)) {
                 const resolved = await this.registry.resolve(varName, context, ...params);
-                return acc.replace(fullMatch, resolved || '');
+                return acc.replace(fullMatch, resolved || "");
             }
 
             logger.warn(`Unknown variable: ${varName}`);
@@ -263,6 +258,5 @@ export class PromptParser {
  * Factory function to create a PromptParser with dependencies.
  * Components should get data from TanStack Query hooks and pass it here.
  */
-export const createPromptParser = (dependencies: PromptParserDependencies): PromptParser => {
-    return new PromptParser(dependencies);
-};
+export const createPromptParser = (dependencies: PromptParserDependencies): PromptParser =>
+    new PromptParser(dependencies);

@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import { debounce } from "lodash";
 import { sceneBeatService } from "@/features/scenebeats/services/sceneBeatService";
 import type { SceneBeat } from "@/types/story";
-import { attemptPromise } from '@jfdi/attempt';
-import { logger } from '@/utils/logger';
+import { attemptPromise } from "@jfdi/attempt";
+import { logger } from "@/utils/logger";
 
 const DEBOUNCE_DELAY_MS = 500;
 
@@ -16,105 +16,89 @@ const DEBOUNCE_DELAY_MS = 500;
  * @returns Debounced save functions for various scene beat properties
  */
 export const useSceneBeatSync = (sceneBeatId: string) => {
-  // Create debounced save functions using useMemo to maintain stable references
-  const saveCommand = useMemo(
-    () =>
-      debounce(async (command: string) => {
+    // Create debounced save functions using useMemo to maintain stable references
+    const saveCommand = useMemo(
+        () =>
+            debounce(async (command: string) => {
+                if (!sceneBeatId) return;
+
+                const [error] = await attemptPromise(async () =>
+                    sceneBeatService.updateSceneBeat(sceneBeatId, { command })
+                );
+                if (error) {
+                    logger.error("Error saving SceneBeat command:", error);
+                }
+            }, DEBOUNCE_DELAY_MS),
+        [sceneBeatId]
+    );
+
+    const saveToggles = useMemo(
+        () =>
+            debounce(async (useMatchedChapter: boolean, useMatchedSceneBeat: boolean, useCustomContext: boolean) => {
+                if (!sceneBeatId) return;
+
+                const updatedSceneBeat: Partial<SceneBeat> = {
+                    metadata: {
+                        useMatchedChapter,
+                        useMatchedSceneBeat,
+                        useCustomContext
+                    }
+                };
+                const [error] = await attemptPromise(async () =>
+                    sceneBeatService.updateSceneBeat(sceneBeatId, updatedSceneBeat)
+                );
+                if (error) {
+                    logger.error("Error updating scene beat toggle states:", error);
+                }
+            }, DEBOUNCE_DELAY_MS),
+        [sceneBeatId]
+    );
+
+    const savePOVSettings = async (
+        povType: "First Person" | "Third Person Limited" | "Third Person Omniscient" | undefined,
+        povCharacter: string | undefined
+    ) => {
         if (!sceneBeatId) return;
 
         const [error] = await attemptPromise(async () =>
-          sceneBeatService.updateSceneBeat(sceneBeatId, { command })
+            sceneBeatService.updateSceneBeat(sceneBeatId, {
+                povType,
+                povCharacter
+            })
         );
         if (error) {
-          logger.error("Error saving SceneBeat command:", error);
+            logger.error("Error saving POV settings:", error);
         }
-      }, DEBOUNCE_DELAY_MS),
-    [sceneBeatId]
-  );
+    };
 
-  const saveToggles = useMemo(
-    () =>
-      debounce(
-        async (
-          useMatchedChapter: boolean,
-          useMatchedSceneBeat: boolean,
-          useCustomContext: boolean
-        ) => {
-          if (!sceneBeatId) return;
+    const saveGeneratedContent = async (generatedContent: string, accepted: boolean) => {
+        if (!sceneBeatId) return;
 
-          const updatedSceneBeat: Partial<SceneBeat> = {
-            metadata: {
-              useMatchedChapter,
-              useMatchedSceneBeat,
-              useCustomContext,
-            },
-          };
-          const [error] = await attemptPromise(async () =>
-            sceneBeatService.updateSceneBeat(sceneBeatId, updatedSceneBeat)
-          );
-          if (error) {
-            logger.error("Error updating scene beat toggle states:", error);
-          }
-        },
-        DEBOUNCE_DELAY_MS
-      ),
-    [sceneBeatId]
-  );
+        const [error] = await attemptPromise(async () =>
+            sceneBeatService.updateSceneBeat(sceneBeatId, {
+                generatedContent,
+                accepted
+            })
+        );
+        if (error) {
+            logger.error("Error saving generated content:", error);
+        }
+    };
 
-  const savePOVSettings = async (
-    povType:
-      | "First Person"
-      | "Third Person Limited"
-      | "Third Person Omniscient"
-      | undefined,
-    povCharacter: string | undefined
-  ) => {
-    if (!sceneBeatId) return;
+    const saveAccepted = async (accepted: boolean) => {
+        if (!sceneBeatId) return;
 
-    const [error] = await attemptPromise(async () =>
-      sceneBeatService.updateSceneBeat(sceneBeatId, {
-        povType,
-        povCharacter,
-      })
-    );
-    if (error) {
-      logger.error("Error saving POV settings:", error);
-    }
-  };
+        const [error] = await attemptPromise(async () => sceneBeatService.updateSceneBeat(sceneBeatId, { accepted }));
+        if (error) {
+            logger.error("Error updating accepted status:", error);
+        }
+    };
 
-  const saveGeneratedContent = async (
-    generatedContent: string,
-    accepted: boolean
-  ) => {
-    if (!sceneBeatId) return;
-
-    const [error] = await attemptPromise(async () =>
-      sceneBeatService.updateSceneBeat(sceneBeatId, {
-        generatedContent,
-        accepted,
-      })
-    );
-    if (error) {
-      logger.error("Error saving generated content:", error);
-    }
-  };
-
-  const saveAccepted = async (accepted: boolean) => {
-    if (!sceneBeatId) return;
-
-    const [error] = await attemptPromise(async () =>
-      sceneBeatService.updateSceneBeat(sceneBeatId, { accepted })
-    );
-    if (error) {
-      logger.error("Error updating accepted status:", error);
-    }
-  };
-
-  return {
-    saveCommand,
-    saveToggles,
-    savePOVSettings,
-    saveGeneratedContent,
-    saveAccepted,
-  };
+    return {
+        saveCommand,
+        saveToggles,
+        savePOVSettings,
+        saveGeneratedContent,
+        saveAccepted
+    };
 };

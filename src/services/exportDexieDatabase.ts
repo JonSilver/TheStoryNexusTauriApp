@@ -1,4 +1,4 @@
-import { adminApi } from './api/client';
+import { adminApi } from "./api/client";
 
 interface DatabaseExport {
     version: string;
@@ -19,9 +19,7 @@ interface DatabaseExport {
  * Exports all data from the SQLite database as JSON via server API
  * @returns Promise resolving to a complete database export
  */
-const exportDexieDatabase = async (): Promise<DatabaseExport> => {
-    return await adminApi.exportDatabase();
-};
+const exportDexieDatabase = async (): Promise<DatabaseExport> => await adminApi.exportDatabase();
 
 /**
  * Downloads the database export as a JSON file
@@ -30,12 +28,12 @@ const exportDexieDatabase = async (): Promise<DatabaseExport> => {
 export const downloadDatabaseExport = async (filename?: string): Promise<void> => {
     const data = await exportDexieDatabase();
     const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
+    const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = filename || `story-nexus-export-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = filename || `story-nexus-export-${new Date().toISOString().split("T")[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

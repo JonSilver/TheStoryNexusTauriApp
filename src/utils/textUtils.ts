@@ -1,4 +1,4 @@
-import { words } from 'lodash';
+import { words } from "lodash";
 
 /**
  * Count the number of words in a text string.
@@ -20,6 +20,6 @@ import { words } from 'lodash';
  * ```
  */
 export const countWords = (text: string): number => {
-  if (!text || !text.trim()) return 0;
-  return words(text).length;
+    if (!text || !text.trim()) return 0;
+    return words(text).length;
 };

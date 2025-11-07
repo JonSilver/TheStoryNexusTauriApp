@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 /**
  * Standardized toast notifications for CRUD operations.
@@ -49,9 +49,9 @@ export const toastCRUD = {
         toast.error(error instanceof Error ? `${message}: ${error.message}` : message);
     },
 
-    copySuccess: (entity?: string) => toast.success(entity ? `${entity} copied to clipboard` : 'Copied to clipboard'),
+    copySuccess: (entity?: string) => toast.success(entity ? `${entity} copied to clipboard` : "Copied to clipboard"),
     copyError: (error?: unknown) => {
-        const message = 'Failed to copy to clipboard';
+        const message = "Failed to copy to clipboard";
         toast.error(error instanceof Error ? `${message}: ${error.message}` : message);
     },
 
@@ -61,6 +61,6 @@ export const toastCRUD = {
             toast.error(error instanceof Error ? `${message}: ${error.message}` : message);
         },
         info: (message: string) => toast.info(message),
-        warning: (message: string) => toast.warning(message),
+        warning: (message: string) => toast.warning(message)
     }
 };

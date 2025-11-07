@@ -1,4 +1,4 @@
-import { attemptPromise } from '@jfdi/attempt';
+import { attemptPromise } from "@jfdi/attempt";
 
 /**
  * Wraps an OpenAI-compatible async streaming response into a Web API Response with ReadableStream.
@@ -9,10 +9,8 @@ import { attemptPromise } from '@jfdi/attempt';
  * @param stream - The async iterable stream from OpenAI SDK
  * @returns A Response object with a ReadableStream body containing the text chunks
  */
-export const wrapOpenAIStream = async (
-    stream: AsyncIterable<any>
-): Promise<Response> => {
-    return new Response(
+export const wrapOpenAIStream = async (stream: AsyncIterable<any>): Promise<Response> =>
+    new Response(
         new ReadableStream({
             async start(controller) {
                 const [error] = await attemptPromise(async () => {
@@ -32,4 +30,3 @@ export const wrapOpenAIStream = async (
             }
         })
     );
-};

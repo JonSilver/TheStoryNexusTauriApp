@@ -1,4 +1,4 @@
-import { storiesApi } from '../api/client';
+import { storiesApi } from "../api/client";
 
 export class StoryImportService {
     async importStory(file: File): Promise<string> {

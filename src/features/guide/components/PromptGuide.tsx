@@ -11,7 +11,7 @@ import {
     Table,
     Sliders,
     PenTool,
-    Layers,
+    Layers
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,13 +23,16 @@ export default function PromptGuide() {
             <div>
                 <h2 className="text-2xl font-bold mb-4">Prompt Guide</h2>
                 <p className="text-muted-foreground mb-6">
-                    Creating effective prompts is essential for getting the best results from AI generation in your story. This guide will help you understand how to create, customise,
-                    and use prompts effectively in The Story Nexus.
+                    Creating effective prompts is essential for getting the best results from AI generation in your
+                    story. This guide will help you understand how to create, customise, and use prompts effectively in
+                    The Story Nexus.
                 </p>
                 <Alert>
                     <AlertTitle>System Prompts &amp; Prompt Scope</AlertTitle>
                     <AlertDescription>
-                        There are 6 system prompts automatically created for you. They cannot be deleted or edited but can be cloned. Custom prompts you create are story-specific and available only within that story. To reuse prompts across stories, export and import them via the Prompts Manager.
+                        There are 6 system prompts automatically created for you. They cannot be deleted or edited but
+                        can be cloned. Custom prompts you create are story-specific and available only within that
+                        story. To reuse prompts across stories, export and import them via the Prompts Manager.
                     </AlertDescription>
                 </Alert>
             </div>
@@ -47,7 +50,9 @@ export default function PromptGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">What are Prompts?</h3>
                         <p>
-                            Prompts are structured instructions that tell the AI how to generate content for your story. They consist of a series of messages with different roles (system, user, assistant) that provide context and direction to the AI model.
+                            Prompts are structured instructions that tell the AI how to generate content for your story.
+                            They consist of a series of messages with different roles (system, user, assistant) that
+                            provide context and direction to the AI model.
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -60,11 +65,26 @@ export default function PromptGuide() {
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <ul className="list-disc list-inside space-y-1">
-                                        <li>Consistent Writing Style: Create prompts that maintain a consistent tone and style throughout your story</li>
-                                        <li>Specialized Generation: Tailor prompts for specific tasks like scene beats, summaries, or brainstorming</li>
-                                        <li>Customizable Parameters: Adjust temperature and token settings to control creativity and length</li>
-                                        <li>Model Selection: Choose which AI models can use each prompt for optimal results</li>
-                                        <li>Variable System: Use dynamic variables to automatically include story context</li>
+                                        <li>
+                                            Consistent Writing Style: Create prompts that maintain a consistent tone and
+                                            style throughout your story
+                                        </li>
+                                        <li>
+                                            Specialized Generation: Tailor prompts for specific tasks like scene beats,
+                                            summaries, or brainstorming
+                                        </li>
+                                        <li>
+                                            Customizable Parameters: Adjust temperature and token settings to control
+                                            creativity and length
+                                        </li>
+                                        <li>
+                                            Model Selection: Choose which AI models can use each prompt for optimal
+                                            results
+                                        </li>
+                                        <li>
+                                            Variable System: Use dynamic variables to automatically include story
+                                            context
+                                        </li>
                                     </ul>
                                 </CardContent>
                             </Card>
@@ -77,16 +97,23 @@ export default function PromptGuide() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
-                                    <p>
-                                        Prompts consist of a series of messages with different roles:
-                                    </p>
+                                    <p>Prompts consist of a series of messages with different roles:</p>
                                     <ul className="list-disc list-inside space-y-1">
-                                        <li><strong>System Messages:</strong> Instructions that set the overall behavior of the AI</li>
-                                        <li><strong>User Messages:</strong> Represent what the user (you) is asking the AI to do</li>
-                                        <li><strong>Assistant Messages:</strong> Examples of how the AI should respond</li>
+                                        <li>
+                                            <strong>System Messages:</strong> Instructions that set the overall behavior
+                                            of the AI
+                                        </li>
+                                        <li>
+                                            <strong>User Messages:</strong> Represent what the user (you) is asking the
+                                            AI to do
+                                        </li>
+                                        <li>
+                                            <strong>Assistant Messages:</strong> Examples of how the AI should respond
+                                        </li>
                                     </ul>
                                     <p className="text-sm text-muted-foreground mt-2">
-                                        This structure allows for precise control over the AI's output, ensuring it matches your creative vision.
+                                        This structure allows for precise control over the AI's output, ensuring it
+                                        matches your creative vision.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -96,7 +123,8 @@ export default function PromptGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Prompt Types</h3>
                         <p>
-                            The Story Nexus supports various types of prompts to help you with different aspects of your writing process:
+                            The Story Nexus supports various types of prompts to help you with different aspects of your
+                            writing process:
                         </p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
@@ -167,7 +195,8 @@ export default function PromptGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Creating Effective Prompts</h3>
                         <p>
-                            Creating well-crafted prompts is the key to getting high-quality AI-generated content that matches your vision.
+                            Creating well-crafted prompts is the key to getting high-quality AI-generated content that
+                            matches your vision.
                         </p>
 
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
@@ -185,17 +214,13 @@ export default function PromptGuide() {
 
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 2: Create a New Prompt</h4>
-                            <p>
-                                Click the "New Prompt" button to open the prompt creation form.
-                            </p>
+                            <p>Click the "New Prompt" button to open the prompt creation form.</p>
                         </div>
 
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 3: Basic Information</h4>
                             <div className="space-y-2">
-                                <p>
-                                    Fill in the basic information for your prompt:
-                                </p>
+                                <p>Fill in the basic information for your prompt:</p>
                                 <ul className="list-disc list-inside space-y-2 ml-4">
                                     <li>
                                         <strong>Name:</strong> Give your prompt a descriptive name
@@ -206,7 +231,8 @@ export default function PromptGuide() {
                                     <li>
                                         <strong>Prompt Type:</strong> Select the appropriate type for your prompt
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            Choose from Scene Beat, Generate Summary, Selection-Specific, Continue Writing, Brainstorm, or Other
+                                            Choose from Scene Beat, Generate Summary, Selection-Specific, Continue
+                                            Writing, Brainstorm, or Other
                                         </p>
                                     </li>
                                 </ul>
@@ -215,21 +241,18 @@ export default function PromptGuide() {
 
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 4: Create Messages</h4>
-                            <p>
-                                Prompts consist of a series of messages with different roles:
-                            </p>
+                            <p>Prompts consist of a series of messages with different roles:</p>
                             <div className="space-y-4 mt-4">
                                 <div className="border rounded-lg p-4 bg-card">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Settings className="h-5 w-5 text-primary" />
                                         <h5 className="font-medium">System Messages</h5>
                                     </div>
-                                    <p className="text-sm">
-                                        Instructions that set the overall behavior of the AI
-                                    </p>
+                                    <p className="text-sm">Instructions that set the overall behavior of the AI</p>
                                     <div className="bg-muted p-3 rounded mt-2 text-sm">
                                         <p className="font-mono">
-                                            "You are a skilled fantasy writer with a descriptive style. Focus on sensory details and atmosphere."
+                                            "You are a skilled fantasy writer with a descriptive style. Focus on sensory
+                                            details and atmosphere."
                                         </p>
                                     </div>
                                 </div>
@@ -239,9 +262,7 @@ export default function PromptGuide() {
                                         <MessageSquare className="h-5 w-5 text-primary" />
                                         <h5 className="font-medium">User Messages</h5>
                                     </div>
-                                    <p className="text-sm">
-                                        Represent what the user (you) is asking the AI to do
-                                    </p>
+                                    <p className="text-sm">Represent what the user (you) is asking the AI to do</p>
                                     <div className="bg-muted p-3 rounded mt-2 text-sm">
                                         <p className="font-mono">
                                             "Write a scene where x character enters y location for the first time."
@@ -254,12 +275,11 @@ export default function PromptGuide() {
                                         <BookOpen className="h-5 w-5 text-primary" />
                                         <h5 className="font-medium">Assistant Messages</h5>
                                     </div>
-                                    <p className="text-sm">
-                                        Examples of how the AI should respond
-                                    </p>
+                                    <p className="text-sm">Examples of how the AI should respond</p>
                                     <div className="bg-muted p-3 rounded mt-2 text-sm">
                                         <p className="font-mono">
-                                            "Here's a vivid description of the character entering the location, focusing on their emotional reaction and the sensory details..."
+                                            "Here's a vivid description of the character entering the location, focusing
+                                            on their emotional reaction and the sensory details..."
                                         </p>
                                     </div>
                                 </div>
@@ -267,7 +287,9 @@ export default function PromptGuide() {
                             <div className="mt-4">
                                 <h5 className="font-medium">Adding Messages</h5>
                                 <ul className="list-disc list-inside space-y-1 ml-4 text-sm">
-                                    <li>Click the "System", "User", or "Assistant" buttons to add messages of each type</li>
+                                    <li>
+                                        Click the "System", "User", or "Assistant" buttons to add messages of each type
+                                    </li>
                                     <li>Use the up/down arrows to change message order</li>
                                     <li>Use the trash icon to delete messages</li>
                                 </ul>
@@ -276,9 +298,7 @@ export default function PromptGuide() {
 
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 5: Select AI Models</h4>
-                            <p>
-                                Choose which AI models can use this prompt:
-                            </p>
+                            <p>Choose which AI models can use this prompt:</p>
                             <ul className="list-disc list-inside space-y-1 ml-4 text-sm">
                                 <li>Click the model dropdown to see available models grouped by provider</li>
                                 <li>Select models that work well for your prompt's purpose</li>
@@ -289,29 +309,39 @@ export default function PromptGuide() {
 
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 6: Configure Advanced Settings</h4>
-                            <p>
-                                Adjust parameters to fine-tune the AI's behavior:
-                            </p>
+                            <p>Adjust parameters to fine-tune the AI's behavior:</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                 <div className="border rounded-lg p-4 bg-card">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Sliders className="h-5 w-5 text-primary" />
                                         <h5 className="font-medium">Temperature</h5>
                                     </div>
-                                    <p className="text-sm mb-2">
-                                        Controls randomness and creativity in AI output.
-                                    </p>
+                                    <p className="text-sm mb-2">Controls randomness and creativity in AI output.</p>
                                     <p className="text-xs text-muted-foreground mb-2">
-                                        <strong>Range:</strong> 0.0 to 2.0 (typically). Most providers support 0.0-2.0, some allow higher.
+                                        <strong>Range:</strong> 0.0 to 2.0 (typically). Most providers support 0.0-2.0,
+                                        some allow higher.
                                     </p>
                                     <ul className="list-disc list-inside space-y-1 ml-4 text-sm text-muted-foreground">
-                                        <li><strong>0.1-0.4:</strong> Very focused, deterministic. Good for factual or technical writing</li>
-                                        <li><strong>0.5-0.7:</strong> Balanced (recommended default). Reliable with some variation</li>
-                                        <li><strong>0.8-1.2:</strong> More creative. Good for fiction, dialogue, varied prose</li>
-                                        <li><strong>1.3+:</strong> Highly creative but may lose coherence or drift off-topic</li>
+                                        <li>
+                                            <strong>0.1-0.4:</strong> Very focused, deterministic. Good for factual or
+                                            technical writing
+                                        </li>
+                                        <li>
+                                            <strong>0.5-0.7:</strong> Balanced (recommended default). Reliable with some
+                                            variation
+                                        </li>
+                                        <li>
+                                            <strong>0.8-1.2:</strong> More creative. Good for fiction, dialogue, varied
+                                            prose
+                                        </li>
+                                        <li>
+                                            <strong>1.3+:</strong> Highly creative but may lose coherence or drift
+                                            off-topic
+                                        </li>
                                     </ul>
                                     <p className="text-xs text-muted-foreground mt-2">
-                                        <strong>Tip:</strong> Start at 0.7 and adjust based on results. Different models respond differently to the same temperature.
+                                        <strong>Tip:</strong> Start at 0.7 and adjust based on results. Different models
+                                        respond differently to the same temperature.
                                     </p>
                                 </div>
 
@@ -324,12 +354,22 @@ export default function PromptGuide() {
                                         Maximum number of tokens (roughly words) the AI can generate in response.
                                     </p>
                                     <ul className="list-disc list-inside space-y-1 ml-4 text-sm text-muted-foreground">
-                                        <li><strong>Short (100-300 tokens):</strong> Quick responses, dialogue, brief descriptions</li>
-                                        <li><strong>Medium (400-800 tokens):</strong> Scene beats, substantial paragraphs</li>
-                                        <li><strong>Long (1000+ tokens):</strong> Extended scenes, multiple paragraphs</li>
+                                        <li>
+                                            <strong>Short (100-300 tokens):</strong> Quick responses, dialogue, brief
+                                            descriptions
+                                        </li>
+                                        <li>
+                                            <strong>Medium (400-800 tokens):</strong> Scene beats, substantial
+                                            paragraphs
+                                        </li>
+                                        <li>
+                                            <strong>Long (1000+ tokens):</strong> Extended scenes, multiple paragraphs
+                                        </li>
                                     </ul>
                                     <p className="text-xs text-muted-foreground mt-2">
-                                        <strong>Note:</strong> The AI may generate fewer tokens than the max if it reaches a natural stopping point. Higher max tokens = slower generation and higher API costs.
+                                        <strong>Note:</strong> The AI may generate fewer tokens than the max if it
+                                        reaches a natural stopping point. Higher max tokens = slower generation and
+                                        higher API costs.
                                     </p>
                                 </div>
                             </div>
@@ -338,12 +378,14 @@ export default function PromptGuide() {
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 7: Save Your Prompt</h4>
                             <p>
-                                Click "Create Prompt" to save your new prompt or "Update Prompt" if editing an existing one.
+                                Click "Create Prompt" to save your new prompt or "Update Prompt" if editing an existing
+                                one.
                             </p>
                             <Alert className="mt-4 bg-primary/10 border-primary">
                                 <AlertTitle>Pro Tip</AlertTitle>
                                 <AlertDescription>
-                                    Start with a simple prompt and test it with different AI models. Then refine it based on the results to get exactly the style and content you want.
+                                    Start with a simple prompt and test it with different AI models. Then refine it
+                                    based on the results to get exactly the style and content you want.
                                 </AlertDescription>
                             </Alert>
                         </div>
@@ -354,14 +396,13 @@ export default function PromptGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Using Variables</h3>
                         <p>
-                            Variables are placeholders in your prompts that get replaced with actual content when the prompt is used. They make your prompts dynamic and context-aware.
+                            Variables are placeholders in your prompts that get replaced with actual content when the
+                            prompt is used. They make your prompts dynamic and context-aware.
                         </p>
 
                         <div className="space-y-4">
                             <h4 className="text-lg font-medium">Common Variables</h4>
-                            <p>
-                                The Story Nexus provides a variety of variables you can use in your prompts:
-                            </p>
+                            <p>The Story Nexus provides a variety of variables you can use in your prompts:</p>
                             <div className="overflow-x-auto mt-4">
                                 <table className="w-full border-collapse">
                                     <thead>
@@ -372,56 +413,95 @@ export default function PromptGuide() {
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;scenebeat&#125;&#125;</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;scenebeat&#125;&#125;
+                                            </td>
                                             <td className="border p-2">The scene beat command you enter</td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;scenebeat_context&#125;&#125;</td>
-                                            <td className="border p-2">This will dynamically generate a context based on matched lorebook entries in the chapter or custom context you provide</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;scenebeat_context&#125;&#125;
+                                            </td>
+                                            <td className="border p-2">
+                                                This will dynamically generate a context based on matched lorebook
+                                                entries in the chapter or custom context you provide
+                                            </td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;brainstorm_context&#125;&#125;</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;brainstorm_context&#125;&#125;
+                                            </td>
                                             <td className="border p-2">Dynamic Brainstorm Context</td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;summaries&#125;&#125;</td>
-                                            <td className="border p-2">Summaries of all previous chapters. So if you have 3 chapters, it will be the summaries of the previous 2 chapters.</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;summaries&#125;&#125;
+                                            </td>
+                                            <td className="border p-2">
+                                                Summaries of all previous chapters. So if you have 3 chapters, it will
+                                                be the summaries of the previous 2 chapters.
+                                            </td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;previous_words(1000)&#125;&#125;</td>
-                                            <td className="border p-2">The last 1000 words before the cursor in the editor</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;previous_words(1000)&#125;&#125;
+                                            </td>
+                                            <td className="border p-2">
+                                                The last 1000 words before the cursor in the editor
+                                            </td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;pov&#125;&#125;</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;pov&#125;&#125;
+                                            </td>
                                             <td className="border p-2">The current point of view character and type</td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;chapter_content&#125;&#125;</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;chapter_content&#125;&#125;
+                                            </td>
                                             <td className="border p-2">The full content of the current chapter</td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;selected_text&#125;&#125;</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;selected_text&#125;&#125;
+                                            </td>
                                             <td className="border p-2">Text currently selected in the editor</td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;story_language&#125;&#125;</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;story_language&#125;&#125;
+                                            </td>
                                             <td className="border p-2">The language of the story</td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;all_characters&#125;&#125;</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;all_characters&#125;&#125;
+                                            </td>
                                             <td className="border p-2">All character entries from the Lorebook</td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;all_locations&#125;&#125;</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;all_locations&#125;&#125;
+                                            </td>
                                             <td className="border p-2">All location entries from the Lorebook</td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;user_input&#125;&#125;</td>
-                                            <td className="border p-2">Specifically for brainstorm section, adds user_input to resolved prompt</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;user_input&#125;&#125;
+                                            </td>
+                                            <td className="border p-2">
+                                                Specifically for brainstorm section, adds user_input to resolved prompt
+                                            </td>
                                         </tr>
                                         <tr>
-                                            <td className="border p-2 font-mono text-sm">&#123;&#123;chat_history&#125;&#125;</td>
-                                            <td className="border p-2">Specifically for brainstorm section, adds current chat history to resolved prompt</td>
+                                            <td className="border p-2 font-mono text-sm">
+                                                &#123;&#123;chat_history&#125;&#125;
+                                            </td>
+                                            <td className="border p-2">
+                                                Specifically for brainstorm section, adds current chat history to
+                                                resolved prompt
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -431,20 +511,25 @@ export default function PromptGuide() {
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Using Variables in Messages</h4>
                             <p>
-                                Variables can be used in any message type (system, user, or assistant) to create dynamic prompts.
+                                Variables can be used in any message type (system, user, or assistant) to create dynamic
+                                prompts.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                                 <div className="border rounded-lg p-4 bg-card">
                                     <h5 className="font-medium mb-2">System Message Example</h5>
                                     <div className="bg-muted p-3 rounded text-sm font-mono">
-                                        You are a skilled writer working on a story in &#123;&#123;story_language&#125;&#125;. The story is written in &#123;&#123;pov&#125;&#125; perspective. Maintain this perspective and style in your writing.
+                                        You are a skilled writer working on a story in
+                                        &#123;&#123;story_language&#125;&#125;. The story is written in
+                                        &#123;&#123;pov&#125;&#125; perspective. Maintain this perspective and style in
+                                        your writing.
                                     </div>
                                 </div>
 
                                 <div className="border rounded-lg p-4 bg-card">
                                     <h5 className="font-medium mb-2">User Message Example</h5>
                                     <div className="bg-muted p-3 rounded text-sm font-mono">
-                                        Write a scene where &#123;&#123;scenebeat&#125;&#125;. Use the following context from my story: &#123;&#123;previous_words(500)&#125;&#125;
+                                        Write a scene where &#123;&#123;scenebeat&#125;&#125;. Use the following context
+                                        from my story: &#123;&#123;previous_words(500)&#125;&#125;
                                     </div>
                                 </div>
                             </div>
@@ -452,9 +537,7 @@ export default function PromptGuide() {
 
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Context Integration</h4>
-                            <p>
-                                The prompt parser automatically integrates context from your story:
-                            </p>
+                            <p>The prompt parser automatically integrates context from your story:</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                                 <div className="border rounded-lg p-4 bg-card">
                                     <div className="flex items-center gap-2 mb-2">
@@ -471,9 +554,7 @@ export default function PromptGuide() {
                                         <FileText className="h-5 w-5 text-primary" />
                                         <h5 className="font-medium">Chapter Content</h5>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        The text you've already written
-                                    </p>
+                                    <p className="text-sm text-muted-foreground">The text you've already written</p>
                                 </div>
 
                                 <div className="border rounded-lg p-4 bg-card">
@@ -491,9 +572,7 @@ export default function PromptGuide() {
                                         <Layers className="h-5 w-5 text-primary" />
                                         <h5 className="font-medium">Previous Chapters</h5>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Summaries of what came before
-                                    </p>
+                                    <p className="text-sm text-muted-foreground">Summaries of what came before</p>
                                 </div>
                             </div>
                             <p className="text-sm mt-4">
@@ -515,9 +594,18 @@ export default function PromptGuide() {
                                     <CardContent className="text-sm space-y-2">
                                         <p>When a variable has no value, it's replaced with an empty string:</p>
                                         <ul className="list-disc list-inside space-y-1 text-xs">
-                                            <li><code>&#123;&#123;pov&#125;&#125;</code> → Empty if no POV set on chapter</li>
-                                            <li><code>&#123;&#123;summaries&#125;&#125;</code> → Empty if no chapter summaries exist</li>
-                                            <li><code>&#123;&#123;selected_text&#125;&#125;</code> → Empty if no text selected</li>
+                                            <li>
+                                                <code>&#123;&#123;pov&#125;&#125;</code> → Empty if no POV set on
+                                                chapter
+                                            </li>
+                                            <li>
+                                                <code>&#123;&#123;summaries&#125;&#125;</code> → Empty if no chapter
+                                                summaries exist
+                                            </li>
+                                            <li>
+                                                <code>&#123;&#123;selected_text&#125;&#125;</code> → Empty if no text
+                                                selected
+                                            </li>
                                         </ul>
                                         <p className="text-xs text-muted-foreground mt-2">
                                             Prompts won't fail, but empty variables may affect AI output quality.
@@ -532,11 +620,13 @@ export default function PromptGuide() {
                                     <CardContent className="text-sm space-y-2">
                                         <p>Handle optional variables gracefully:</p>
                                         <div className="bg-muted p-2 rounded text-xs font-mono mt-1">
-                                            Write a scene where &#123;&#123;scenebeat&#125;&#125;.
-                                            &#123;&#123;#if pov&#125;&#125;Maintain &#123;&#123;pov&#125;&#125; perspective.&#123;&#123;/if&#125;&#125;
+                                            Write a scene where &#123;&#123;scenebeat&#125;&#125;. &#123;&#123;#if
+                                            pov&#125;&#125;Maintain &#123;&#123;pov&#125;&#125;
+                                            perspective.&#123;&#123;/if&#125;&#125;
                                         </div>
                                         <p className="text-xs text-muted-foreground mt-2">
-                                            <strong>Note:</strong> Conditional syntax shown is illustrative. Currently, prompts should be written to work whether variables are populated or empty.
+                                            <strong>Note:</strong> Conditional syntax shown is illustrative. Currently,
+                                            prompts should be written to work whether variables are populated or empty.
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -550,10 +640,14 @@ export default function PromptGuide() {
                             </AlertTitle>
                             <AlertDescription>
                                 <p className="mb-2">
-                                    You can create sophisticated prompts that adapt to your story context by combining variables:
+                                    You can create sophisticated prompts that adapt to your story context by combining
+                                    variables:
                                 </p>
                                 <div className="bg-muted p-3 rounded text-sm font-mono mt-2">
-                                    Write a scene where &#123;&#123;scenebeat&#125;&#125;. The scene involves the following characters: &#123;&#123;scenebeat_context&#125;&#125;. The scene takes place after these events: &#123;&#123;summaries&#125;&#125;. Maintain the &#123;&#123;pov&#125;&#125; perspective.
+                                    Write a scene where &#123;&#123;scenebeat&#125;&#125;. The scene involves the
+                                    following characters: &#123;&#123;scenebeat_context&#125;&#125;. The scene takes
+                                    place after these events: &#123;&#123;summaries&#125;&#125;. Maintain the
+                                    &#123;&#123;pov&#125;&#125; perspective.
                                 </div>
                             </AlertDescription>
                         </Alert>
@@ -564,23 +658,20 @@ export default function PromptGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Managing Prompts</h3>
                         <p>
-                            Effective prompt management helps you maintain a library of useful prompts for different writing scenarios.
+                            Effective prompt management helps you maintain a library of useful prompts for different
+                            writing scenarios.
                         </p>
 
                         <div className="space-y-4">
                             <h4 className="text-lg font-medium">Organizing Prompts</h4>
-                            <p>
-                                Create different prompts for different writing tasks to build a versatile toolkit:
-                            </p>
+                            <p>Create different prompts for different writing tasks to build a versatile toolkit:</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                                 <div className="border rounded-lg p-4 bg-card">
                                     <div className="flex items-center gap-2 mb-2">
                                         <BookOpen className="h-5 w-5 text-primary" />
                                         <h5 className="font-medium">Description Prompts</h5>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        For vivid settings and environments
-                                    </p>
+                                    <p className="text-sm text-muted-foreground">For vivid settings and environments</p>
                                 </div>
 
                                 <div className="border rounded-lg p-4 bg-card">
@@ -598,9 +689,7 @@ export default function PromptGuide() {
                                         <Zap className="h-5 w-5 text-primary" />
                                         <h5 className="font-medium">Action Prompts</h5>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        For dynamic sequences and events
-                                    </p>
+                                    <p className="text-sm text-muted-foreground">For dynamic sequences and events</p>
                                 </div>
                             </div>
                             <div className="mt-4">
@@ -614,20 +703,12 @@ export default function PromptGuide() {
 
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Editing Prompts</h4>
-                            <p>
-                                To edit an existing prompt:
-                            </p>
+                            <p>To edit an existing prompt:</p>
                             <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                                 <ol className="list-decimal list-inside space-y-2 ml-4">
-                                    <li>
-                                        Select the prompt from the list in the Prompts section
-                                    </li>
-                                    <li>
-                                        Make your changes in the prompt form
-                                    </li>
-                                    <li>
-                                        Click "Update Prompt" to save your changes
-                                    </li>
+                                    <li>Select the prompt from the list in the Prompts section</li>
+                                    <li>Make your changes in the prompt form</li>
+                                    <li>Click "Update Prompt" to save your changes</li>
                                 </ol>
                                 <p className="text-sm text-muted-foreground mt-2">
                                     Regularly review and refine your prompts based on the results they produce.
@@ -637,25 +718,18 @@ export default function PromptGuide() {
 
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Deleting Prompts</h4>
-                            <p>
-                                To delete a prompt you no longer need:
-                            </p>
+                            <p>To delete a prompt you no longer need:</p>
                             <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                                 <ol className="list-decimal list-inside space-y-2 ml-4">
-                                    <li>
-                                        Hover over the prompt in the list
-                                    </li>
-                                    <li>
-                                        Click the trash icon that appears
-                                    </li>
-                                    <li>
-                                        Confirm the deletion when prompted
-                                    </li>
+                                    <li>Hover over the prompt in the list</li>
+                                    <li>Click the trash icon that appears</li>
+                                    <li>Confirm the deletion when prompted</li>
                                 </ol>
                                 <Alert className="mt-4 bg-destructive/10 border-destructive">
                                     <AlertTitle>Warning</AlertTitle>
                                     <AlertDescription>
-                                        Deletion is permanent and cannot be undone. Consider keeping useful prompts even if you don't use them frequently.
+                                        Deletion is permanent and cannot be undone. Consider keeping useful prompts even
+                                        if you don't use them frequently.
                                     </AlertDescription>
                                 </Alert>
                             </div>
@@ -664,7 +738,8 @@ export default function PromptGuide() {
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Cloning System Prompts</h4>
                             <p>
-                                System prompts cannot be edited or deleted, but you can clone them to create customizable versions.
+                                System prompts cannot be edited or deleted, but you can clone them to create
+                                customizable versions.
                             </p>
                             <div className="bg-muted p-4 rounded-md">
                                 <h5 className="font-medium text-sm mb-2">How to Clone a System Prompt:</h5>
@@ -692,9 +767,7 @@ export default function PromptGuide() {
 
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Import & Export Prompts</h4>
-                            <p>
-                                Share prompts between stories or back them up using import/export functionality.
-                            </p>
+                            <p>Share prompts between stories or back them up using import/export functionality.</p>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                 <Card>
@@ -709,7 +782,8 @@ export default function PromptGuide() {
                                             <li>A JSON file downloads with your prompts</li>
                                         </ol>
                                         <p className="text-xs text-muted-foreground mt-2">
-                                            Exported files include all prompt data: name, messages, settings, allowed models, and prompt type.
+                                            Exported files include all prompt data: name, messages, settings, allowed
+                                            models, and prompt type.
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -727,7 +801,9 @@ export default function PromptGuide() {
                                             <li>Confirm to add them to your story</li>
                                         </ol>
                                         <p className="text-xs text-muted-foreground mt-2">
-                                            <strong>Name collisions:</strong> If a prompt with the same name exists, the imported prompt gets an "(Imported)" suffix. System prompts are never overwritten during import.
+                                            <strong>Name collisions:</strong> If a prompt with the same name exists, the
+                                            imported prompt gets an "(Imported)" suffix. System prompts are never
+                                            overwritten during import.
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -737,10 +813,18 @@ export default function PromptGuide() {
                                 <AlertTitle>Import/Export Use Cases</AlertTitle>
                                 <AlertDescription>
                                     <ul className="list-disc list-inside space-y-1 text-sm">
-                                        <li><strong>Reuse:</strong> Move your best prompts from one story to another</li>
-                                        <li><strong>Backup:</strong> Export prompts before experimenting with changes</li>
-                                        <li><strong>Collaboration:</strong> Share effective prompts with other writers</li>
-                                        <li><strong>Templates:</strong> Build prompt libraries for different genres</li>
+                                        <li>
+                                            <strong>Reuse:</strong> Move your best prompts from one story to another
+                                        </li>
+                                        <li>
+                                            <strong>Backup:</strong> Export prompts before experimenting with changes
+                                        </li>
+                                        <li>
+                                            <strong>Collaboration:</strong> Share effective prompts with other writers
+                                        </li>
+                                        <li>
+                                            <strong>Templates:</strong> Build prompt libraries for different genres
+                                        </li>
                                     </ul>
                                 </AlertDescription>
                             </Alert>
@@ -749,26 +833,23 @@ export default function PromptGuide() {
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Prompt Integration with Writing</h4>
                             <p>
-                                Prompts are integrated with the writing process through the Scene Beat feature and other AI generation tools.
+                                Prompts are integrated with the writing process through the Scene Beat feature and other
+                                AI generation tools.
                             </p>
                             <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                                 <h5 className="font-medium">Using Prompts with Scene Beats</h5>
                                 <ol className="list-decimal list-inside space-y-2 ml-4">
                                     <li>
-                                        In the editor, press Alt + S (Windows) or Option + S (Mac) to insert a Scene Beat
+                                        In the editor, press Alt + S (Windows) or Option + S (Mac) to insert a Scene
+                                        Beat
                                     </li>
+                                    <li>Enter your scene beat command describing what you want the AI to write</li>
+                                    <li>Select one of your prompts from the dropdown menu</li>
                                     <li>
-                                        Enter your scene beat command describing what you want the AI to write
+                                        The system will process your prompt, replacing variables with context from your
+                                        story
                                     </li>
-                                    <li>
-                                        Select one of your prompts from the dropdown menu
-                                    </li>
-                                    <li>
-                                        The system will process your prompt, replacing variables with context from your story
-                                    </li>
-                                    <li>
-                                        Click "Generate Prose" to create content based on your prompt
-                                    </li>
+                                    <li>Click "Generate Prose" to create content based on your prompt</li>
                                 </ol>
                             </div>
                         </div>
@@ -778,15 +859,11 @@ export default function PromptGuide() {
                 <TabsContent value="advanced" className="space-y-6">
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Advanced Prompt Strategies</h3>
-                        <p>
-                            Master these advanced techniques to get the most out of your AI-assisted writing.
-                        </p>
+                        <p>Master these advanced techniques to get the most out of your AI-assisted writing.</p>
 
                         <div className="space-y-4">
                             <h4 className="text-lg font-medium">Creating Specialized Prompts</h4>
-                            <p>
-                                Develop prompts for specific writing challenges:
-                            </p>
+                            <p>Develop prompts for specific writing challenges:</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                                 <div className="border rounded-lg p-4 bg-card">
                                     <div className="flex items-center gap-2 mb-2">
@@ -832,14 +909,14 @@ export default function PromptGuide() {
 
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Prompt Chaining</h4>
-                            <p>
-                                Use multiple prompts in sequence for complex writing tasks:
-                            </p>
+                            <p>Use multiple prompts in sequence for complex writing tasks:</p>
                             <div className="relative overflow-hidden mt-4">
                                 <div className="border-l-2 border-primary absolute h-full left-4 top-0"></div>
                                 <div className="space-y-6 ml-10">
                                     <div className="relative">
-                                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center absolute -left-12">1</div>
+                                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center absolute -left-12">
+                                            1
+                                        </div>
                                         <div className="border rounded-lg p-4 bg-card">
                                             <h5 className="font-medium">Brainstorming Prompt</h5>
                                             <p className="text-sm text-muted-foreground mt-1">
@@ -849,7 +926,9 @@ export default function PromptGuide() {
                                     </div>
 
                                     <div className="relative">
-                                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center absolute -left-12">2</div>
+                                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center absolute -left-12">
+                                            2
+                                        </div>
                                         <div className="border rounded-lg p-4 bg-card">
                                             <h5 className="font-medium">Scene Structure Prompt</h5>
                                             <p className="text-sm text-muted-foreground mt-1">
@@ -859,7 +938,9 @@ export default function PromptGuide() {
                                     </div>
 
                                     <div className="relative">
-                                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center absolute -left-12">3</div>
+                                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center absolute -left-12">
+                                            3
+                                        </div>
                                         <div className="border rounded-lg p-4 bg-card">
                                             <h5 className="font-medium">Detailed Scene Beat Prompt</h5>
                                             <p className="text-sm text-muted-foreground mt-1">
@@ -873,9 +954,7 @@ export default function PromptGuide() {
 
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Troubleshooting Common Issues</h4>
-                            <p>
-                                If your prompts aren't producing the desired results:
-                            </p>
+                            <p>If your prompts aren't producing the desired results:</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                 <div className="border rounded-lg p-4 bg-card">
                                     <div className="flex items-center gap-2 mb-2">
@@ -934,23 +1013,45 @@ export default function PromptGuide() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <ul className="list-disc list-inside space-y-2">
-                                        <li>Start Simple: Begin with basic prompts and refine them as you learn what works</li>
-                                        <li>Test Different Models: Different AI models respond differently to the same prompt</li>
-                                        <li>Include Examples: Provide examples of the style and format you want in assistant messages</li>
-                                        <li>Be Specific: Clear, detailed instructions yield better results than vague ones</li>
+                                        <li>
+                                            Start Simple: Begin with basic prompts and refine them as you learn what
+                                            works
+                                        </li>
+                                        <li>
+                                            Test Different Models: Different AI models respond differently to the same
+                                            prompt
+                                        </li>
+                                        <li>
+                                            Include Examples: Provide examples of the style and format you want in
+                                            assistant messages
+                                        </li>
+                                        <li>
+                                            Be Specific: Clear, detailed instructions yield better results than vague
+                                            ones
+                                        </li>
                                     </ul>
                                 </div>
                                 <div>
                                     <ul className="list-disc list-inside space-y-2">
                                         <li>Iterate: Refine your prompts based on the results you get</li>
-                                        <li>Save Variations: Keep different versions of prompts for different writing needs</li>
-                                        <li>Balance Creativity and Control: Find the right temperature setting for your writing style</li>
-                                        <li>Use Variables Strategically: Include only the context that's relevant to your current task</li>
+                                        <li>
+                                            Save Variations: Keep different versions of prompts for different writing
+                                            needs
+                                        </li>
+                                        <li>
+                                            Balance Creativity and Control: Find the right temperature setting for your
+                                            writing style
+                                        </li>
+                                        <li>
+                                            Use Variables Strategically: Include only the context that's relevant to
+                                            your current task
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
                             <p className="mt-4 text-muted-foreground">
-                                By mastering the art of prompt creation, you'll be able to harness the full power of AI to enhance your storytelling while maintaining your unique voice and vision.
+                                By mastering the art of prompt creation, you'll be able to harness the full power of AI
+                                to enhance your storytelling while maintaining your unique voice and vision.
                             </p>
                         </div>
                     </div>
@@ -958,4 +1059,4 @@ export default function PromptGuide() {
             </Tabs>
         </div>
     );
-} 
+}

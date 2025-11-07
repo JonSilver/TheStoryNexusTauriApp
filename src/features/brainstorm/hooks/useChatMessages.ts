@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import type { AIChat, ChatMessage } from '@/types/story';
+import { useMemo } from "react";
+import type { AIChat, ChatMessage } from "@/types/story";
 
 interface UseChatMessagesParams {
     selectedChat: AIChat;
@@ -12,9 +12,9 @@ export const useChatMessages = ({
     selectedChat,
     streamingMessageId,
     streamingContent,
-    pendingUserMessage,
-}: UseChatMessagesParams): ChatMessage[] => {
-    return useMemo(() => {
+    pendingUserMessage
+}: UseChatMessagesParams): ChatMessage[] =>
+    useMemo(() => {
         const baseMessages = selectedChat.messages;
         const messagesToAdd: ChatMessage[] = [];
 
@@ -26,13 +26,10 @@ export const useChatMessages = ({
             messagesToAdd.push({
                 id: streamingMessageId,
                 content: streamingContent,
-                role: 'assistant',
+                role: "assistant",
                 timestamp: new Date()
             });
         }
 
-        return messagesToAdd.length > 0
-            ? [...baseMessages, ...messagesToAdd]
-            : baseMessages;
+        return messagesToAdd.length > 0 ? [...baseMessages, ...messagesToAdd] : baseMessages;
     }, [selectedChat.messages, streamingMessageId, streamingContent, pendingUserMessage]);
-};

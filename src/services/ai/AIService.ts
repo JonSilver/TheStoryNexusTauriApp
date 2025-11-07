@@ -1,12 +1,12 @@
-import { AIModel, AIProvider, AISettings, PromptMessage } from '@/types/story';
-import { aiApi } from '../api/client';
-import { AIProviderFactory } from './AIProviderFactory';
-import { IAIProvider } from './providers/IAIProvider';
-import { attemptPromise } from '@jfdi/attempt';
-import { formatSSEChunk, formatSSEDone } from '@/constants/aiConstants';
-import { API_URLS } from '@/constants/urls';
-import { aiSettingsSchema } from '@/schemas/entities';
-import { logger } from '@/utils/logger';
+import { AIModel, AIProvider, AISettings, PromptMessage } from "@/types/story";
+import { aiApi } from "../api/client";
+import { AIProviderFactory } from "./AIProviderFactory";
+import { IAIProvider } from "./providers/IAIProvider";
+import { attemptPromise } from "@jfdi/attempt";
+import { formatSSEChunk, formatSSEDone } from "@/constants/aiConstants";
+import { API_URLS } from "@/constants/urls";
+import { aiSettingsSchema } from "@/schemas/entities";
+import { logger } from "@/utils/logger";
 
 export class AIService {
     private static instance: AIService;
@@ -31,7 +31,7 @@ export class AIService {
         const [error, settings] = await attemptPromise(() => aiApi.getSettings());
 
         if (error) {
-            logger.error('[AIService] Failed to fetch settings from API', error);
+            logger.error("[AIService] Failed to fetch settings from API", error);
             throw error;
         }
 
@@ -39,10 +39,10 @@ export class AIService {
 
         // Initialize providers with stored keys
         if (this.settings.openaiKey) {
-            this.providerFactory.initializeProvider('openai', this.settings.openaiKey);
+            this.providerFactory.initializeProvider("openai", this.settings.openaiKey);
         }
         if (this.settings.openrouterKey) {
-            this.providerFactory.initializeProvider('openrouter', this.settings.openrouterKey);
+            this.providerFactory.initializeProvider("openrouter", this.settings.openrouterKey);
         }
         if (this.settings.localApiUrl) {
             this.providerFactory.updateLocalApiUrl(this.settings.localApiUrl);
@@ -50,13 +50,13 @@ export class AIService {
     }
 
     async updateKey(provider: AIProvider, key: string) {
-        if (!this.settings) throw new Error('AIService not initialized');
+        if (!this.settings) throw new Error("AIService not initialized");
 
         logger.info(`[AIService] Updating key for provider: ${provider}`);
 
         const update: Partial<AISettings> = {
-            ...(provider === 'openai' && { openaiKey: key }),
-            ...(provider === 'openrouter' && { openrouterKey: key })
+            ...(provider === "openai" && { openaiKey: key }),
+            ...(provider === "openrouter" && { openrouterKey: key })
         };
 
         const result = aiSettingsSchema.partial().safeParse(update);
@@ -67,7 +67,7 @@ export class AIService {
         // Update via API
         const [error] = await attemptPromise(() => aiApi.updateSettings(this.settings!.id, update));
         if (error) {
-            logger.error('[AIService] Failed to update settings via API', error);
+            logger.error("[AIService] Failed to update settings via API", error);
             throw error;
         }
 
@@ -81,7 +81,7 @@ export class AIService {
     }
 
     private async fetchAvailableModels(provider: AIProvider) {
-        if (!this.settings) throw new Error('AIService not initialized');
+        if (!this.settings) throw new Error("AIService not initialized");
 
         logger.info(`[AIService] Fetching available models for provider: ${provider}`);
 
@@ -89,7 +89,7 @@ export class AIService {
         const [error, models] = await attemptPromise(() => aiProvider.fetchModels());
 
         if (error) {
-            logger.error('Error fetching models:', error);
+            logger.error("Error fetching models:", error);
             throw error;
         }
 
@@ -112,7 +112,7 @@ export class AIService {
         // Update via API
         const [apiError] = await attemptPromise(() => aiApi.updateSettings(this.settings!.id, updateData));
         if (apiError) {
-            logger.error('[AIService] Failed to update models via API', apiError);
+            logger.error("[AIService] Failed to update models via API", apiError);
             throw apiError;
         }
 
@@ -121,7 +121,7 @@ export class AIService {
     }
 
     async getAvailableModels(provider?: AIProvider, forceRefresh: boolean = true): Promise<AIModel[]> {
-        if (!this.settings) throw new Error('AIService not initialized');
+        if (!this.settings) throw new Error("AIService not initialized");
 
         // Refresh settings from API to ensure we have latest data
         const [error, freshSettings] = await attemptPromise(() => aiApi.getSettings());
@@ -166,7 +166,7 @@ export class AIService {
                 });
 
                 if (error) {
-                    if ((error as Error).name === 'AbortError') {
+                    if ((error as Error).name === "AbortError") {
                         controller.close();
                     } else {
                         controller.error(error);
@@ -178,7 +178,7 @@ export class AIService {
         });
 
         return new Response(responseStream, {
-            headers: { 'Content-Type': 'text/event-stream' }
+            headers: { "Content-Type": "text/event-stream" }
         });
     }
 
@@ -194,14 +194,8 @@ export class AIService {
     ): Promise<Response> {
         this.abortController = new AbortController();
 
-        const provider = this.providerFactory.getProvider('local');
-        return await provider.generate(
-            messages,
-            modelId,
-            temperature,
-            maxTokens,
-            this.abortController.signal
-        );
+        const provider = this.providerFactory.getProvider("local");
+        return await provider.generate(messages, modelId, temperature, maxTokens, this.abortController.signal);
     }
 
     async generateWithOpenAI(
@@ -215,21 +209,15 @@ export class AIService {
         _min_p?: number
     ): Promise<Response> {
         if (!this.settings?.openaiKey) {
-            throw new Error('OpenAI API key not set');
+            throw new Error("OpenAI API key not set");
         }
 
-        const provider = this.providerFactory.getProvider('openai');
+        const provider = this.providerFactory.getProvider("openai");
         if (!provider.isInitialized()) {
-            this.providerFactory.initializeProvider('openai', this.settings.openaiKey);
+            this.providerFactory.initializeProvider("openai", this.settings.openaiKey);
         }
 
-        return await this.generateWithSSEFormatting(
-            provider,
-            messages,
-            modelId,
-            temperature,
-            maxTokens
-        );
+        return await this.generateWithSSEFormatting(provider, messages, modelId, temperature, maxTokens);
     }
 
     async generateWithOpenRouter(
@@ -243,21 +231,15 @@ export class AIService {
         _min_p?: number
     ): Promise<Response> {
         if (!this.settings?.openrouterKey) {
-            throw new Error('OpenRouter API key not set');
+            throw new Error("OpenRouter API key not set");
         }
 
-        const provider = this.providerFactory.getProvider('openrouter');
+        const provider = this.providerFactory.getProvider("openrouter");
         if (!provider.isInitialized()) {
-            this.providerFactory.initializeProvider('openrouter', this.settings.openrouterKey);
+            this.providerFactory.initializeProvider("openrouter", this.settings.openrouterKey);
         }
 
-        return await this.generateWithSSEFormatting(
-            provider,
-            messages,
-            modelId,
-            temperature,
-            maxTokens
-        );
+        return await this.generateWithSSEFormatting(provider, messages, modelId, temperature, maxTokens);
     }
 
     private async generateWithSSEFormatting(
@@ -270,24 +252,18 @@ export class AIService {
         this.abortController = new AbortController();
 
         const [error, response] = await attemptPromise(() =>
-            provider.generate(
-                messages,
-                modelId,
-                temperature,
-                maxTokens,
-                this.abortController!.signal
-            )
+            provider.generate(messages, modelId, temperature, maxTokens, this.abortController!.signal)
         );
 
         if (error) {
-            if ((error as Error).name === 'AbortError') {
+            if ((error as Error).name === "AbortError") {
                 return new Response(null, { status: 204 });
             }
             throw error;
         }
 
         if (!response) {
-            throw new Error('No response from provider');
+            throw new Error("No response from provider");
         }
 
         return this.formatStreamAsSSE(response);
@@ -300,7 +276,7 @@ export class AIService {
         onError: (error: Error) => void
     ) {
         if (!response.body) {
-            return onError(new Error('Response body is null'));
+            return onError(new Error("Response body is null"));
         }
 
         const reader = response.body.getReader();
@@ -315,18 +291,18 @@ export class AIService {
                 }
 
                 const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n').filter(line => line.trim() !== '');
+                const lines = chunk.split("\n").filter(line => line.trim() !== "");
 
                 for (const line of lines) {
-                    if (line.startsWith('data: ')) {
+                    if (line.startsWith("data: ")) {
                         const data = line.substring(6);
-                        if (data === '[DONE]') {
+                        if (data === "[DONE]") {
                             onComplete();
                             return;
                         }
                         const [parseError, json] = await attemptPromise(() => Promise.resolve(JSON.parse(data)));
                         if (!parseError && json) {
-                            const text = json.choices[0]?.delta?.content || '';
+                            const text = json.choices[0]?.delta?.content || "";
                             if (text) {
                                 onToken(text);
                             }
@@ -337,8 +313,8 @@ export class AIService {
         });
 
         if (error) {
-            if ((error as Error).name === 'AbortError') {
-                logger.info('Stream reading aborted.');
+            if ((error as Error).name === "AbortError") {
+                logger.info("Stream reading aborted.");
                 onComplete();
             } else {
                 onError(error as Error);
@@ -375,15 +351,15 @@ export class AIService {
 
     async updateDefaultModel(provider: AIProvider, modelId: string | undefined): Promise<void> {
         if (!this.settings) {
-            throw new Error('AI settings not initialized');
+            throw new Error("AI settings not initialized");
         }
 
         let updateData: Partial<AISettings>;
-        if (provider === 'local') {
+        if (provider === "local") {
             updateData = { defaultLocalModel: modelId };
-        } else if (provider === 'openai') {
+        } else if (provider === "openai") {
             updateData = { defaultOpenAIModel: modelId };
-        } else if (provider === 'openrouter') {
+        } else if (provider === "openrouter") {
             updateData = { defaultOpenRouterModel: modelId };
         } else {
             return;
@@ -397,7 +373,7 @@ export class AIService {
         // Update via API
         const [error] = await attemptPromise(() => aiApi.updateSettings(this.settings!.id, updateData));
         if (error) {
-            logger.error('[AIService] Failed to update default model via API', error);
+            logger.error("[AIService] Failed to update default model via API", error);
             throw error;
         }
 
@@ -406,7 +382,7 @@ export class AIService {
 
     async updateLocalApiUrl(url: string): Promise<void> {
         if (!this.settings) {
-            throw new Error('Settings not initialized');
+            throw new Error("Settings not initialized");
         }
 
         const updateData = { localApiUrl: url };
@@ -419,7 +395,7 @@ export class AIService {
         // Update via API
         const [error] = await attemptPromise(() => aiApi.updateSettings(this.settings!.id, updateData));
         if (error) {
-            logger.error('[AIService] Failed to update local API URL via API', error);
+            logger.error("[AIService] Failed to update local API URL via API", error);
             throw error;
         }
 
@@ -427,7 +403,7 @@ export class AIService {
 
         // Update provider and re-fetch models
         this.providerFactory.updateLocalApiUrl(url);
-        await this.fetchAvailableModels('local');
+        await this.fetchAvailableModels("local");
     }
 
     getSettings(): AISettings | null {
@@ -436,7 +412,7 @@ export class AIService {
 
     abortStream(): void {
         if (this.abortController) {
-            logger.info('[AIService] Aborting stream');
+            logger.info("[AIService] Aborting stream");
             this.abortController.abort();
             this.abortController = null;
         }

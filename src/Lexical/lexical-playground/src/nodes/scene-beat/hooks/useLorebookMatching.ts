@@ -10,19 +10,18 @@ import type { LorebookEntry } from "@/types/story";
  * @returns Map of matched lorebook entries
  */
 export const useLorebookMatching = (
-  command: string,
-  tagMap: Record<string, LorebookEntry>
-): Map<string, LorebookEntry> => {
-  return useMemo(() => {
-    const matchedEntries = new Map<string, LorebookEntry>();
-    const lowerCommand = command.toLowerCase();
+    command: string,
+    tagMap: Record<string, LorebookEntry>
+): Map<string, LorebookEntry> =>
+    useMemo(() => {
+        const matchedEntries = new Map<string, LorebookEntry>();
+        const lowerCommand = command.toLowerCase();
 
-    Object.entries(tagMap).forEach(([tag, entry]) => {
-      if (lowerCommand.includes(tag.toLowerCase())) {
-        matchedEntries.set(entry.id, entry);
-      }
-    });
+        Object.entries(tagMap).forEach(([tag, entry]) => {
+            if (lowerCommand.includes(tag.toLowerCase())) {
+                matchedEntries.set(entry.id, entry);
+            }
+        });
 
-    return matchedEntries;
-  }, [command, tagMap]);
-};
+        return matchedEntries;
+    }, [command, tagMap]);

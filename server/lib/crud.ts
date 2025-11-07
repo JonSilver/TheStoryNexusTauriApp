@@ -35,7 +35,8 @@ export const createCrudRouter = <TTable extends Table = Table, TRow = unknown, T
     const router = Router();
     const { table, name, parentKey, parentRoute, transforms, customRoutes } = config;
 
-    const applyTransform = (data: TRow): TTransformed => (transforms?.afterRead ? transforms.afterRead(data) : data as unknown as TTransformed);
+    const applyTransform = (data: TRow): TTransformed =>
+        transforms?.afterRead ? transforms.afterRead(data) : (data as unknown as TTransformed);
 
     const helpers: RouteHelpers<TTable, TRow, TTransformed> = { asyncHandler, applyTransform, table };
 

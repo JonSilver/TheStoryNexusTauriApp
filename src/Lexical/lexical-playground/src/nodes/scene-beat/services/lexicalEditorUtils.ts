@@ -10,42 +10,42 @@ import { $createParagraphNode, $createTextNode, $getNodeByKey } from "lexical";
  * @returns The previous text content with preserved formatting
  */
 export const extractPreviousText = (editor: LexicalEditor, nodeKey: NodeKey): string => {
-  let previousText = "";
+    let previousText = "";
 
-  editor.getEditorState().read(() => {
-    const node = $getNodeByKey(nodeKey);
-    if (!node) return;
+    editor.getEditorState().read(() => {
+        const node = $getNodeByKey(nodeKey);
+        if (!node) return;
 
-    const textNodes: string[] = [];
-    let currentNode = node.getPreviousSibling();
+        const textNodes: string[] = [];
+        let currentNode = node.getPreviousSibling();
 
-    while (currentNode) {
-      if ("getTextContent" in currentNode) {
-        // Check if the node is a block-level node
-        const isBlockNode =
-          currentNode.getType() === "paragraph" ||
-          currentNode.getType() === "heading" ||
-          currentNode.getType() === "list-item";
+        while (currentNode) {
+            if ("getTextContent" in currentNode) {
+                // Check if the node is a block-level node
+                const isBlockNode =
+                    currentNode.getType() === "paragraph" ||
+                    currentNode.getType() === "heading" ||
+                    currentNode.getType() === "list-item";
 
-        const nodeText = currentNode.getTextContent();
+                const nodeText = currentNode.getTextContent();
 
-        // Add the text content with proper newline handling
-        if (nodeText.trim()) {
-          textNodes.unshift(nodeText);
+                // Add the text content with proper newline handling
+                if (nodeText.trim()) {
+                    textNodes.unshift(nodeText);
 
-          // Add an extra newline after block nodes
-          if (isBlockNode) {
-            textNodes.unshift("\n");
-          }
+                    // Add an extra newline after block nodes
+                    if (isBlockNode) {
+                        textNodes.unshift("\n");
+                    }
+                }
+            }
+            currentNode = currentNode.getPreviousSibling();
         }
-      }
-      currentNode = currentNode.getPreviousSibling();
-    }
 
-    previousText = textNodes.join("");
-  });
+        previousText = textNodes.join("");
+    });
 
-  return previousText;
+    return previousText;
 };
 
 /**
@@ -55,17 +55,13 @@ export const extractPreviousText = (editor: LexicalEditor, nodeKey: NodeKey): st
  * @param nodeKey - The key of the node to insert after
  * @param text - The text content to insert
  */
-export const insertTextAfterNode = (
-  editor: LexicalEditor,
-  nodeKey: NodeKey,
-  text: string
-): void => {
-  editor.update(() => {
-    const paragraphNode = $createParagraphNode();
-    paragraphNode.append($createTextNode(text));
-    const currentNode = $getNodeByKey(nodeKey);
-    if (currentNode) {
-      currentNode.insertAfter(paragraphNode);
-    }
-  });
+export const insertTextAfterNode = (editor: LexicalEditor, nodeKey: NodeKey, text: string): void => {
+    editor.update(() => {
+        const paragraphNode = $createParagraphNode();
+        paragraphNode.append($createTextNode(text));
+        const currentNode = $getNodeByKey(nodeKey);
+        if (currentNode) {
+            currentNode.insertAfter(paragraphNode);
+        }
+    });
 };

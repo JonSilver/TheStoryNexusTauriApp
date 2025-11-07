@@ -2,7 +2,7 @@
  * SlashCommandPlugin - Adds support for slash commands like in Notion
  */
 
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
     COMMAND_PRIORITY_NORMAL,
     KEY_ESCAPE_COMMAND,
@@ -12,12 +12,12 @@ import {
     $getSelection,
     $isRangeSelection,
     $createParagraphNode,
-    LexicalEditor,
-} from 'lexical';
-import { mergeRegister } from '@lexical/utils';
-import { $createSceneBeatNode } from '../../nodes/SceneBeatNode';
-import { Bot } from 'lucide-react';
-import { createPortal } from 'react-dom';
+    LexicalEditor
+} from "lexical";
+import { mergeRegister } from "@lexical/utils";
+import { $createSceneBeatNode } from "../../nodes/SceneBeatNode";
+import { Bot } from "lucide-react";
+import { createPortal } from "react-dom";
 
 interface SlashCommandItem {
     key: string;
@@ -29,10 +29,10 @@ interface SlashCommandItem {
 
 const SLASH_COMMANDS: SlashCommandItem[] = [
     {
-        key: 'scene-beat',
-        name: 'Scene Beat',
+        key: "scene-beat",
+        name: "Scene Beat",
         icon: <Bot className="h-4 w-4" />,
-        description: 'Insert a scene beat for AI generation',
+        description: "Insert a scene beat for AI generation",
         onSelect: (editor: LexicalEditor) => {
             editor.update(() => {
                 const selection = $getSelection();
@@ -46,16 +46,12 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
                     selection.insertNodes([beatNode, paragraphNode]);
                 }
             });
-        },
-    },
+        }
+    }
     // Add more slash commands here as needed
 ];
 
-export default function SlashCommandPlugin({
-    editor,
-}: {
-    editor: LexicalEditor;
-}): JSX.Element | null {
+export default function SlashCommandPlugin({ editor }: { editor: LexicalEditor }): JSX.Element | null {
     const [slashCommandText, setSlashCommandText] = useState<string | null>(null);
     const [showMenu, setShowMenu] = useState(false);
     const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
@@ -63,10 +59,11 @@ export default function SlashCommandPlugin({
     const menuRef = useRef<HTMLDivElement>(null);
 
     const filteredCommands = slashCommandText
-        ? SLASH_COMMANDS.filter(cmd =>
-            cmd.name.toLowerCase().includes(slashCommandText.toLowerCase()) ||
-            cmd.description.toLowerCase().includes(slashCommandText.toLowerCase())
-        )
+        ? SLASH_COMMANDS.filter(
+              cmd =>
+                  cmd.name.toLowerCase().includes(slashCommandText.toLowerCase()) ||
+                  cmd.description.toLowerCase().includes(slashCommandText.toLowerCase())
+          )
         : SLASH_COMMANDS;
 
     const resetMenu = useCallback(() => {
@@ -84,7 +81,7 @@ export default function SlashCommandPlugin({
             // Position the menu below the cursor
             setMenuPosition({
                 top: rect.bottom + window.scrollY,
-                left: rect.left + window.scrollX,
+                left: rect.left + window.scrollX
             });
         }
     }, []);
@@ -94,29 +91,27 @@ export default function SlashCommandPlugin({
             if (!showMenu) return false;
 
             // Handle escape to close the menu
-            if (event.key === 'Escape') {
+            if (event.key === "Escape") {
                 event.preventDefault();
                 resetMenu();
                 return true;
             }
 
             // Handle arrow keys for navigation
-            if (event.key === 'ArrowDown') {
+            if (event.key === "ArrowDown") {
                 event.preventDefault();
-                setSelectedCommandIndex((prev) =>
-                    prev < filteredCommands.length - 1 ? prev + 1 : prev
-                );
+                setSelectedCommandIndex(prev => (prev < filteredCommands.length - 1 ? prev + 1 : prev));
                 return true;
             }
 
-            if (event.key === 'ArrowUp') {
+            if (event.key === "ArrowUp") {
                 event.preventDefault();
-                setSelectedCommandIndex((prev) => (prev > 0 ? prev - 1 : 0));
+                setSelectedCommandIndex(prev => (prev > 0 ? prev - 1 : 0));
                 return true;
             }
 
             // Handle enter to select command
-            if (event.key === 'Enter' && filteredCommands.length > 0) {
+            if (event.key === "Enter" && filteredCommands.length > 0) {
                 event.preventDefault();
                 const selectedCommand = filteredCommands[selectedCommandIndex];
                 selectedCommand.onSelect(editor);
@@ -131,23 +126,21 @@ export default function SlashCommandPlugin({
 
     // Listen for text changes to detect slash commands
     useEffect(() => {
-        const removeTextListener = editor.registerTextContentListener(
-            (textContent) => {
-                // Check if the text contains a slash command
-                // This regex matches a slash followed by any word characters at the end of the text
-                // or a slash at the very end of the text (to show the menu as soon as / is typed)
-                const match = textContent.match(/\/(\w*)$|\/$/);
-                if (match) {
-                    // If we matched just a slash at the end, set empty text
-                    const commandText = match[1] || '';
-                    setSlashCommandText(commandText);
-                    setShowMenu(true);
-                    updateMenuPosition();
-                } else if (showMenu) {
-                    resetMenu();
-                }
+        const removeTextListener = editor.registerTextContentListener(textContent => {
+            // Check if the text contains a slash command
+            // This regex matches a slash followed by any word characters at the end of the text
+            // or a slash at the very end of the text (to show the menu as soon as / is typed)
+            const match = textContent.match(/\/(\w*)$|\/$/);
+            if (match) {
+                // If we matched just a slash at the end, set empty text
+                const commandText = match[1] || "";
+                setSlashCommandText(commandText);
+                setShowMenu(true);
+                updateMenuPosition();
+            } else if (showMenu) {
+                resetMenu();
             }
-        );
+        });
 
         return removeTextListener;
     }, [editor, resetMenu, showMenu, updateMenuPosition]);
@@ -161,45 +154,47 @@ export default function SlashCommandPlugin({
                 }
             };
 
-            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener("mousedown", handleClickOutside);
             return () => {
-                document.removeEventListener('mousedown', handleClickOutside);
+                document.removeEventListener("mousedown", handleClickOutside);
             };
         }
         return undefined;
     }, [showMenu, resetMenu]);
 
     // Register command listeners
-    useEffect(() => {
-        return mergeRegister(
-            editor.registerCommand(
-                KEY_ESCAPE_COMMAND,
-                () => {
-                    if (showMenu) {
-                        resetMenu();
-                        return true;
-                    }
-                    return false;
-                },
-                COMMAND_PRIORITY_NORMAL
+    useEffect(
+        () =>
+            mergeRegister(
+                editor.registerCommand(
+                    KEY_ESCAPE_COMMAND,
+                    () => {
+                        if (showMenu) {
+                            resetMenu();
+                            return true;
+                        }
+                        return false;
+                    },
+                    COMMAND_PRIORITY_NORMAL
+                ),
+                editor.registerCommand(
+                    KEY_ENTER_COMMAND,
+                    event => onKeyDown(event as KeyboardEvent),
+                    COMMAND_PRIORITY_NORMAL
+                ),
+                editor.registerCommand(
+                    KEY_ARROW_DOWN_COMMAND,
+                    event => onKeyDown(event as KeyboardEvent),
+                    COMMAND_PRIORITY_NORMAL
+                ),
+                editor.registerCommand(
+                    KEY_ARROW_UP_COMMAND,
+                    event => onKeyDown(event as KeyboardEvent),
+                    COMMAND_PRIORITY_NORMAL
+                )
             ),
-            editor.registerCommand(
-                KEY_ENTER_COMMAND,
-                (event) => onKeyDown(event as KeyboardEvent),
-                COMMAND_PRIORITY_NORMAL
-            ),
-            editor.registerCommand(
-                KEY_ARROW_DOWN_COMMAND,
-                (event) => onKeyDown(event as KeyboardEvent),
-                COMMAND_PRIORITY_NORMAL
-            ),
-            editor.registerCommand(
-                KEY_ARROW_UP_COMMAND,
-                (event) => onKeyDown(event as KeyboardEvent),
-                COMMAND_PRIORITY_NORMAL
-            )
-        );
-    }, [editor, onKeyDown, resetMenu, showMenu]);
+        [editor, onKeyDown, resetMenu, showMenu]
+    );
 
     // If menu is not shown, don't render anything
     if (!showMenu) {
@@ -220,7 +215,7 @@ export default function SlashCommandPlugin({
                     <div className="p-2">No commands found</div>
                 ) : (
                     <div className="text-xs px-2 py-1 text-muted-foreground">
-                        {slashCommandText ? `Results for "${slashCommandText}"` : 'Commands'}
+                        {slashCommandText ? `Results for "${slashCommandText}"` : "Commands"}
                     </div>
                 )}
             </div>
@@ -228,8 +223,9 @@ export default function SlashCommandPlugin({
                 {filteredCommands.map((command, index) => (
                     <div
                         key={command.key}
-                        className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-accent/50 ${index === selectedCommandIndex ? 'bg-accent/50' : ''
-                            }`}
+                        className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-accent/50 ${
+                            index === selectedCommandIndex ? "bg-accent/50" : ""
+                        }`}
                         onClick={() => {
                             command.onSelect(editor);
                             resetMenu();
@@ -240,9 +236,7 @@ export default function SlashCommandPlugin({
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="font-medium">{command.name}</div>
-                            <div className="text-xs text-muted-foreground truncate">
-                                {command.description}
-                            </div>
+                            <div className="text-xs text-muted-foreground truncate">{command.description}</div>
                         </div>
                     </div>
                 ))}
@@ -250,4 +244,4 @@ export default function SlashCommandPlugin({
         </div>,
         document.body
     );
-} 
+}

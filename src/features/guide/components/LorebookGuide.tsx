@@ -31,7 +31,8 @@ export default function LorebookGuide() {
             <div>
                 <h2 className="text-2xl font-bold mb-4">Lorebook Guide</h2>
                 <p className="text-muted-foreground mb-6">
-                    Learn how to use the Lorebook feature to organize and manage your story's world, characters, and other elements.
+                    Learn how to use the Lorebook feature to organize and manage your story's world, characters, and
+                    other elements.
                 </p>
             </div>
 
@@ -47,7 +48,8 @@ export default function LorebookGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Understanding Lorebook Levels</h3>
                         <p>
-                            The Story Nexus uses a hierarchical lorebook system with three levels, allowing you to share world-building across multiple stories or keep it specific to individual projects.
+                            The Story Nexus uses a hierarchical lorebook system with three levels, allowing you to share
+                            world-building across multiple stories or keep it specific to individual projects.
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
@@ -60,7 +62,8 @@ export default function LorebookGuide() {
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <p className="text-sm">
-                                        Accessible across all series and stories. Use for universal world-building elements, writing style references, or frequently used concepts.
+                                        Accessible across all series and stories. Use for universal world-building
+                                        elements, writing style references, or frequently used concepts.
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         Example: Magic system rules, world geography, universal lore
@@ -77,7 +80,8 @@ export default function LorebookGuide() {
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <p className="text-sm">
-                                        Shared by all stories within a series. Perfect for recurring characters, locations, and plot elements that span multiple stories.
+                                        Shared by all stories within a series. Perfect for recurring characters,
+                                        locations, and plot elements that span multiple stories.
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         Example: Main characters, key locations, series timeline
@@ -94,7 +98,8 @@ export default function LorebookGuide() {
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <p className="text-sm">
-                                        Specific to one story only. Use for story-unique characters, plot-specific locations, and elements that don't appear elsewhere.
+                                        Specific to one story only. Use for story-unique characters, plot-specific
+                                        locations, and elements that don't appear elsewhere.
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         Example: Story-exclusive characters, unique items, specific events
@@ -106,7 +111,9 @@ export default function LorebookGuide() {
                         <Alert className="mt-4">
                             <AlertTitle>How Inheritance Works</AlertTitle>
                             <AlertDescription>
-                                When working on a story, you have access to all three levels: story-specific entries, series entries (if part of a series), and global entries. The AI automatically uses context from all accessible levels when generating content.
+                                When working on a story, you have access to all three levels: story-specific entries,
+                                series entries (if part of a series), and global entries. The AI automatically uses
+                                context from all accessible levels when generating content.
                             </AlertDescription>
                         </Alert>
                     </div>
@@ -114,10 +121,13 @@ export default function LorebookGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">What is a Lorebook?</h3>
                         <p>
-                            A Lorebook is a powerful organisational tool that helps you keep track of all the important elements in your story's world. It serves as a central repository for characters, locations, items, events, and other story elements.
+                            A Lorebook is a powerful organisational tool that helps you keep track of all the important
+                            elements in your story's world. It serves as a central repository for characters, locations,
+                            items, events, and other story elements.
                         </p>
                         <p>
-                            The Lorebook in The Story Nexus is designed to not only help you organise your story elements but also to integrate them seamlessly with the AI writing process.
+                            The Lorebook in The Story Nexus is designed to not only help you organise your story
+                            elements but also to integrate them seamlessly with the AI writing process.
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -148,10 +158,14 @@ export default function LorebookGuide() {
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <p>
-                                        The Lorebook uses a tag-based system to connect your writing with your Lorebook entries. When you write text that contains tags matching your Lorebook entries, those entries are automatically identified and can be used to provide context to the AI.
+                                        The Lorebook uses a tag-based system to connect your writing with your Lorebook
+                                        entries. When you write text that contains tags matching your Lorebook entries,
+                                        those entries are automatically identified and can be used to provide context to
+                                        the AI.
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        For example, if you have a character named "Harry Potter" and you mention "Harry" in your text, the system will recognize and match this entry.
+                                        For example, if you have a character named "Harry Potter" and you mention
+                                        "Harry" in your text, the system will recognize and match this entry.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -161,7 +175,8 @@ export default function LorebookGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Entry Categories</h3>
                         <p>
-                            The Lorebook supports various categories of entries to help you organize different types of story elements:
+                            The Lorebook supports various categories of entries to help you organize different types of
+                            story elements:
                         </p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
@@ -210,9 +225,7 @@ export default function LorebookGuide() {
                                     <StickyNote className="h-5 w-5 text-primary" />
                                     <h4 className="font-medium">Notes</h4>
                                 </div>
-                                <p className="text-sm text-muted-foreground">
-                                    General information, ideas, or concepts
-                                </p>
+                                <p className="text-sm text-muted-foreground">General information, ideas, or concepts</p>
                             </div>
 
                             <div className="border rounded-lg p-4 bg-card">
@@ -251,7 +264,8 @@ export default function LorebookGuide() {
                         <Alert>
                             <AlertTitle>Accessing the Lorebook</AlertTitle>
                             <AlertDescription>
-                                Navigate to your story or series dashboard and click the "Lorebook" tab in the navigation menu to access your lorebook entries.
+                                Navigate to your story or series dashboard and click the "Lorebook" tab in the
+                                navigation menu to access your lorebook entries.
                             </AlertDescription>
                         </Alert>
                     </div>
@@ -261,13 +275,15 @@ export default function LorebookGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Creating Lorebook Entries</h3>
                         <p>
-                            Creating detailed Lorebook entries is essential for building a rich story world and providing the AI with the context it needs to generate appropriate content.
+                            Creating detailed Lorebook entries is essential for building a rich story world and
+                            providing the AI with the context it needs to generate appropriate content.
                         </p>
 
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 1: Access the Lorebook</h4>
                             <p>
-                                You can access the lorebook from multiple locations depending on what level you want to create entries at:
+                                You can access the lorebook from multiple locations depending on what level you want to
+                                create entries at:
                             </p>
                             <div className="space-y-2 ml-4">
                                 <div className="flex items-start gap-2">
@@ -275,7 +291,8 @@ export default function LorebookGuide() {
                                     <div>
                                         <p className="text-sm font-medium">From Story Dashboard</p>
                                         <p className="text-xs text-muted-foreground">
-                                            Dashboard → [Your Story] → Lorebook (access to global, series, and story levels)
+                                            Dashboard → [Your Story] → Lorebook (access to global, series, and story
+                                            levels)
                                         </p>
                                     </div>
                                 </div>
@@ -293,9 +310,7 @@ export default function LorebookGuide() {
 
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 2: Create a New Entry</h4>
-                            <p>
-                                Click the "New Entry" button in the top-right corner of the Lorebook page.
-                            </p>
+                            <p>Click the "New Entry" button in the top-right corner of the Lorebook page.</p>
                             <div className="flex items-center gap-2 my-2">
                                 <Plus className="h-5 w-5 text-primary" />
                                 <span className="text-sm text-muted-foreground">
@@ -307,18 +322,18 @@ export default function LorebookGuide() {
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 3: Fill in the Basic Information</h4>
                             <div className="space-y-2">
-                                <p>
-                                    Complete the following fields in the dialog:
-                                </p>
+                                <p>Complete the following fields in the dialog:</p>
                                 <ul className="list-disc list-inside space-y-2 ml-4">
                                     <li>
                                         <strong>Level:</strong> Choose the scope for this entry
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            Global (accessible everywhere), Series (shared within series), or Story (specific to one story)
+                                            Global (accessible everywhere), Series (shared within series), or Story
+                                            (specific to one story)
                                         </p>
                                     </li>
                                     <li>
-                                        <strong>Series/Story:</strong> If Level is Series or Story, select which series or story
+                                        <strong>Series/Story:</strong> If Level is Series or Story, select which series
+                                        or story
                                         <p className="text-sm text-muted-foreground ml-6">
                                             When creating from a story/series context, this is pre-filled automatically
                                         </p>
@@ -332,7 +347,8 @@ export default function LorebookGuide() {
                                     <li>
                                         <strong>Category:</strong> Select the appropriate category for your entry
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            Choose from character, location, item, event, note, synopsis, starting scenario, or timeline
+                                            Choose from character, location, item, event, note, synopsis, starting
+                                            scenario, or timeline
                                         </p>
                                     </li>
                                     <li>
@@ -344,13 +360,15 @@ export default function LorebookGuide() {
                                     <li>
                                         <strong>Tags:</strong> Add additional tags for this entry
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            Enter tags separated by commas (e.g., "The Boy Who Lived, Gryffindor, Wizard")
+                                            Enter tags separated by commas (e.g., "The Boy Who Lived, Gryffindor,
+                                            Wizard")
                                         </p>
                                     </li>
                                     <li>
                                         <strong>Description:</strong> Write a detailed description of this entry
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            This is the main content that will be provided to the AI when this entry is matched
+                                            This is the main content that will be provided to the AI when this entry is
+                                            matched
                                         </p>
                                     </li>
                                 </ul>
@@ -359,20 +377,23 @@ export default function LorebookGuide() {
 
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 4: Advanced Settings (Optional)</h4>
-                            <p>
-                                Click on "Advanced Settings" to access additional options:
-                            </p>
+                            <p>Click on "Advanced Settings" to access additional options:</p>
                             <ul className="list-disc list-inside space-y-2 ml-4">
                                 <li>
                                     <strong>Type:</strong> Specify a more specific type within the category
                                     <p className="text-sm text-muted-foreground ml-6">
-                                        Examples: "Protagonist", "Villain", "Capital City", "Magical Artifact". This is for your organization—the AI doesn't specifically use this field differently, but it's included in the entry context.
+                                        Examples: "Protagonist", "Villain", "Capital City", "Magical Artifact". This is
+                                        for your organization—the AI doesn't specifically use this field differently,
+                                        but it's included in the entry context.
                                     </p>
                                 </li>
                                 <li>
                                     <strong>Status:</strong> Set the narrative status of this entry
                                     <p className="text-sm text-muted-foreground ml-6">
-                                        Options: <strong>active</strong> (currently relevant to your story), <strong>inactive</strong> (temporarily not in play), <strong>historical</strong> (past events/deceased characters). This is descriptive metadata for your reference and is included in the entry description sent to the AI.
+                                        Options: <strong>active</strong> (currently relevant to your story),{" "}
+                                        <strong>inactive</strong> (temporarily not in play), <strong>historical</strong>{" "}
+                                        (past events/deceased characters). This is descriptive metadata for your
+                                        reference and is included in the entry description sent to the AI.
                                     </p>
                                 </li>
                                 <li>
@@ -386,13 +407,13 @@ export default function LorebookGuide() {
 
                         <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                             <h4 className="text-lg font-medium">Step 5: Save Your Entry</h4>
-                            <p>
-                                Click the "Create" button to save your new Lorebook entry.
-                            </p>
+                            <p>Click the "Create" button to save your new Lorebook entry.</p>
                             <Alert className="mt-4 bg-primary/10 border-primary">
                                 <AlertTitle>Pro Tip</AlertTitle>
                                 <AlertDescription>
-                                    Create entries for all major characters, locations, and important story elements before you start writing. This will ensure the AI has a good understanding of your story world from the beginning.
+                                    Create entries for all major characters, locations, and important story elements
+                                    before you start writing. This will ensure the AI has a good understanding of your
+                                    story world from the beginning.
                                 </AlertDescription>
                             </Alert>
                         </div>
@@ -403,7 +424,8 @@ export default function LorebookGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Managing Your Lorebook</h3>
                         <p>
-                            The Lorebook provides powerful tools for organizing, filtering, and managing your story elements.
+                            The Lorebook provides powerful tools for organizing, filtering, and managing your story
+                            elements.
                         </p>
 
                         <div className="space-y-4">
@@ -438,9 +460,7 @@ export default function LorebookGuide() {
                                     <p className="text-sm">
                                         Use the search bar to find specific entries by name, description, or tags.
                                     </p>
-                                    <p className="text-sm mt-2">
-                                        Sort your entries by:
-                                    </p>
+                                    <p className="text-sm mt-2">Sort your entries by:</p>
                                     <div className="flex flex-wrap gap-2 mt-2">
                                         <Badge variant="outline">Name</Badge>
                                         <Badge variant="outline">Category</Badge>
@@ -460,11 +480,10 @@ export default function LorebookGuide() {
                                         <h5 className="font-medium">Editing Entries</h5>
                                     </div>
                                     <p className="text-sm">
-                                        To edit an entry, click the edit icon on the entry card. This will open the same dialog used for creation, but with the current values pre-filled.
+                                        To edit an entry, click the edit icon on the entry card. This will open the same
+                                        dialog used for creation, but with the current values pre-filled.
                                     </p>
-                                    <p className="text-sm mt-2">
-                                        Make your changes and click "Update" to save them.
-                                    </p>
+                                    <p className="text-sm mt-2">Make your changes and click "Update" to save them.</p>
                                 </div>
 
                                 <div className="space-y-2">
@@ -473,13 +492,12 @@ export default function LorebookGuide() {
                                         <h5 className="font-medium">Deleting Entries</h5>
                                     </div>
                                     <p className="text-sm">
-                                        To delete an entry, click the trash icon on the entry card. You will be asked to confirm the deletion.
+                                        To delete an entry, click the trash icon on the entry card. You will be asked to
+                                        confirm the deletion.
                                     </p>
                                     <Alert className="mt-2 bg-destructive/10 border-destructive">
                                         <AlertTitle>Warning</AlertTitle>
-                                        <AlertDescription>
-                                            Deletion is permanent and cannot be undone.
-                                        </AlertDescription>
+                                        <AlertDescription>Deletion is permanent and cannot be undone.</AlertDescription>
                                     </Alert>
                                 </div>
                             </div>
@@ -489,32 +507,35 @@ export default function LorebookGuide() {
                             <h4 className="text-lg font-medium">Understanding Level Badges</h4>
                             <div className="space-y-2">
                                 <p className="text-sm">
-                                    Each lorebook entry displays a badge indicating its level (Global, Series, or Story). These badges help you quickly identify which scope an entry belongs to.
+                                    Each lorebook entry displays a badge indicating its level (Global, Series, or
+                                    Story). These badges help you quickly identify which scope an entry belongs to.
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                                     <div className="border rounded-lg p-3 bg-card">
-                                        <Badge variant="outline" className="mb-2">Global</Badge>
-                                        <p className="text-xs text-muted-foreground">
-                                            Available everywhere
-                                        </p>
+                                        <Badge variant="outline" className="mb-2">
+                                            Global
+                                        </Badge>
+                                        <p className="text-xs text-muted-foreground">Available everywhere</p>
                                     </div>
                                     <div className="border rounded-lg p-3 bg-card">
-                                        <Badge variant="outline" className="mb-2">Series</Badge>
-                                        <p className="text-xs text-muted-foreground">
-                                            Shared within series
-                                        </p>
+                                        <Badge variant="outline" className="mb-2">
+                                            Series
+                                        </Badge>
+                                        <p className="text-xs text-muted-foreground">Shared within series</p>
                                     </div>
                                     <div className="border rounded-lg p-3 bg-card">
-                                        <Badge variant="outline" className="mb-2">Story</Badge>
-                                        <p className="text-xs text-muted-foreground">
-                                            Story-specific only
-                                        </p>
+                                        <Badge variant="outline" className="mb-2">
+                                            Story
+                                        </Badge>
+                                        <p className="text-xs text-muted-foreground">Story-specific only</p>
                                     </div>
                                 </div>
                                 <Alert className="mt-3">
                                     <AlertTitle>Viewing Inherited Entries</AlertTitle>
                                     <AlertDescription>
-                                        When viewing a story's lorebook, you'll see entries from all accessible levels (global, series if applicable, and story). Each entry's badge shows its origin level.
+                                        When viewing a story's lorebook, you'll see entries from all accessible levels
+                                        (global, series if applicable, and story). Each entry's badge shows its origin
+                                        level.
                                     </AlertDescription>
                                 </Alert>
                             </div>
@@ -529,7 +550,9 @@ export default function LorebookGuide() {
                                     <h5 className="font-medium">Toggle Visibility</h5>
                                 </div>
                                 <p className="text-sm">
-                                    Instead of deleting entries, you can disable them temporarily. This is useful when you want to exclude certain entries from being matched or included in AI context without losing the information.
+                                    Instead of deleting entries, you can disable them temporarily. This is useful when
+                                    you want to exclude certain entries from being matched or included in AI context
+                                    without losing the information.
                                 </p>
                                 <ul className="list-disc list-inside space-y-1 ml-4 text-sm">
                                     <li>Click the eye icon on an entry card to toggle its enabled/disabled state</li>
@@ -542,7 +565,8 @@ export default function LorebookGuide() {
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Import & Export Lorebook Entries</h4>
                             <p className="text-sm">
-                                Share lorebook entries between stories or back them up using import/export functionality.
+                                Share lorebook entries between stories or back them up using import/export
+                                functionality.
                             </p>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -558,7 +582,8 @@ export default function LorebookGuide() {
                                             <li>A JSON file downloads with your entries</li>
                                         </ol>
                                         <p className="text-xs text-muted-foreground mt-2">
-                                            Exported files include all entry data: names, descriptions, tags, categories, metadata, and level information.
+                                            Exported files include all entry data: names, descriptions, tags,
+                                            categories, metadata, and level information.
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -576,7 +601,8 @@ export default function LorebookGuide() {
                                             <li>Confirm to add them to your lorebook</li>
                                         </ol>
                                         <p className="text-xs text-muted-foreground mt-2">
-                                            Name collisions are handled automatically with unique suffixes. Level assignments are preserved or can be reassigned during import.
+                                            Name collisions are handled automatically with unique suffixes. Level
+                                            assignments are preserved or can be reassigned during import.
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -586,10 +612,22 @@ export default function LorebookGuide() {
                                 <AlertTitle>Import/Export Use Cases</AlertTitle>
                                 <AlertDescription>
                                     <ul className="list-disc list-inside space-y-1 text-sm">
-                                        <li><strong>Backup:</strong> Export all lorebook entries as a backup before making major changes</li>
-                                        <li><strong>Reuse:</strong> Export character/location entries from one story to use in another</li>
-                                        <li><strong>Collaboration:</strong> Share lorebook entries with co-authors or beta readers</li>
-                                        <li><strong>Templates:</strong> Create template lorebook sets for recurring story types</li>
+                                        <li>
+                                            <strong>Backup:</strong> Export all lorebook entries as a backup before
+                                            making major changes
+                                        </li>
+                                        <li>
+                                            <strong>Reuse:</strong> Export character/location entries from one story to
+                                            use in another
+                                        </li>
+                                        <li>
+                                            <strong>Collaboration:</strong> Share lorebook entries with co-authors or
+                                            beta readers
+                                        </li>
+                                        <li>
+                                            <strong>Templates:</strong> Create template lorebook sets for recurring
+                                            story types
+                                        </li>
                                     </ul>
                                 </AlertDescription>
                             </Alert>
@@ -614,13 +652,15 @@ export default function LorebookGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Integration with Writing</h3>
                         <p>
-                            The true power of the Lorebook comes from how it integrates with your writing process and the AI generation.
+                            The true power of the Lorebook comes from how it integrates with your writing process and
+                            the AI generation.
                         </p>
 
                         <div className="space-y-4">
                             <h4 className="text-lg font-medium">Automatic Tag Matching</h4>
                             <p>
-                                As you write, The Story Nexus automatically scans your text for matches with your Lorebook entries' tags.
+                                As you write, The Story Nexus automatically scans your text for matches with your
+                                Lorebook entries' tags.
                             </p>
                             <div className="bg-muted p-4 rounded-md">
                                 <h5 className="font-medium mb-2">How Tag Matching Works:</h5>
@@ -628,19 +668,23 @@ export default function LorebookGuide() {
                                     <li>
                                         Each Lorebook entry has tags (including its name)
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            Example: A character named "Harry Potter" might have tags like "Harry Potter", "The Boy Who Lived", "Gryffindor Seeker"
+                                            Example: A character named "Harry Potter" might have tags like "Harry
+                                            Potter", "The Boy Who Lived", "Gryffindor Seeker"
                                         </p>
                                     </li>
                                     <li>
-                                        When you write text that contains any of these tags, the system identifies a match
+                                        When you write text that contains any of these tags, the system identifies a
+                                        match
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            Example: Writing "Harry walked into the room" would match the "Harry Potter" entry
+                                            Example: Writing "Harry walked into the room" would match the "Harry Potter"
+                                            entry
                                         </p>
                                     </li>
                                     <li>
                                         Matched entries are collected and can be viewed in the editor sidebar
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            Click on "Matched Tags" in the editor to see which Lorebook entries have been matched in your current chapter
+                                            Click on "Matched Tags" in the editor to see which Lorebook entries have
+                                            been matched in your current chapter
                                         </p>
                                     </li>
                                 </ol>
@@ -650,33 +694,40 @@ export default function LorebookGuide() {
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">AI Context Integration</h4>
                             <p>
-                                When you use AI generation features like Scene Beats, matched Lorebook entries provide context to the AI.
+                                When you use AI generation features like Scene Beats, matched Lorebook entries provide
+                                context to the AI.
                             </p>
                             <div className="bg-muted p-4 rounded-md">
                                 <h5 className="font-medium mb-2">How AI Integration Works:</h5>
                                 <ol className="list-decimal list-inside space-y-2 ml-4">
                                     <li>
-                                        When you create a Scene Beat, the system identifies which Lorebook entries are relevant
+                                        When you create a Scene Beat, the system identifies which Lorebook entries are
+                                        relevant
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            This includes entries matched in your current chapter and potentially in your Scene Beat command
+                                            This includes entries matched in your current chapter and potentially in
+                                            your Scene Beat command
                                         </p>
                                     </li>
                                     <li>
-                                        The system searches across all accessible levels (global, series if applicable, and story)
+                                        The system searches across all accessible levels (global, series if applicable,
+                                        and story)
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            Hierarchical matching ensures the AI has access to all relevant world-building from every scope
+                                            Hierarchical matching ensures the AI has access to all relevant
+                                            world-building from every scope
                                         </p>
                                     </li>
                                     <li>
                                         The descriptions from these entries are included in the context sent to the AI
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            This helps the AI understand your characters, locations, and other story elements
+                                            This helps the AI understand your characters, locations, and other story
+                                            elements
                                         </p>
                                     </li>
                                     <li>
                                         The AI uses this context to generate more accurate and consistent content
                                         <p className="text-sm text-muted-foreground ml-6">
-                                            For example, it will know character personalities, location details, and important story facts
+                                            For example, it will know character personalities, location details, and
+                                            important story facts
                                         </p>
                                     </li>
                                 </ol>
@@ -685,7 +736,9 @@ export default function LorebookGuide() {
                             <Alert className="mt-4 bg-primary/10 border-primary">
                                 <AlertTitle>Hierarchical Context</AlertTitle>
                                 <AlertDescription>
-                                    The AI automatically uses context from all lorebook levels you have access to. This means series-wide characters and world-building are always available alongside story-specific details, ensuring consistency across your interconnected narratives.
+                                    The AI automatically uses context from all lorebook levels you have access to. This
+                                    means series-wide characters and world-building are always available alongside
+                                    story-specific details, ensuring consistency across your interconnected narratives.
                                 </AlertDescription>
                             </Alert>
                         </div>
@@ -693,16 +746,19 @@ export default function LorebookGuide() {
                         <div className="space-y-4 mt-6">
                             <h4 className="text-lg font-medium">Viewing Matched Entries in the Editor</h4>
                             <p>
-                                While writing, you can view which Lorebook entries are actively matched in your current chapter.
+                                While writing, you can view which Lorebook entries are actively matched in your current
+                                chapter.
                             </p>
                             <div className="bg-muted p-4 rounded-md">
                                 <h5 className="font-medium text-sm mb-2">How to View Matched Entries:</h5>
                                 <ol className="list-decimal list-inside space-y-2 ml-4 text-sm">
                                     <li>
-                                        In the chapter editor, look for the "Matched Tags" button in the right sidebar or toolbar
+                                        In the chapter editor, look for the "Matched Tags" button in the right sidebar
+                                        or toolbar
                                     </li>
                                     <li>
-                                        Click it to open a drawer showing all lorebook entries that match text in your current chapter
+                                        Click it to open a drawer showing all lorebook entries that match text in your
+                                        current chapter
                                     </li>
                                     <li>
                                         The drawer displays:
@@ -713,18 +769,18 @@ export default function LorebookGuide() {
                                             <li>A preview of the entry description</li>
                                         </ul>
                                     </li>
+                                    <li>Review matches to ensure the right context will be provided to the AI</li>
                                     <li>
-                                        Review matches to ensure the right context will be provided to the AI
-                                    </li>
-                                    <li>
-                                        If important entries are missing, mention them by their exact name or tags in your text
+                                        If important entries are missing, mention them by their exact name or tags in
+                                        your text
                                     </li>
                                 </ol>
                             </div>
                             <Alert className="mt-3">
                                 <AlertTitle>Matching is Dynamic</AlertTitle>
                                 <AlertDescription>
-                                    Lorebook matching updates as you type. As soon as you mention a character name or location tag, the corresponding entry becomes matched and available to the AI.
+                                    Lorebook matching updates as you type. As soon as you mention a character name or
+                                    location tag, the corresponding entry becomes matched and available to the AI.
                                 </AlertDescription>
                             </Alert>
                         </div>
@@ -735,28 +791,32 @@ export default function LorebookGuide() {
                                 <div>
                                     <h4 className="font-medium">Strategic Tagging</h4>
                                     <p className="text-sm">
-                                        Create tags that are likely to appear naturally in your writing. Include variations, nicknames, and common references.
+                                        Create tags that are likely to appear naturally in your writing. Include
+                                        variations, nicknames, and common references.
                                     </p>
                                 </div>
 
                                 <div>
                                     <h4 className="font-medium">Hierarchical Organization</h4>
                                     <p className="text-sm">
-                                        Use the importance levels (major, minor, background) to create a hierarchy of entries. This helps prioritize which information is most critical for the AI.
+                                        Use the importance levels (major, minor, background) to create a hierarchy of
+                                        entries. This helps prioritize which information is most critical for the AI.
                                     </p>
                                 </div>
 
                                 <div>
                                     <h4 className="font-medium">Consistent Descriptions</h4>
                                     <p className="text-sm">
-                                        Write descriptions in a consistent style and format across entries. Focus on information that's relevant for the AI to know when generating content.
+                                        Write descriptions in a consistent style and format across entries. Focus on
+                                        information that's relevant for the AI to know when generating content.
                                     </p>
                                 </div>
 
                                 <div>
                                     <h4 className="font-medium">Regular Maintenance</h4>
                                     <p className="text-sm">
-                                        As your story evolves, regularly update your Lorebook entries to reflect character development, changing relationships, and new story elements.
+                                        As your story evolves, regularly update your Lorebook entries to reflect
+                                        character development, changing relationships, and new story elements.
                                     </p>
                                 </div>
                             </div>
@@ -766,4 +826,4 @@ export default function LorebookGuide() {
             </Tabs>
         </div>
     );
-} 
+}

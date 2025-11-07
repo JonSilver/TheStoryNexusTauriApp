@@ -6,5 +6,4 @@ export const normalizeString = (str: string): string => str.toLowerCase().trim()
 /**
  * Compares two strings case-insensitively after normalization
  */
-export const stringEquals = (a: string, b: string): boolean =>
-  normalizeString(a) === normalizeString(b);
+export const stringEquals = (a: string, b: string): boolean => normalizeString(a) === normalizeString(b);

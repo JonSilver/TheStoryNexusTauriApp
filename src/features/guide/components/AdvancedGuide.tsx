@@ -1,4 +1,16 @@
-import { Library, BookOpen, Link as LinkIcon, Layers, FolderTree, CheckCircle, AlertCircle, GripVertical, Pencil, ChevronDown, Trash2 } from "lucide-react";
+import {
+    Library,
+    BookOpen,
+    Link as LinkIcon,
+    Layers,
+    FolderTree,
+    CheckCircle,
+    AlertCircle,
+    GripVertical,
+    Pencil,
+    ChevronDown,
+    Trash2
+} from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +21,8 @@ export default function AdvancedGuide() {
             <div>
                 <h2 className="text-2xl font-bold mb-4">Advanced Features Guide</h2>
                 <p className="text-muted-foreground mb-6">
-                    Master advanced features including series management, hierarchical lorebooks, and workflow optimisation to take your writing to the next level.
+                    Master advanced features including series management, hierarchical lorebooks, and workflow
+                    optimisation to take your writing to the next level.
                 </p>
             </div>
 
@@ -26,7 +39,9 @@ export default function AdvancedGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Working with Series</h3>
                         <p>
-                            Series provide a powerful way to organise interconnected stories that share world-building, characters, or timelines. Understanding when and how to use series effectively can significantly improve your writing workflow.
+                            Series provide a powerful way to organise interconnected stories that share world-building,
+                            characters, or timelines. Understanding when and how to use series effectively can
+                            significantly improve your writing workflow.
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -74,19 +89,25 @@ export default function AdvancedGuide() {
                             <div>
                                 <h4 className="font-medium text-sm mb-1">1. Creating a Series</h4>
                                 <p className="text-sm text-muted-foreground ml-4">
-                                    Navigate to the Series page from the home screen. Click "Create New Series" and provide a name and optional description. The description helps you remember what connects the stories in this series.
+                                    Navigate to the Series page from the home screen. Click "Create New Series" and
+                                    provide a name and optional description. The description helps you remember what
+                                    connects the stories in this series.
                                 </p>
                             </div>
                             <div>
                                 <h4 className="font-medium text-sm mb-1">2. Adding Stories to a Series</h4>
                                 <p className="text-sm text-muted-foreground ml-4">
-                                    From the series dashboard, click "Create New Story". Stories created this way automatically belong to the series. You can also assign existing standalone stories to a series by editing the story's details.
+                                    From the series dashboard, click "Create New Story". Stories created this way
+                                    automatically belong to the series. You can also assign existing standalone stories
+                                    to a series by editing the story's details.
                                 </p>
                             </div>
                             <div>
                                 <h4 className="font-medium text-sm mb-1">3. Accessing Series Lorebook</h4>
                                 <p className="text-sm text-muted-foreground ml-4">
-                                    The series dashboard includes a Lorebook tab. Entries created at the series level are accessible to all stories in the series, perfect for recurring characters, shared locations, or universal world rules.
+                                    The series dashboard includes a Lorebook tab. Entries created at the series level
+                                    are accessible to all stories in the series, perfect for recurring characters,
+                                    shared locations, or universal world rules.
                                 </p>
                             </div>
                         </div>
@@ -95,7 +116,8 @@ export default function AdvancedGuide() {
                     <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                         <h3 className="text-lg font-medium">Series Lorebook Strategy</h3>
                         <p>
-                            Deciding what goes in the series lorebook versus individual story lorebooks is crucial for effective organisation.
+                            Deciding what goes in the series lorebook versus individual story lorebooks is crucial for
+                            effective organisation.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                             <div className="border rounded-lg p-4 bg-card">
@@ -150,7 +172,9 @@ export default function AdvancedGuide() {
                                     <div>
                                         <h4 className="font-medium text-sm">Plan Your Hierarchy Early</h4>
                                         <p className="text-sm text-muted-foreground">
-                                            Before creating multiple stories, decide what elements should be shared across the series. Moving entries between levels later is possible but planning prevents reorganisation work.
+                                            Before creating multiple stories, decide what elements should be shared
+                                            across the series. Moving entries between levels later is possible but
+                                            planning prevents reorganisation work.
                                         </p>
                                     </div>
                                 </div>
@@ -161,7 +185,8 @@ export default function AdvancedGuide() {
                                     <div>
                                         <h4 className="font-medium text-sm">Use Consistent Naming</h4>
                                         <p className="text-sm text-muted-foreground">
-                                            If a character appears across multiple stories, use the same tags and naming in series-level entries. This ensures the AI recognises them consistently.
+                                            If a character appears across multiple stories, use the same tags and naming
+                                            in series-level entries. This ensures the AI recognises them consistently.
                                         </p>
                                     </div>
                                 </div>
@@ -170,9 +195,13 @@ export default function AdvancedGuide() {
                                 <div className="flex items-start gap-2">
                                     <CheckCircle className="h-4 w-4 text-primary mt-0.5" />
                                     <div>
-                                        <h4 className="font-medium text-sm">Update Series Entries as Stories Progress</h4>
+                                        <h4 className="font-medium text-sm">
+                                            Update Series Entries as Stories Progress
+                                        </h4>
                                         <p className="text-sm text-muted-foreground">
-                                            When characters develop or world elements evolve across stories, update the series lorebook entries to reflect the current state. This keeps AI context accurate across all stories.
+                                            When characters develop or world elements evolve across stories, update the
+                                            series lorebook entries to reflect the current state. This keeps AI context
+                                            accurate across all stories.
                                         </p>
                                     </div>
                                 </div>
@@ -183,7 +212,9 @@ export default function AdvancedGuide() {
                                     <div>
                                         <h4 className="font-medium text-sm">Consider Chronological Order</h4>
                                         <p className="text-sm text-muted-foreground">
-                                            Even if you're not writing in chronological order, note the timeline in series lorebook entries. This helps maintain continuity when jumping between different points in your story universe.
+                                            Even if you're not writing in chronological order, note the timeline in
+                                            series lorebook entries. This helps maintain continuity when jumping between
+                                            different points in your story universe.
                                         </p>
                                     </div>
                                 </div>
@@ -195,7 +226,10 @@ export default function AdvancedGuide() {
                         <LinkIcon className="h-4 w-4" />
                         <AlertTitle>Converting Standalone Stories to Series</AlertTitle>
                         <AlertDescription>
-                            If you start with a standalone story and later decide to create a series, simply create the series and edit your story to assign it to the series. Any story-level lorebook entries remain at the story level—you can manually promote shared elements to the series level as needed.
+                            If you start with a standalone story and later decide to create a series, simply create the
+                            series and edit your story to assign it to the series. Any story-level lorebook entries
+                            remain at the story level—you can manually promote shared elements to the series level as
+                            needed.
                         </AlertDescription>
                     </Alert>
                 </TabsContent>
@@ -204,7 +238,8 @@ export default function AdvancedGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Managing Your Content</h3>
                         <p>
-                            Master the tools for managing stories, chapters, and notes to keep your writing organised and accessible.
+                            Master the tools for managing stories, chapters, and notes to keep your writing organised
+                            and accessible.
                         </p>
                     </div>
 
@@ -221,7 +256,9 @@ export default function AdvancedGuide() {
                                     Reordering Chapters
                                 </h4>
                                 <p className="text-sm text-muted-foreground ml-6">
-                                    Drag and drop chapters by the grip handle (six dots) on the left side of each chapter card. The order updates automatically and affects chapter numbering and summary context.
+                                    Drag and drop chapters by the grip handle (six dots) on the left side of each
+                                    chapter card. The order updates automatically and affects chapter numbering and
+                                    summary context.
                                 </p>
                             </div>
 
@@ -234,9 +271,17 @@ export default function AdvancedGuide() {
                                     Click the edit icon on a chapter card to modify:
                                 </p>
                                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-12 mt-1">
-                                    <li><strong>Title:</strong> Change the chapter title</li>
-                                    <li><strong>POV Type:</strong> First Person, Third Person Limited, or Third Person Omniscient</li>
-                                    <li><strong>POV Character:</strong> Select from your lorebook characters (disabled for Omniscient POV)</li>
+                                    <li>
+                                        <strong>Title:</strong> Change the chapter title
+                                    </li>
+                                    <li>
+                                        <strong>POV Type:</strong> First Person, Third Person Limited, or Third Person
+                                        Omniscient
+                                    </li>
+                                    <li>
+                                        <strong>POV Character:</strong> Select from your lorebook characters (disabled
+                                        for Omniscient POV)
+                                    </li>
                                 </ul>
                             </div>
 
@@ -250,7 +295,10 @@ export default function AdvancedGuide() {
                                 </p>
                                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-12 mt-1">
                                     <li>Edit the summary directly in the textarea</li>
-                                    <li>Generate a new summary using the AI (select a "Generate Summary" prompt and model)</li>
+                                    <li>
+                                        Generate a new summary using the AI (select a "Generate Summary" prompt and
+                                        model)
+                                    </li>
                                     <li>Export the chapter to various formats using the download menu</li>
                                 </ul>
                             </div>
@@ -261,7 +309,11 @@ export default function AdvancedGuide() {
                                     Deleting Chapters
                                 </h4>
                                 <p className="text-sm text-muted-foreground ml-6">
-                                    Click the delete icon on a chapter card. You'll be asked to confirm. <strong className="text-destructive">Deletion is permanent and cannot be undone.</strong> All chapter content, notes, outlines, and scene beats are deleted.
+                                    Click the delete icon on a chapter card. You'll be asked to confirm.{" "}
+                                    <strong className="text-destructive">
+                                        Deletion is permanent and cannot be undone.
+                                    </strong>{" "}
+                                    All chapter content, notes, outlines, and scene beats are deleted.
                                 </p>
                             </div>
 
@@ -271,9 +323,17 @@ export default function AdvancedGuide() {
                                     Access notes and outlines from within the chapter editor:
                                 </p>
                                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-12 mt-1">
-                                    <li><strong>Outline:</strong> Plan your chapter structure, scene beats, and plot points before writing</li>
-                                    <li><strong>Notes:</strong> Track character arcs, continuity reminders, or revision notes for this specific chapter</li>
-                                    <li>Both persist automatically and are accessible from the editor sidebar or toolbar</li>
+                                    <li>
+                                        <strong>Outline:</strong> Plan your chapter structure, scene beats, and plot
+                                        points before writing
+                                    </li>
+                                    <li>
+                                        <strong>Notes:</strong> Track character arcs, continuity reminders, or revision
+                                        notes for this specific chapter
+                                    </li>
+                                    <li>
+                                        Both persist automatically and are accessible from the editor sidebar or toolbar
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -281,9 +341,7 @@ export default function AdvancedGuide() {
 
                     <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                         <h3 className="text-lg font-medium">Story Management</h3>
-                        <p className="text-sm">
-                            Manage story metadata and settings from the Stories page.
-                        </p>
+                        <p className="text-sm">Manage story metadata and settings from the Stories page.</p>
 
                         <div className="space-y-4 mt-4">
                             <div>
@@ -292,11 +350,22 @@ export default function AdvancedGuide() {
                                     From the Stories page, click the edit icon on a story card to modify:
                                 </p>
                                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-12 mt-1">
-                                    <li><strong>Title:</strong> Story title</li>
-                                    <li><strong>Author:</strong> Author name</li>
-                                    <li><strong>Language:</strong> Primary story language (used in AI prompts)</li>
-                                    <li><strong>Synopsis:</strong> Brief story description or summary</li>
-                                    <li><strong>Series:</strong> Assign to a series or change series assignment (leave blank for standalone)</li>
+                                    <li>
+                                        <strong>Title:</strong> Story title
+                                    </li>
+                                    <li>
+                                        <strong>Author:</strong> Author name
+                                    </li>
+                                    <li>
+                                        <strong>Language:</strong> Primary story language (used in AI prompts)
+                                    </li>
+                                    <li>
+                                        <strong>Synopsis:</strong> Brief story description or summary
+                                    </li>
+                                    <li>
+                                        <strong>Series:</strong> Assign to a series or change series assignment (leave
+                                        blank for standalone)
+                                    </li>
                                 </ul>
                             </div>
 
@@ -317,7 +386,12 @@ export default function AdvancedGuide() {
                                     Deleting Stories
                                 </h4>
                                 <p className="text-sm text-muted-foreground ml-6">
-                                    Click the delete icon on a story card and confirm. <strong className="text-destructive">This permanently deletes the story and all its chapters, prompts, lorebook entries, notes, brainstorm chats, and scene beats.</strong> Consider exporting before deletion if you want to keep a backup.
+                                    Click the delete icon on a story card and confirm.{" "}
+                                    <strong className="text-destructive">
+                                        This permanently deletes the story and all its chapters, prompts, lorebook
+                                        entries, notes, brainstorm chats, and scene beats.
+                                    </strong>{" "}
+                                    Consider exporting before deletion if you want to keep a backup.
                                 </p>
                             </div>
                         </div>
@@ -326,7 +400,8 @@ export default function AdvancedGuide() {
                     <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                         <h3 className="text-lg font-medium">Notes Feature</h3>
                         <p className="text-sm">
-                            The Notes feature provides story-level note-taking separate from chapter notes. Access it from the "Notes" tab in your story dashboard.
+                            The Notes feature provides story-level note-taking separate from chapter notes. Access it
+                            from the "Notes" tab in your story dashboard.
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -350,10 +425,18 @@ export default function AdvancedGuide() {
                                 </CardHeader>
                                 <CardContent>
                                     <ul className="list-disc list-inside space-y-1 text-sm">
-                                        <li><strong>Idea:</strong> Plot ideas, character concepts</li>
-                                        <li><strong>Research:</strong> Background research, references</li>
-                                        <li><strong>Todo:</strong> Tasks, revisions, editing notes</li>
-                                        <li><strong>Other:</strong> Anything else</li>
+                                        <li>
+                                            <strong>Idea:</strong> Plot ideas, character concepts
+                                        </li>
+                                        <li>
+                                            <strong>Research:</strong> Background research, references
+                                        </li>
+                                        <li>
+                                            <strong>Todo:</strong> Tasks, revisions, editing notes
+                                        </li>
+                                        <li>
+                                            <strong>Other:</strong> Anything else
+                                        </li>
                                     </ul>
                                 </CardContent>
                             </Card>
@@ -376,9 +459,18 @@ export default function AdvancedGuide() {
                             <AlertTitle>Notes vs Chapter Notes vs Lorebook</AlertTitle>
                             <AlertDescription>
                                 <ul className="list-disc list-inside space-y-1 text-sm">
-                                    <li><strong>Story Notes:</strong> General story-wide information, not tied to chapters</li>
-                                    <li><strong>Chapter Notes:</strong> Specific to one chapter, accessed from chapter editor</li>
-                                    <li><strong>Lorebook Notes Category:</strong> Story elements visible to AI during generation</li>
+                                    <li>
+                                        <strong>Story Notes:</strong> General story-wide information, not tied to
+                                        chapters
+                                    </li>
+                                    <li>
+                                        <strong>Chapter Notes:</strong> Specific to one chapter, accessed from chapter
+                                        editor
+                                    </li>
+                                    <li>
+                                        <strong>Lorebook Notes Category:</strong> Story elements visible to AI during
+                                        generation
+                                    </li>
                                 </ul>
                             </AlertDescription>
                         </Alert>
@@ -389,14 +481,16 @@ export default function AdvancedGuide() {
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Optimising Your Writing Workflow</h3>
                         <p>
-                            Effective workflow habits help you make the most of The Story Nexus's features and maintain creative momentum.
+                            Effective workflow habits help you make the most of The Story Nexus's features and maintain
+                            creative momentum.
                         </p>
                     </div>
 
                     <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                         <h3 className="text-lg font-medium">Lorebook-First Approach</h3>
                         <p className="text-sm">
-                            Before diving into writing, spend time building your lorebook. This upfront investment pays dividends when the AI has rich context from the start.
+                            Before diving into writing, spend time building your lorebook. This upfront investment pays
+                            dividends when the AI has rich context from the start.
                         </p>
                         <div className="bg-muted p-4 rounded-md mt-2">
                             <h4 className="font-medium text-sm mb-2">Recommended Workflow:</h4>
@@ -419,13 +513,15 @@ export default function AdvancedGuide() {
                             <div className="border rounded-lg p-3 bg-card">
                                 <h4 className="font-medium text-sm mb-1">Chapter Outlines</h4>
                                 <p className="text-xs text-muted-foreground">
-                                    Plan scene beats, plot points, and structure before writing. Refer back as you write to stay on track.
+                                    Plan scene beats, plot points, and structure before writing. Refer back as you write
+                                    to stay on track.
                                 </p>
                             </div>
                             <div className="border rounded-lg p-3 bg-card">
                                 <h4 className="font-medium text-sm mb-1">Chapter Notes</h4>
                                 <p className="text-xs text-muted-foreground">
-                                    Track character arcs, continuity details, or revision reminders. Notes persist alongside your chapter.
+                                    Track character arcs, continuity details, or revision reminders. Notes persist
+                                    alongside your chapter.
                                 </p>
                             </div>
                         </div>
@@ -434,7 +530,8 @@ export default function AdvancedGuide() {
                     <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                         <h3 className="text-lg font-medium">Using Brainstorming Effectively</h3>
                         <p className="text-sm">
-                            Don't wait until you're stuck to brainstorm. Proactive brainstorming prevents writer's block:
+                            Don't wait until you're stuck to brainstorm. Proactive brainstorming prevents writer's
+                            block:
                         </p>
                         <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4 mt-2">
                             <li>Brainstorm upcoming plot points before reaching them</li>
@@ -447,7 +544,8 @@ export default function AdvancedGuide() {
                     <div className="space-y-4 border-l-4 border-primary pl-4 py-2">
                         <h3 className="text-lg font-medium">Summary Generation Strategy</h3>
                         <p className="text-sm">
-                            Chapter summaries help the AI maintain continuity across your story. Generate summaries after completing each chapter:
+                            Chapter summaries help the AI maintain continuity across your story. Generate summaries
+                            after completing each chapter:
                         </p>
                         <div className="bg-muted p-4 rounded-md mt-2">
                             <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
@@ -461,9 +559,7 @@ export default function AdvancedGuide() {
 
                     <div className="space-y-4 border-l-4 border-primary pl-4 py-2 mt-6">
                         <h3 className="text-lg font-medium">Keyboard Shortcuts Reference</h3>
-                        <p className="text-sm">
-                            Master these shortcuts to speed up your writing workflow.
-                        </p>
+                        <p className="text-sm">Master these shortcuts to speed up your writing workflow.</p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             <Card>
@@ -474,7 +570,9 @@ export default function AdvancedGuide() {
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
                                             <span>Insert Scene Beat</span>
-                                            <kbd className="px-2 py-1 bg-muted rounded border text-xs">Alt+S / Opt+S</kbd>
+                                            <kbd className="px-2 py-1 bg-muted rounded border text-xs">
+                                                Alt+S / Opt+S
+                                            </kbd>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Trigger @ Autocomplete</span>
@@ -507,9 +605,7 @@ export default function AdvancedGuide() {
                 <TabsContent value="troubleshooting" className="space-y-6">
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Troubleshooting Common Issues</h3>
-                        <p>
-                            Solutions to common problems you might encounter while using The Story Nexus.
-                        </p>
+                        <p>Solutions to common problems you might encounter while using The Story Nexus.</p>
                     </div>
 
                     <div className="space-y-4 border-l-4 border-destructive pl-4 py-2">
@@ -554,11 +650,24 @@ export default function AdvancedGuide() {
                                 <h4 className="font-medium text-sm mb-2">Generation Fails or Returns Error</h4>
                                 <p className="text-sm text-muted-foreground mb-2">Common causes:</p>
                                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
-                                    <li><strong>API Key Issues:</strong> Invalid or expired key, insufficient credits</li>
-                                    <li><strong>Rate Limits:</strong> You may have hit provider rate limits - wait and try again</li>
-                                    <li><strong>Context Too Large:</strong> Too much lorebook context or chapter content. Try using "Use Custom Context" with fewer entries</li>
-                                    <li><strong>Local Server:</strong> Server crashed or model unloaded - restart LM Studio</li>
-                                    <li><strong>Network Issues:</strong> Check internet connection for cloud providers</li>
+                                    <li>
+                                        <strong>API Key Issues:</strong> Invalid or expired key, insufficient credits
+                                    </li>
+                                    <li>
+                                        <strong>Rate Limits:</strong> You may have hit provider rate limits - wait and
+                                        try again
+                                    </li>
+                                    <li>
+                                        <strong>Context Too Large:</strong> Too much lorebook context or chapter
+                                        content. Try using "Use Custom Context" with fewer entries
+                                    </li>
+                                    <li>
+                                        <strong>Local Server:</strong> Server crashed or model unloaded - restart LM
+                                        Studio
+                                    </li>
+                                    <li>
+                                        <strong>Network Issues:</strong> Check internet connection for cloud providers
+                                    </li>
                                 </ul>
                             </div>
 
@@ -566,10 +675,20 @@ export default function AdvancedGuide() {
                                 <h4 className="font-medium text-sm mb-2">Generation is Slow</h4>
                                 <p className="text-sm text-muted-foreground mb-2">Speed factors:</p>
                                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
-                                    <li><strong>Local Models:</strong> Speed depends on your hardware (CPU/GPU)</li>
-                                    <li><strong>Cloud Models:</strong> Network speed and provider server load affect generation</li>
-                                    <li><strong>Context Size:</strong> More lorebook entries = slower generation. Use selective context</li>
-                                    <li><strong>Max Tokens:</strong> Higher max tokens = longer generation time</li>
+                                    <li>
+                                        <strong>Local Models:</strong> Speed depends on your hardware (CPU/GPU)
+                                    </li>
+                                    <li>
+                                        <strong>Cloud Models:</strong> Network speed and provider server load affect
+                                        generation
+                                    </li>
+                                    <li>
+                                        <strong>Context Size:</strong> More lorebook entries = slower generation. Use
+                                        selective context
+                                    </li>
+                                    <li>
+                                        <strong>Max Tokens:</strong> Higher max tokens = longer generation time
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -593,7 +712,9 @@ export default function AdvancedGuide() {
                                 <h4 className="font-medium text-sm mb-2">Can't See Series Lorebook Entries in Story</h4>
                                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
                                     <li>Verify your story is assigned to a series (edit story details to check)</li>
-                                    <li>Series entries show with "Series" badge - look for the level badge on each entry</li>
+                                    <li>
+                                        Series entries show with "Series" badge - look for the level badge on each entry
+                                    </li>
                                     <li>If you just assigned the story to a series, try refreshing the page</li>
                                 </ul>
                             </div>
@@ -607,8 +728,14 @@ export default function AdvancedGuide() {
                             <div className="border rounded-lg p-4 bg-card">
                                 <h4 className="font-medium text-sm mb-2">Changes Not Saving</h4>
                                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
-                                    <li><strong>Chapter Content:</strong> Auto-saves as you type with debounce - wait a moment after stopping typing</li>
-                                    <li><strong>Other Fields:</strong> Most save when you click Save/Update buttons or close dialogs</li>
+                                    <li>
+                                        <strong>Chapter Content:</strong> Auto-saves as you type with debounce - wait a
+                                        moment after stopping typing
+                                    </li>
+                                    <li>
+                                        <strong>Other Fields:</strong> Most save when you click Save/Update buttons or
+                                        close dialogs
+                                    </li>
                                     <li>Check browser console for errors (F12 → Console tab)</li>
                                     <li>Ensure you're not running out of disk space (SQLite database)</li>
                                 </ul>
@@ -637,7 +764,17 @@ export default function AdvancedGuide() {
                             <ul className="list-disc list-inside space-y-1 text-sm">
                                 <li>Check the browser console (F12) for error messages</li>
                                 <li>Try refreshing the page or restarting the application</li>
-                                <li>Report issues at: <a href="https://github.com/JonSilver/TheStoryNexus/issues" className="text-primary underline" target="_blank" rel="noopener noreferrer">GitHub Issues</a></li>
+                                <li>
+                                    Report issues at:{" "}
+                                    <a
+                                        href="https://github.com/JonSilver/TheStoryNexus/issues"
+                                        className="text-primary underline"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        GitHub Issues
+                                    </a>
+                                </li>
                             </ul>
                         </AlertDescription>
                     </Alert>
@@ -646,9 +783,7 @@ export default function AdvancedGuide() {
                 <TabsContent value="future" className="space-y-6">
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold">Future Guide Topics</h3>
-                        <p>
-                            The following topics are planned for future guide updates:
-                        </p>
+                        <p>The following topics are planned for future guide updates:</p>
                     </div>
 
                     <Alert>
@@ -718,4 +853,4 @@ export default function AdvancedGuide() {
             </Tabs>
         </div>
     );
-} 
+}
