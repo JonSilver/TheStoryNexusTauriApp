@@ -5,7 +5,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/app/data
+      - /share/Docker Volumes/config/TheStoryNexus:/app/data
     environment:
       - NODE_ENV=production
       - PORT=3000
