@@ -136,22 +136,157 @@ Each plan includes lint/build steps for agents to verify their changes. Human te
 
 ## Execution Order
 
-### Critical Path
-1. **#01** (Workspace Infrastructure) - MUST BE FIRST
-2. **#02** (Story List Entry Point) - After #01
-3. **#03** (Editor Tool) - After #01, BEFORE other tools
-4. **#04-#08** (Remaining Tools) - After #03, can be sequential or slightly overlapped
-5. **#09-#13** (Enhancements) - After relevant tools exist (see dependencies)
-6. **#14** (Polish) - LAST
+### Dependency Chain Visualization
 
-### Parallelisation Opportunities
-- **None in Foundation Layer** (#01, #02 are sequential)
-- **Partial in Core Tools Layer** (#04-#08 can proceed once #03 is done, but test each individually)
-- **Partial in Enhancement Layer** (#11, #12 can proceed independently if dependencies met)
-- **Keyboard shortcuts** (#13) can be done anytime after #03-#08
+```
+#01 (Workspace Infrastructure)
+ ├─→ #02 (Story List Entry)
+ ├─→ #03 (Editor Tool)
+ │    ├─→ #04 (Chapters Tool)
+ │    ├─→ #09 (Right Panel)
+ │    │    └─→ #12 (Editor Quick Reference)
+ │    └─→ #13 (Keyboard Shortcuts)*
+ ├─→ #05 (Lorebook Tool)
+ │    ├─→ #11 (Brainstorm→Lorebook)*
+ │    ├─→ #12 (Editor Quick Reference)
+ │    └─→ #13 (Keyboard Shortcuts)*
+ ├─→ #06 (Brainstorm Tool)
+ │    ├─→ #11 (Brainstorm→Lorebook)*
+ │    └─→ #13 (Keyboard Shortcuts)*
+ ├─→ #07 (Prompts Tool)
+ │    └─→ #13 (Keyboard Shortcuts)*
+ ├─→ #08 (Notes Tool)
+ │    └─→ #13 (Keyboard Shortcuts)*
+ └─→ #10 (Command Palette)**
 
-### Recommended Execution Strategy
-Run plans strictly in numerical order. Do not start a plan until its dependencies are complete and tested. Each plan should end with lint/build verification before human testing.
+#03-#08 complete → #13 (Keyboard Shortcuts)
+#03-#08 complete → #10 (Command Palette)
+#01-#08 complete → #14 (Visual Polish)
+
+* #13 requires ALL tools #03-#08 complete
+** #10 requires ALL tools #03-#08 complete
+```
+
+### Execution Phases
+
+**PHASE 1: Foundation (Strictly Sequential)**
+```
+Execute: #01
+  ↓ (test & verify)
+Execute: #02
+  ↓ (test & verify)
+Execute: #03
+  ↓ (test & verify)
+Execute: #04
+  ↓ (test & verify)
+```
+**No parallelization possible. Must complete in order.**
+
+---
+
+**PHASE 2: Remaining Tools (Can Parallelize)**
+```
+Execute in parallel (or sequential if preferred):
+  - #05 (Lorebook)
+  - #06 (Brainstorm)
+  - #07 (Prompts)
+  - #08 (Notes)
+
+Test each individually before proceeding.
+```
+**All depend only on #01. Can run simultaneously or in any order.**
+
+---
+
+**PHASE 3: Enhancements Wave 1 (Partial Parallelization)**
+```
+After #03-#08 complete:
+
+Execute: #09 (Right Panel)
+  ↓ (test & verify)
+
+Then execute in parallel:
+  - #10 (Command Palette)
+  - #11 (Brainstorm→Lorebook)
+```
+**#10 and #11 can run in parallel. #12 must wait for #09.**
+
+---
+
+**PHASE 4: Enhancements Wave 2 (Parallel)**
+```
+After #09 complete:
+
+Execute in parallel:
+  - #12 (Editor Quick Reference)
+  - #13 (Keyboard Shortcuts)
+```
+**Both can run simultaneously once their dependencies are met.**
+
+---
+
+**PHASE 5: Polish (Final)**
+```
+After #03-#08 complete:
+
+Execute: #14 (Visual Polish)
+```
+**Must be last. Requires all tools to exist for cohesion audit.**
+
+---
+
+### Safest Execution Strategy (Fully Sequential)
+
+For simplest orchestration with no parallelization:
+
+```
+1.  #01 → test
+2.  #02 → test
+3.  #03 → test
+4.  #04 → test
+5.  #05 → test
+6.  #06 → test
+7.  #07 → test
+8.  #08 → test
+9.  #09 → test
+10. #10 → test
+11. #11 → test
+12. #12 → test
+13. #13 → test
+14. #14 → test
+```
+
+This is the numbered sequence. Always works. No complexity.
+
+---
+
+### Fastest Execution Strategy (Maximum Parallelization)
+
+For orchestrators that can manage parallel agents:
+
+**Step 1:** Execute #01 → test
+**Step 2:** Execute #02 → test
+**Step 3:** Execute #03 → test
+**Step 4:** Execute #04 → test
+**Step 5:** Execute #05, #06, #07, #08 in parallel → test each
+**Step 6:** Execute #09 → test
+**Step 7:** Execute #10, #11 in parallel → test each
+**Step 8:** Execute #12, #13 in parallel → test each
+**Step 9:** Execute #14 → test
+
+Reduces total execution time by ~30% if parallel agents available.
+
+---
+
+### Critical Rules for Orchestrator
+
+1. **Never start a plan before its dependencies are complete and tested**
+2. **Always run lint/build verification after each plan**
+3. **Always wait for human approval before proceeding to next phase**
+4. **If a plan fails, stop and fix before continuing**
+5. **Phase 1 (#01-#04) is strictly sequential - no exceptions**
+6. **Parallel execution requires separate agent instances**
+7. **Test each plan individually even when run in parallel**
 
 ---
 
