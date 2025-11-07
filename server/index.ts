@@ -57,21 +57,21 @@ app.use("/api/scenebeats", scenebeatsRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/admin", adminRouter);
 
+// Health check
+app.get("/api/health", (_, res) => {
+    res.json({ status: "ok" });
+});
+
 // Serve static files in production
 if (NODE_ENV === "production") {
     const staticPath = path.join(__dirname, "../dist/client");
     app.use(express.static(staticPath));
 
     // Serve index.html for all non-API routes (SPA routing)
-    app.get("*", (_, res) => {
+    app.get("/*", (_, res) => {
         res.sendFile(path.join(staticPath, "index.html"));
     });
 }
-
-// Health check
-app.get("/api/health", (_, res) => {
-    res.json({ status: "ok" });
-});
 
 // Error handling middleware
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
