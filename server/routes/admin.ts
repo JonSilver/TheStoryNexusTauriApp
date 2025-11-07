@@ -144,8 +144,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
                 tables.aiSettings.map((setting: ImportedAiSetting) =>
                     db.insert(schema.aiSettings).values({
                         ...setting,
-                        createdAt: new Date(setting.createdAt),
-                        updatedAt: setting.updatedAt ? new Date(setting.updatedAt) : undefined
+                        createdAt: new Date(setting.createdAt)
                     })
                 )
             );

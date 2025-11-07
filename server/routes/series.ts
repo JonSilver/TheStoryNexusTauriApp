@@ -6,10 +6,12 @@ import { nanoid } from "nanoid";
 import { db } from "../db/client.js";
 import { aiChats, chapters, lorebookEntries, sceneBeats, series, stories } from "../db/schema.js";
 
-type ImportedChapter = typeof chapters.$inferSelect;
-type ImportedLorebookEntry = typeof lorebookEntries.$inferSelect;
-type ImportedSceneBeat = typeof sceneBeats.$inferSelect;
-type ImportedAiChat = typeof aiChats.$inferSelect;
+import type { InferSelectModel } from "drizzle-orm";
+
+type ImportedChapter = InferSelectModel<typeof chapters>;
+type ImportedLorebookEntry = InferSelectModel<typeof lorebookEntries>;
+type ImportedSceneBeat = InferSelectModel<typeof sceneBeats>;
+type ImportedAiChat = InferSelectModel<typeof aiChats>;
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
@@ -241,7 +243,7 @@ seriesRouter.post(
                         createdAt: new Date()
                     };
                 })
-                .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+                .filter((entry: ImportedLorebookEntry): entry is NonNullable<typeof entry> => entry !== null);
 
             if (newEntries.length > 0) await db.insert(lorebookEntries).values(newEntries);
         }
@@ -282,7 +284,7 @@ seriesRouter.post(
                         storyId: newStoryId, // Temporary for Phase 1
                         createdAt: new Date()
                     }))
-                    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+                    .filter((entry: ImportedLorebookEntry): entry is NonNullable<typeof entry> => entry !== null);
 
                 if (newEntries.length > 0) await db.insert(lorebookEntries).values(newEntries);
             }
