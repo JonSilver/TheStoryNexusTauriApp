@@ -22,6 +22,8 @@ import {
     FORMAT_TEXT_COMMAND,
     getDOMSelection,
     LexicalEditor,
+    LexicalNode,
+    RangeSelection,
     SELECTION_CHANGE_COMMAND
 } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -217,7 +219,7 @@ function TextFormatFloatingToolbar({
                 let reachedStartNode = false;
 
                 // Function to traverse the editor content in document order
-                const traverseNodes = (node: any): boolean => {
+                const traverseNodes = (node: LexicalNode): boolean => {
                     // If we've already reached the selection start node, stop traversal
                     if (reachedStartNode) {
                         return true;
@@ -289,7 +291,7 @@ function TextFormatFloatingToolbar({
         }
 
         let selectedText = "";
-        let selection: any = null;
+        let selection: RangeSelection | null = null;
 
         editor.getEditorState().read(() => {
             selection = $getSelection();

@@ -70,6 +70,7 @@ export default [
                     destructuredArrayIgnorePattern: "^_"
                 }
             ],
+            "@typescript-eslint/no-explicit-any": "error",
 
             // React rules
             "react/react-in-jsx-scope": "off",
@@ -103,7 +104,7 @@ export default [
                     destructuredArrayIgnorePattern: "^_"
                 }
             ],
-            "@typescript-eslint/no-explicit-any": "warn",
+            "@typescript-eslint/no-explicit-any": "error",
             "@typescript-eslint/no-non-null-assertion": "warn"
         }
     },
