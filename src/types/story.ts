@@ -256,3 +256,18 @@ export interface GlobalLorebookExport {
     exportDate: string;
     lorebookEntries: LorebookEntry[];
 }
+
+export interface DatabaseExport {
+    version: string;
+    exportedAt: string;
+    tables: {
+        stories: Story[];
+        chapters: Chapter[];
+        prompts: Prompt[];
+        lorebookEntries: LorebookEntry[];
+        aiChats: AIChat[];
+        sceneBeats: SceneBeat[];
+        notes: Note[];
+        aiSettings: AISettings[];
+    };
+}

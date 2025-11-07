@@ -1,4 +1,18 @@
-import type { Story, Chapter, LorebookEntry, Prompt, AISettings, AIChat, SceneBeat, Note, Series } from "@/types/story";
+import type {
+    Story,
+    Chapter,
+    LorebookEntry,
+    Prompt,
+    AISettings,
+    AIChat,
+    SceneBeat,
+    Note,
+    Series,
+    StoryExport,
+    SeriesExport,
+    GlobalLorebookExport,
+    DatabaseExport
+} from "@/types/story";
 
 const API_BASE = "/api";
 
@@ -38,7 +52,7 @@ export const storiesApi = {
         fetchJSON<{ success: boolean }>(`/stories/${id}`, {
             method: "DELETE"
         }),
-    exportStory: (id: string) => fetchJSON<any>(`/stories/${id}/export`),
+    exportStory: (id: string) => fetchJSON<StoryExport>(`/stories/${id}/export`),
     importStory: (file: File) => {
         const formData = new FormData();
         formData.append("file", file);
@@ -75,7 +89,7 @@ export const seriesApi = {
         fetchJSON<{ success: boolean }>(`/series/${id}`, {
             method: "DELETE"
         }),
-    exportSeries: (id: string) => fetchJSON<any>(`/series/${id}/export`),
+    exportSeries: (id: string) => fetchJSON<SeriesExport>(`/series/${id}/export`),
     importSeries: (file: File) => {
         const formData = new FormData();
         formData.append("file", file);
@@ -137,7 +151,7 @@ export const lorebookApi = {
     getBySeries: (seriesId: string) => fetchJSON<LorebookEntry[]>(`/lorebook/series/${seriesId}`),
     getHierarchical: (storyId: string) => fetchJSON<LorebookEntry[]>(`/lorebook/story/${storyId}/hierarchical`),
     // Export/Import
-    exportGlobal: () => fetchJSON<any>("/lorebook/global/export"),
+    exportGlobal: () => fetchJSON<GlobalLorebookExport>("/lorebook/global/export"),
     importGlobal: (file: File) => {
         const formData = new FormData();
         formData.append("file", file);
@@ -251,7 +265,7 @@ export const notesApi = {
 
 // Admin/Migration API
 export const adminApi = {
-    exportDatabase: () => fetchJSON<any>("/admin/export"),
+    exportDatabase: () => fetchJSON<DatabaseExport>("/admin/export"),
     importDatabase: (file: File) => {
         const formData = new FormData();
         formData.append("file", file);
