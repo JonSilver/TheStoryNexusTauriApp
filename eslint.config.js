@@ -6,6 +6,14 @@ import prettier from "eslint-plugin-prettier";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactHooksAddons from "eslint-plugin-react-hooks-addons";
+import globals from "globals";
+
+// Filter out globals with leading/trailing whitespace (bug in globals package)
+const cleanGlobals = (globalsObj) => {
+    return Object.fromEntries(
+        Object.entries(globalsObj).filter(([key]) => key.trim() === key)
+    );
+};
 
 export default [
     // Global ignores (replaces .eslintignore)
@@ -24,21 +32,11 @@ export default [
             ecmaVersion: 2021,
             sourceType: "module",
             globals: {
-                console: "readonly",
-                process: "readonly",
-                Buffer: "readonly",
-                __dirname: "readonly",
-                __filename: "readonly",
-                global: "readonly",
-                window: "readonly",
-                document: "readonly",
-                navigator: "readonly",
-                localStorage: "readonly",
-                sessionStorage: "readonly",
-                HTMLElement: "readonly",
-                Element: "readonly",
-                Node: "readonly",
-                NodeJS: "readonly"
+                ...cleanGlobals(globals.browser),
+                ...cleanGlobals(globals.node),
+                React: "readonly",
+                JSX: "readonly",
+                RequestInit: "readonly"
             },
             parserOptions: {
                 ecmaFeatures: {
@@ -64,7 +62,14 @@ export default [
             "arrow-body-style": ["warn", "as-needed"],
 
             // TypeScript rules
-            "@typescript-eslint/no-unused-vars": "warn",
+            "@typescript-eslint/no-unused-vars": [
+                "warn",
+                {
+                    argsIgnorePattern: "^_",
+                    varsIgnorePattern: "^_",
+                    destructuredArrayIgnorePattern: "^_"
+                }
+            ],
 
             // React rules
             "react/react-in-jsx-scope": "off",
@@ -90,7 +95,14 @@ export default [
         files: ["**/*.{ts,tsx}"],
         rules: {
             ...typescript.configs.recommended.rules,
-            "@typescript-eslint/no-unused-vars": "warn",
+            "@typescript-eslint/no-unused-vars": [
+                "warn",
+                {
+                    argsIgnorePattern: "^_",
+                    varsIgnorePattern: "^_",
+                    destructuredArrayIgnorePattern: "^_"
+                }
+            ],
             "@typescript-eslint/no-explicit-any": "warn",
             "@typescript-eslint/no-non-null-assertion": "warn"
         }
