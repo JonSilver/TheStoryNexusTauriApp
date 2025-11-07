@@ -173,7 +173,11 @@ router.post("/import", upload.single("file"), async (req, res) => {
                 "aiSettings",
                 schema.aiSettings,
                 tables.aiSettings,
-                (s: ImportedAiSetting) => ({ ...s, createdAt: new Date(s.createdAt) })
+                (s: ImportedAiSetting) => ({
+                    ...s,
+                    createdAt: new Date(s.createdAt),
+                    lastModelsFetch: s.lastModelsFetch ? new Date(s.lastModelsFetch) : undefined
+                })
             )
         };
     });
