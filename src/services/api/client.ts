@@ -275,7 +275,8 @@ export const adminApi = {
         }).then(async response => {
             if (!response.ok) {
                 const error = await response.json().catch(() => ({ error: "Import failed" }));
-                throw new Error(error.error || "Import failed");
+                const message = error.details ? `${error.error}: ${error.details}` : (error.error || "Import failed");
+                throw new Error(message);
             }
             return response.json();
         });
