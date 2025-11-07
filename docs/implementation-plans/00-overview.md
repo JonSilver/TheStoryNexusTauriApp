@@ -21,13 +21,16 @@ Each plan includes lint/build steps for agents to verify their changes. Human te
 
 ### Foundation Layer (Sequential)
 
-**01-workspace-infrastructure.md** (Sonnet, LARGE)
-- Create workspace layout components (TopBar, ToolSidebar, BottomToolbar, MainContentArea)
-- Implement workspace context provider (story, chapter, active tool state)
-- Build tool switching mechanism
-- Refactor routing (remove old navigation, add `/story/:storyId` workspace route)
-- Responsive breakpoints (desktop sidebar, mobile bottom toolbar)
+**01-workspace-infrastructure.md** (Haiku)
+- Install dependencies: `npx shadcn@latest add sidebar`, `react-resizable-panels`, `cmdk`
+- Minimal workspace context: current tool state (`editor` | `chapters` | `lorebook` | `brainstorm` | `prompts` | `notes`)
+- Workspace route: `/story/:storyId` (replaces old dashboard route)
+- Layout: SidebarProvider wrapping Sidebar + main content area
+- Tool navigation: SidebarMenu with MenuItem per tool, MenuButton with onClick to switch tool state
+- Top bar: Story title, chapter dropdown placeholder, back to stories
+- Mobile: Shadcn Sidebar's collapsible variants handle responsive automatically
 - **Dependencies**: None (foundational)
+- **Key principle**: Shadcn Sidebar handles collapse, responsive, state persistence. Zero custom nav components.
 
 **02-story-list-entry-point.md** (Haiku)
 - Remove story dashboard concept
@@ -52,9 +55,9 @@ Each plan includes lint/build steps for agents to verify their changes. Human te
 - Click chapter → switches to Editor tool with that chapter loaded
 - **Dependencies**: #01, #03 (workspace + Editor tool must exist)
 
-**05-lorebook-tool-refactor.md** (Sonnet)
+**05-lorebook-tool-refactor.md** (Haiku)
 - Refactor Lorebook page as workspace tool
-- Split view: category filter + entry list + entry editor
+- Split view using `react-resizable-panels`: category filter + entry list + entry editor
 - Remove old lorebook navigation chrome
 - Responsive mobile: two-stage list → editor
 - **Dependencies**: #01 (workspace infrastructure must exist)
@@ -67,13 +70,13 @@ Each plan includes lint/build steps for agents to verify their changes. Human te
 
 **07-prompts-tool-refactor.md** (Haiku)
 - Refactor Prompts page as workspace tool
-- Split view: prompt list + editor
+- Split view using `react-resizable-panels`: prompt list + editor
 - Remove old prompts navigation chrome
 - **Dependencies**: #01 (workspace infrastructure must exist)
 
 **08-notes-tool-refactor.md** (Haiku)
 - Refactor Notes page as workspace tool
-- Split view: note list + editor
+- Split view using `react-resizable-panels`: note list + editor
 - Remove old notes navigation chrome
 - **Dependencies**: #01 (workspace infrastructure must exist)
 
@@ -81,11 +84,11 @@ Each plan includes lint/build steps for agents to verify their changes. Human te
 
 ### Enhancement Layer (After tools exist)
 
-**09-right-panel-system.md** (Sonnet)
-- Create collapsible Right Panel component (desktop only)
+**09-right-panel-system.md** (Haiku)
+- Right Panel using `react-resizable-panels` (desktop only)
 - Contextual tools when Editor active: Matched Tags, Outline, POV, Notes
 - Toggle mechanism from Editor toolbar
-- State persistence (collapsed/expanded, panel width)
+- State persistence (collapsed/expanded, panel width) via react-resizable-panels API
 - **Dependencies**: #03 (Editor must be a tool first)
 
 **10-command-palette.md** (Sonnet)
