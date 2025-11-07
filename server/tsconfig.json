@@ -5,7 +5,8 @@
         "rootDir": "..",
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
-        "types": ["node"]
+        "types": ["node"],
+        "noEmit": false
     },
     "include": ["./**/*", "../src/data/systemPrompts.ts", "../src/types/story.ts"],
     "exclude": ["node_modules"]
