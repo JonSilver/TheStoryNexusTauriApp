@@ -1,13 +1,20 @@
 import { attemptPromise } from "@jfdi/attempt";
-import { eq } from "drizzle-orm";
+import { eq, type InferSelectModel } from "drizzle-orm";
 import { Request, Response, Router } from "express";
 import { db } from "../db/client.js";
 import type { Table } from "drizzle-orm";
+import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 
-type CrudConfig<TTable extends Table = Table, TRow = unknown, TTransformed = TRow> = {
+type TableWithId = Table & { id: SQLiteColumn };
+
+type CrudConfig<
+    TTable extends TableWithId,
+    TRow extends InferSelectModel<TTable> = InferSelectModel<TTable>,
+    TTransformed = TRow
+> = {
     table: TTable;
     name: string;
-    parentKey?: string;
+    parentKey?: keyof TRow & string;
     parentRoute?: string;
     transforms?: {
         afterRead?: (row: TRow) => TTransformed;
@@ -15,7 +22,7 @@ type CrudConfig<TTable extends Table = Table, TRow = unknown, TTransformed = TRo
     customRoutes?: (router: Router, helpers: RouteHelpers<TTable, TRow, TTransformed>) => void;
 };
 
-type RouteHelpers<TTable extends Table = Table, TRow = unknown, TTransformed = TRow> = {
+type RouteHelpers<TTable extends TableWithId, TRow, TTransformed = TRow> = {
     asyncHandler: (fn: (req: Request, res: Response) => Promise<void>) => (req: Request, res: Response) => void;
     applyTransform: (data: TRow) => TTransformed;
     table: TTable;
@@ -29,7 +36,11 @@ const asyncHandler = (fn: (req: Request, res: Response) => Promise<void>) => asy
     }
 };
 
-export const createCrudRouter = <TTable extends Table = Table, TRow = unknown, TTransformed = TRow>(
+export const createCrudRouter = <
+    TTable extends TableWithId,
+    TRow extends InferSelectModel<TTable> = InferSelectModel<TTable>,
+    TTransformed = TRow
+>(
     config: CrudConfig<TTable, TRow, TTransformed>
 ): Router => {
     const router = Router();
@@ -50,8 +61,11 @@ export const createCrudRouter = <TTable extends Table = Table, TRow = unknown, T
         router.get(
             `/${routePath}/:${paramName}`,
             asyncHandler(async (req, res) => {
-                const rows = await db.select().from(table).where(eq(table[parentKey], req.params[paramName]));
-                res.json(rows.map(applyTransform));
+                // TypeScript limitation: can't express that parentKey (keyof TRow) maps to table columns
+                // At runtime, parentKey is constrained to valid column names via the type system
+                const column = (table as unknown as Record<string, SQLiteColumn>)[parentKey];
+                const rows = await db.select().from(table).where(eq(column, req.params[paramName]));
+                res.json(rows.map(r => applyTransform(r as TRow)));
             })
         );
     } else {
@@ -59,7 +73,7 @@ export const createCrudRouter = <TTable extends Table = Table, TRow = unknown, T
             "/",
             asyncHandler(async (_, res) => {
                 const rows = await db.select().from(table);
-                res.json(rows.map(applyTransform));
+                res.json(rows.map(r => applyTransform(r as TRow)));
             })
         );
     }
@@ -67,13 +81,14 @@ export const createCrudRouter = <TTable extends Table = Table, TRow = unknown, T
     // GET by id
     router.get(
         "/:id",
-        asyncHandler(async (_, res) => {
-            const [row] = await db.select().from(table).where(eq(table.id, _.params.id));
+        asyncHandler(async (req, res) => {
+            const column = table.id;
+            const [row] = await db.select().from(table).where(eq(column, req.params.id));
             if (!row) {
                 res.status(404).json({ error: `${name} not found` });
                 return;
             }
-            res.json(applyTransform(row));
+            res.json(applyTransform(row as TRow));
         })
     );
 
@@ -88,7 +103,7 @@ export const createCrudRouter = <TTable extends Table = Table, TRow = unknown, T
             };
             const result = await db.insert(table).values(data).returning();
             const created = Array.isArray(result) ? result[0] : result;
-            res.status(201).json(applyTransform(created));
+            res.status(201).json(applyTransform(created as TRow));
         })
     );
 
@@ -97,13 +112,14 @@ export const createCrudRouter = <TTable extends Table = Table, TRow = unknown, T
         "/:id",
         asyncHandler(async (req, res) => {
             const { id, createdAt, ...updates } = req.body;
-            const result = await db.update(table).set(updates).where(eq(table.id, req.params.id)).returning();
+            const column = table.id;
+            const result = await db.update(table).set(updates).where(eq(column, req.params.id)).returning();
             const updated = Array.isArray(result) ? result[0] : result;
             if (!updated) {
                 res.status(404).json({ error: `${name} not found` });
                 return;
             }
-            res.json(applyTransform(updated));
+            res.json(applyTransform(updated as TRow));
         })
     );
 
@@ -111,7 +127,8 @@ export const createCrudRouter = <TTable extends Table = Table, TRow = unknown, T
     router.delete(
         "/:id",
         asyncHandler(async (req, res) => {
-            await db.delete(table).where(eq(table.id, req.params.id));
+            const column = table.id;
+            await db.delete(table).where(eq(column, req.params.id));
             res.json({ success: true });
         })
     );

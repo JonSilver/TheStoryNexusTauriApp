@@ -248,6 +248,7 @@ export interface SeriesExport {
     series: Series;
     lorebookEntries: LorebookEntry[];
     stories: StoryExport[];
+    [key: string]: unknown;
 }
 
 export interface GlobalLorebookExport {

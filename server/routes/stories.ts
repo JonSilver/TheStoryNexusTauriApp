@@ -3,11 +3,12 @@ import { and, eq } from "drizzle-orm";
 import multer from "multer";
 import { db, schema } from "../db/client.js";
 import { createCrudRouter } from "../lib/crud.js";
+import type { InferSelectModel } from "drizzle-orm";
 
-type ImportedChapter = typeof schema.chapters.$inferSelect;
-type ImportedLorebookEntry = typeof schema.lorebookEntries.$inferSelect;
-type ImportedSceneBeat = typeof schema.sceneBeats.$inferSelect;
-type ImportedAiChat = typeof schema.aiChats.$inferSelect;
+type ImportedChapter = InferSelectModel<typeof schema.chapters>;
+type ImportedLorebookEntry = InferSelectModel<typeof schema.lorebookEntries>;
+type ImportedSceneBeat = InferSelectModel<typeof schema.sceneBeats>;
+type ImportedAiChat = InferSelectModel<typeof schema.aiChats>;
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
@@ -159,7 +160,7 @@ export default createCrudRouter({
                                     createdAt: new Date()
                                 };
                             })
-                            .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+                            .filter((entry: ImportedLorebookEntry): entry is NonNullable<typeof entry> => entry !== null);
 
                         if (newEntries.length > 0) await db.insert(schema.lorebookEntries).values(newEntries);
                     }

@@ -24,7 +24,6 @@ const transform = (entry: LorebookRow): TransformedLorebookEntry => ({
 export default createCrudRouter({
     table: schema.lorebookEntries,
     name: "Lorebook entry",
-    parentKey: "storyId",
     transforms: { afterRead: transform },
     customRoutes: (router, { asyncHandler, table }) => {
         // Level-based query endpoints

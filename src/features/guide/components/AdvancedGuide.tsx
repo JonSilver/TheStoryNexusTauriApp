@@ -1,5 +1,4 @@
 import {
-    Library,
     BookOpen,
     Link as LinkIcon,
     Layers,
