@@ -68,7 +68,7 @@ if (NODE_ENV === "production") {
     app.use(express.static(staticPath));
 
     // Serve index.html for all non-API routes (SPA routing)
-    app.get("/*", (_, res) => {
+    app.get("/:path*", (_, res) => {
         res.sendFile(path.join(staticPath, "index.html"));
     });
 }
