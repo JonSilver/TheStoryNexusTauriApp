@@ -3,7 +3,7 @@ import { attemptPromise } from "@jfdi/attempt";
 interface ChatCompletionChunk {
     choices: Array<{
         delta?: {
-            content?: string;
+            content?: string | null;
         };
     }>;
 }

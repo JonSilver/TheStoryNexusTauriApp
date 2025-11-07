@@ -15,6 +15,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { mergeRegister } from "@lexical/utils";
 import {
     $getSelection,
+    $isElementNode,
     $isParagraphNode,
     $isRangeSelection,
     $isTextNode,
@@ -23,7 +24,6 @@ import {
     getDOMSelection,
     LexicalEditor,
     LexicalNode,
-    RangeSelection,
     SELECTION_CHANGE_COMMAND
 } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -247,7 +247,7 @@ function TextFormatFloatingToolbar({
                     }
 
                     // Traverse children
-                    if (!$isTextNode(node) && is.function(node.getChildren)) {
+                    if (!$isTextNode(node) && $isElementNode(node)) {
                         const children = node.getChildren();
                         for (const child of children) {
                             if (traverseNodes(child)) {
@@ -291,12 +291,11 @@ function TextFormatFloatingToolbar({
         }
 
         let selectedText = "";
-        let selection: RangeSelection | null = null;
 
         editor.getEditorState().read(() => {
-            selection = $getSelection();
-            if ($isRangeSelection(selection)) {
-                selectedText = selection.getTextContent();
+            const sel = $getSelection();
+            if ($isRangeSelection(sel)) {
+                selectedText = sel.getTextContent();
             }
         });
 
