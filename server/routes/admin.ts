@@ -47,10 +47,6 @@ router.get("/export", async (_, res) => {
 
 router.delete("/demo", async (_, res) => {
     const [error, deletedCounts] = await attemptPromise(async () => {
-        // First, get all demo story IDs
-        const demoStories = await db.select().from(schema.stories).where(eq(schema.stories.isDemo, true));
-        const demoStoryIds = demoStories.map(s => s.id);
-
         // Delete demo data from all tables (cascade will handle related records)
         const seriesResult = await db.delete(schema.series).where(eq(schema.series.isDemo, true));
         const storiesResult = await db.delete(schema.stories).where(eq(schema.stories.isDemo, true));
