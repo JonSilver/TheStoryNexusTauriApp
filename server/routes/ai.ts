@@ -36,7 +36,7 @@ router.get(
 router.put(
     "/settings/:id",
     asyncHandler(async (req, res) => {
-        const { id, createdAt, ...updates } = req.body;
+        const { id: _id, createdAt: _createdAt, ...updates } = req.body;
         const result = await db
             .update(schema.aiSettings)
             .set(updates)

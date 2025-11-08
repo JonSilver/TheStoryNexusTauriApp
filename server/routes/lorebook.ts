@@ -182,7 +182,7 @@ export default createCrudRouter({
                     }
                 }
 
-                const { id, createdAt, ...updates } = req.body;
+                const { id: _id, createdAt: _createdAt, ...updates } = req.body;
 
                 const result = await db.update(table).set(updates).where(eq(table.id, req.params.id)).returning();
                 const updated = Array.isArray(result) ? result[0] : result;

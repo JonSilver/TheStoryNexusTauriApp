@@ -96,9 +96,10 @@ export const createCrudRouter = <
     router.post(
         "/",
         asyncHandler(async (req, res) => {
+            const { id: _id, createdAt: _createdAt, ...bodyWithoutReserved } = req.body;
             const data = {
                 id: req.body.id || crypto.randomUUID(),
-                ...req.body,
+                ...bodyWithoutReserved,
                 createdAt: new Date()
             };
             const result = await db.insert(table).values(data).returning();
@@ -111,7 +112,7 @@ export const createCrudRouter = <
     router.put(
         "/:id",
         asyncHandler(async (req, res) => {
-            const { id, createdAt, ...updates } = req.body;
+            const { id: _id, createdAt: _createdAt, ...updates } = req.body;
             const column = table.id;
             const result = await db.update(table).set(updates).where(eq(column, req.params.id)).returning();
             const updated = Array.isArray(result) ? result[0] : result;

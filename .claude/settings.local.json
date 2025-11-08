@@ -5,7 +5,9 @@
       "Bash(mkdir:*)",
       "Bash(npm run db:generate:*)",
       "Bash(git ls-tree:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(node:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []
