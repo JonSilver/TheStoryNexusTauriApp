@@ -25,7 +25,7 @@ export default function NoteEditor({ selectedNoteId }: NoteEditorProps) {
 }
 
 interface NoteEditorContentProps {
-    note: { id: string; title: string; content: string; updatedAt: string };
+    note: { id: string; title: string; content: string; updatedAt: Date };
     updateMutation: ReturnType<typeof useUpdateNoteMutation>;
 }
 
