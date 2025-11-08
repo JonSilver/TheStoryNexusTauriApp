@@ -4,8 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Operational Guidance
 
-- Use extremely concise language in all conversation. British English spellings. Sacrifice grammar for concision.
-- Your human pair is a highly experienced full-stack developer. Call him "Guv". He'll be running the system on a local dev server with Hot Module Reload, and testing your code changes.
+- Use extremely concise language in all interactions. British English spellings. Sacrifice grammar for concision.
+- Your human pair is a highly experienced full-stack developer. Call him "Guv". He'll be running the system on a local dev server with Hot Module Reload, and testing your code changes. But you can also lint and build to check your work before asking Guv to test.
 - Always prioritise code quality, maintainability, and performance.
 - Omit meaningless time & effort estimates from all plans.
 - Apart from useful examples or data/type structures, plans shouldn't include code.
@@ -21,6 +21,12 @@ The Story Nexus is a local-first web application for AI-assisted creative writin
 npm run dev          # Start both backend (port 3001) and frontend (port 5173) servers
 npm run dev:server   # Backend only (Express + SQLite)
 npm run dev:client   # Frontend only (Vite)
+```
+
+### Linting & Formatting
+```bash
+npm run lint         # Run ESLint
+npm run lint:fix     # Fix ESLint and issues
 ```
 
 ### Production
@@ -41,7 +47,7 @@ docker-compose up --build  # Run app in container, access on port 3000
 ```
 
 ### Code Quality
-The project uses Biome for linting and formatting. TypeScript strict mode is disabled (`strict: false` in tsconfig.json). TODO: THIS MUST CHANGE SOON.
+The project uses ESLint for linting and formatting. TypeScript has `strict: false` but enables specific strict checks (`noImplicitAny`, `strictNullChecks`, `noImplicitReturns`, `noFallthroughCasesInSwitch`, `noUnusedLocals`, `noUnusedParameters`).
 
 #### Error Handling
 
@@ -63,7 +69,7 @@ if (error) return handleError(error);
 
 #### Style
 
-- Code volume is not a success metric. Concision and reuse are. Lines of code need maintaining. Ease the burden of ownership by using battle-hardened third-party dependency libraries wherever possible.
+- Code volume is not a success metric. Concision and reuse are. Lines of code need maintaining. Ease the burden of ownership by using battle-hardened third-party dependency libraries wherever possible. Prioritise existing dependencies over adding new ones.
 - Use comments extremely sparingly, to explain a complex process or why something is purposely done in a seemingly problematic way. Prefer self-documenting names and small descriptively named functions for complex expressions or function chains.
 - Prefer functional programming patterns.
 - Use `const`, not `let`. `let` and mutation is a code smell.
@@ -74,17 +80,20 @@ if (error) return handleError(error);
 - Prefer custom React hooks over complex, multi-hook, in-component logic.
 - Modules should be small and focused on a single responsibility.
 - Prefer the iterative data-driven type-inference pattern over switch statements and if/else chains. Make a data structure, derive types from it, index into or iterate over the structure.
+- Where many functions follow the same pattern, prefer factory functions or higher-order functions to reduce boilerplate and improve maintainability. 
 
 #### Architectural Exceptions to Functional Programming
 
 The following classes are justified exceptions to the functional programming preference:
 
-1. **AIService (Singleton)** - Manages stateful API client instances and initialization for multiple AI providers
-2. **AIProviderFactory** - Factory pattern for provider-specific client creation (OpenAI, OpenRouter, Local)
-3. **PromptParser** - Complex parsing system with registry pattern for variable resolution and context building
-4. **ContextBuilder** - Manages database-dependent context construction for prompt parsing
-5. **VariableResolverRegistry** - Registry pattern for managing and resolving dynamic prompt variables
-6. **AI Provider Classes** (OpenAIProvider, OpenRouterProvider, LocalProvider) - Encapsulate provider-specific client state and initialization logic
+1. **AIService (Singleton)** - Manages stateful API client instances, settings synchronisation, and stream lifecycle for multiple AI providers
+2. **AIProviderFactory** - Factory pattern for provider-specific client creation and initialisation (OpenAI, OpenRouter, Local)
+3. **AI Provider Classes** (OpenAIProvider, OpenRouterProvider, LocalAIProvider) - Encapsulate provider-specific client state, model fetching, and generation logic
+4. **PromptParser** - Complex parsing system with registry pattern for variable resolution and context building
+5. **ContextBuilder** - Manages database-dependent context construction for prompt parsing
+6. **VariableResolverRegistry** - Registry pattern for managing and resolving dynamic prompt variables
+7. **LorebookFilterService** - Static utility class providing filtering, matching, and query methods for lorebook entries
+8. **Export/Import Services** (StoryExportService, StoryImportService, SeriesExportService, SeriesImportService, LorebookImportExportService) - Thin wrapper classes around API calls for data portability
 
 All other services should use functional patterns if practical.
 
@@ -124,7 +133,7 @@ All other services should use functional patterns if practical.
 
 **Development**:
 - tsx + concurrently - Backend watch mode + parallel dev servers
-- Biome - Linting and formatting
+- ESLint - Linting and formatting
 - Drizzle Kit - Database migrations
 - cross-env - Environment variable management
 
@@ -147,12 +156,13 @@ Never add these to package.json. They install automatically.
 
 #### Database Schema (SQLite)
 The server-side database (`server/db/schema.ts`) uses Drizzle ORM with SQLite. Tables:
-- `stories` - Story metadata and synopsis
+- `series` - Series metadata (name, description)
+- `stories` - Story metadata, synopsis, optional `seriesId` foreign key
 - `chapters` - Chapter content, outlines, POV settings, word count
 - `aiChats` - Brainstorm chat messages with `lastUsedPromptId`
 - `prompts` - System and user-defined prompts for AI generation
 - `aiSettings` - API keys, available models, local API URL
-- `lorebookEntries` - Characters, locations, items, events, notes, synopsis, timelines (searchable by tags)
+- `lorebookEntries` - Characters, locations, items, events, notes, synopsis, timelines (three-level hierarchy: global/series/story)
 - `sceneBeats` - Scene beat commands with generated content
 - `notes` - Story notes (ideas, research, todos)
 
@@ -160,6 +170,8 @@ All entities have `id`, `createdAt`, and optional `isDemo` fields. Database migr
 
 #### State Management
 Features use TanStack Query hooks in `src/features/*/hooks/`:
+
+- `useSeriesQuery` - Series queries
 - `useStoriesQuery` / `useStoryQuery` - Story queries
 - `useChaptersQuery` / `useChapterQuery` - Chapter queries
 - `usePromptsQuery` / `usePromptQuery` - Prompt queries
@@ -214,6 +226,8 @@ The editor uses a modified version of the Lexical playground and includes custom
 
 #### Frontend
 Features are organized in `src/features/` by domain:
+
+- `series/` - Series creation, listing, dashboard
 - `stories/` - Story creation, listing, dashboard
 - `chapters/` - Chapter editing, outlining, POV management
 - `prompts/` - Prompt creation, editing, import/export
@@ -240,6 +254,8 @@ Other frontend directories:
 ### Routing Structure
 ```
 / - Landing page
+/series - Series listing
+/series/:seriesId - Series dashboard
 /stories - Story listing
 /ai-settings - AI provider configuration
 /guide - User guide
@@ -252,16 +268,18 @@ Other frontend directories:
   └── notes - Story notes
 ```
 
-Story-specific routes are nested under `/dashboard/:storyId` with a shared layout showing story navigation.
+Story-specific routes are nested under `/dashboard/:storyId` with a shared layout showing story navigation. Series provide optional grouping for related stories with inherited lorebook entries.
 
 ### Lorebook System
 Lorebook entries support:
+
+- **Three-level hierarchy**: `global` (all stories), `series` (stories in a series), `story` (single story)
 - **Categories**: character, location, item, event, note, synopsis, starting scenario, timeline
-- **Tag-based retrieval**: Tags can contain spaces and special characters (multi-index on `[storyId, tags]`)
+- **Tag-based retrieval**: Tags can contain spaces and special characters
 - **Auto-matching**: Entries can be matched against chapter content or scene beat commands
 - **Disabled state**: Entries can be temporarily disabled
 
-Lorebook entries are integrated into the prompt system for context injection.
+Lorebook entries are integrated into the prompt system for context injection. Stories inherit global entries and series-level entries (if part of a series).
 
 ### Scene Beat System
 Scene beats are inline writing commands in the editor:
@@ -308,7 +326,7 @@ Entities can be marked with `isDemo: true` to identify demonstration content. Th
 Models are stored with provider prefix (e.g., `local/model-name`, `gpt-4`). Prompts can specify `allowedModels` to restrict which models can be used. Models are fetched from provider APIs and cached in `aiSettings.availableModels`.
 
 ### TypeScript Configuration
-The project uses `strict: false` with disabled linting rules (`noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch` all set to false). When making changes, prefer runtime safety checks over relying on strict TypeScript checking. TODO: This must change soon - strict adherence is vital.
+The project uses `strict: false` but enables specific strict checks (`noImplicitAny`, `strictNullChecks`, `noImplicitReturns`) and linting rules (`noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`). While not fully strict, the configuration provides reasonable type safety. Prefer runtime safety checks via `@jfdi/attempt` for error handling.
 
 ### Development Server Configuration
 Backend runs on port 3001 in development, frontend on port 5173 with Vite proxy to backend. Production runs on single port 3000 (configurable via PORT env var). Frontend built into `dist/` and served as static files by Express in production.
