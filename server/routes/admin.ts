@@ -1,4 +1,5 @@
 import { attemptPromise } from "@jfdi/attempt";
+import { eq } from "drizzle-orm";
 import express from "express";
 import multer from "multer";
 import { db, schema } from "../db/client.js";
@@ -143,62 +144,44 @@ router.post("/import", upload.single("file"), async (req, res) => {
         console.log("[Import] ✓ Cleared existing data");
 
         return {
-            series: await importTable(
-                "series",
-                schema.series,
-                tables.series,
-                (s: ImportedSeries) => ({ ...s, createdAt: new Date(s.createdAt) })
-            ),
-            stories: await importTable(
-                "stories",
-                schema.stories,
-                tables.stories,
-                (s: ImportedStory) => ({ ...s, createdAt: new Date(s.createdAt) })
-            ),
-            chapters: await importTable(
-                "chapters",
-                schema.chapters,
-                tables.chapters,
-                (c: ImportedChapter) => ({ ...c, createdAt: new Date(c.createdAt) })
-            ),
-            prompts: await importTable(
-                "prompts",
-                schema.prompts,
-                tables.prompts,
-                (p: ImportedPrompt) => ({ ...p, createdAt: new Date(p.createdAt) })
-            ),
+            series: await importTable("series", schema.series, tables.series, (s: ImportedSeries) => ({
+                ...s,
+                createdAt: new Date(s.createdAt)
+            })),
+            stories: await importTable("stories", schema.stories, tables.stories, (s: ImportedStory) => ({
+                ...s,
+                createdAt: new Date(s.createdAt)
+            })),
+            chapters: await importTable("chapters", schema.chapters, tables.chapters, (c: ImportedChapter) => ({
+                ...c,
+                createdAt: new Date(c.createdAt)
+            })),
+            prompts: await importTable("prompts", schema.prompts, tables.prompts, (p: ImportedPrompt) => ({
+                ...p,
+                createdAt: new Date(p.createdAt)
+            })),
             lorebookEntries: await importTable(
                 "lorebookEntries",
                 schema.lorebookEntries,
                 tables.lorebookEntries,
                 (e: ImportedLorebookEntry) => ({ ...e, createdAt: new Date(e.createdAt) })
             ),
-            aiChats: await importTable(
-                "aiChats",
-                schema.aiChats,
-                tables.aiChats,
-                (c: ImportedAiChat) => ({
-                    ...c,
-                    createdAt: new Date(c.createdAt),
-                    updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined
-                })
-            ),
+            aiChats: await importTable("aiChats", schema.aiChats, tables.aiChats, (c: ImportedAiChat) => ({
+                ...c,
+                createdAt: new Date(c.createdAt),
+                updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined
+            })),
             sceneBeats: await importTable(
                 "sceneBeats",
                 schema.sceneBeats,
                 tables.sceneBeats,
                 (s: ImportedSceneBeat) => ({ ...s, createdAt: new Date(s.createdAt) })
             ),
-            notes: await importTable(
-                "notes",
-                schema.notes,
-                tables.notes,
-                (n: ImportedNote) => ({
-                    ...n,
-                    createdAt: new Date(n.createdAt),
-                    updatedAt: new Date(n.updatedAt)
-                })
-            ),
+            notes: await importTable("notes", schema.notes, tables.notes, (n: ImportedNote) => ({
+                ...n,
+                createdAt: new Date(n.createdAt),
+                updatedAt: new Date(n.updatedAt)
+            })),
             aiSettings: await importTable(
                 "aiSettings",
                 schema.aiSettings,

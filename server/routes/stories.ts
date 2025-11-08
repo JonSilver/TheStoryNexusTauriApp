@@ -160,7 +160,9 @@ export default createCrudRouter({
                                     createdAt: new Date()
                                 };
                             })
-                            .filter((entry: ImportedLorebookEntry): entry is NonNullable<typeof entry> => entry !== null);
+                            .filter(
+                                (entry: ImportedLorebookEntry): entry is NonNullable<typeof entry> => entry !== null
+                            );
 
                         if (newEntries.length > 0) await db.insert(schema.lorebookEntries).values(newEntries);
                     }

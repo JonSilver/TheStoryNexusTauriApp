@@ -161,14 +161,16 @@ export default function AISettingsPage() {
     };
 
     const handleDeleteDemoData = async () => {
-        if (!confirm("Are you sure you want to delete all demo data? This will remove the demo story, chapters, and lorebook entries. This action cannot be undone.")) {
+        if (
+            !confirm(
+                "Are you sure you want to delete all demo data? This will remove the demo story, chapters, and lorebook entries. This action cannot be undone."
+            )
+        ) {
             return;
         }
 
         setIsDeletingDemo(true);
-        const [error, result] = await attemptPromise(async () => {
-            return await adminApi.deleteDemoData();
-        });
+        const [error, result] = await attemptPromise(async () => await adminApi.deleteDemoData());
 
         if (error) {
             logger.error("Error deleting demo data:", error);
