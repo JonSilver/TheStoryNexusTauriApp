@@ -275,10 +275,21 @@ export const adminApi = {
         }).then(async response => {
             if (!response.ok) {
                 const error = await response.json().catch(() => ({ error: "Import failed" }));
-                const message = error.details ? `${error.error}: ${error.details}` : (error.error || "Import failed");
+                const message = error.details ? `${error.error}: ${error.details}` : error.error || "Import failed";
                 throw new Error(message);
             }
             return response.json();
         });
-    }
+    },
+    importDemoData: () =>
+        fetchJSON<{ success: boolean; message: string }>("/admin/demo/import", {
+            method: "POST"
+        }),
+    deleteDemoData: () =>
+        fetchJSON<{ success: boolean; deleted: { series: number; stories: number; lorebookEntries: number } }>(
+            "/admin/demo",
+            {
+                method: "DELETE"
+            }
+        )
 };
