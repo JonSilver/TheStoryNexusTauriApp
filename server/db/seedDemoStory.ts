@@ -3,32 +3,34 @@ import { eq } from "drizzle-orm";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { attemptPromise } from "@jfdi/attempt";
 import type { StoryExport } from "../../src/types/story.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const seedDemoStory = async () => {
-    try {
-        // Check if demo story already exists
-        const existingDemoStory = await db
-            .select()
-            .from(schema.stories)
-            .where(eq(schema.stories.id, "demo-story-shadows-berlin"));
+    const [checkError, existingDemoStory] = await attemptPromise(() =>
+        db.select().from(schema.stories).where(eq(schema.stories.id, "demo-story-shadows-berlin"))
+    );
 
-        if (existingDemoStory.length > 0) {
-            console.log("Demo story already exists, skipping seed");
-            return;
-        }
+    if (checkError) {
+        console.error("Error checking for existing demo story:", checkError);
+        throw checkError;
+    }
 
-        console.log("Seeding demo story...");
+    if (existingDemoStory.length > 0) {
+        console.log("Demo story already exists, skipping seed");
+        return;
+    }
 
-        // Load demo story data
+    console.log("Seeding demo story...");
+
+    const [error] = await attemptPromise(async () => {
         const demoDataPath = path.join(__dirname, "../data/demo-story-shadows-berlin.json");
         const demoDataRaw = readFileSync(demoDataPath, "utf-8");
         const demoData: StoryExport = JSON.parse(demoDataRaw);
 
-        // Insert story
         await db.insert(schema.stories).values({
             id: demoData.story.id,
             title: demoData.story.title,
@@ -40,7 +42,6 @@ export const seedDemoStory = async () => {
             isDemo: true
         });
 
-        // Insert chapters
         if (demoData.chapters && demoData.chapters.length > 0) {
             const chaptersToInsert = demoData.chapters.map(chapter => ({
                 id: chapter.id,
@@ -60,7 +61,6 @@ export const seedDemoStory = async () => {
             await db.insert(schema.chapters).values(chaptersToInsert);
         }
 
-        // Insert lorebook entries
         if (demoData.lorebookEntries && demoData.lorebookEntries.length > 0) {
             const lorebookToInsert = demoData.lorebookEntries.map(entry => ({
                 id: entry.id,
@@ -78,7 +78,6 @@ export const seedDemoStory = async () => {
             await db.insert(schema.lorebookEntries).values(lorebookToInsert);
         }
 
-        // Insert AI chats
         if (demoData.aiChats && demoData.aiChats.length > 0) {
             const chatsToInsert = demoData.aiChats.map(chat => ({
                 id: chat.id,
@@ -94,7 +93,6 @@ export const seedDemoStory = async () => {
             await db.insert(schema.aiChats).values(chatsToInsert);
         }
 
-        // Insert scene beats (if any)
         if (demoData.sceneBeats && demoData.sceneBeats.length > 0) {
             const sceneBeatsToInsert = demoData.sceneBeats.map(beat => ({
                 id: beat.id,
@@ -114,7 +112,9 @@ export const seedDemoStory = async () => {
         console.log(
             `Successfully seeded demo story with ${demoData.chapters?.length || 0} chapters, ${demoData.lorebookEntries?.length || 0} lorebook entries, and ${demoData.aiChats?.length || 0} AI chats`
         );
-    } catch (error) {
+    });
+
+    if (error) {
         console.error("Error seeding demo story:", error);
         throw error;
     }
