@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Save } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Editor from "react-simple-wysiwyg";
 import { useNoteQuery, useUpdateNoteMutation } from "../hooks/useNotesQuery";
 
@@ -12,22 +12,6 @@ interface NoteEditorProps {
 export default function NoteEditor({ selectedNoteId }: NoteEditorProps) {
     const { data: selectedNote } = useNoteQuery(selectedNoteId || "");
     const updateNoteMutation = useUpdateNoteMutation();
-    const [content, setContent] = useState(selectedNote?.content || "");
-
-    useEffect(() => {
-        if (selectedNote?.content !== undefined) {
-            setContent(selectedNote.content);
-        }
-    }, [selectedNote?.content]);
-
-    const handleSave = async () => {
-        if (!selectedNote) return;
-
-        await updateNoteMutation.mutateAsync({
-            id: selectedNote.id,
-            data: { content }
-        });
-    };
 
     if (!selectedNoteId || !selectedNote) {
         return (
@@ -37,18 +21,36 @@ export default function NoteEditor({ selectedNoteId }: NoteEditorProps) {
         );
     }
 
+    return <NoteEditorContent note={selectedNote} updateMutation={updateNoteMutation} />;
+}
+
+interface NoteEditorContentProps {
+    note: { id: string; title: string; content: string; updatedAt: string };
+    updateMutation: ReturnType<typeof useUpdateNoteMutation>;
+}
+
+function NoteEditorContent({ note, updateMutation }: NoteEditorContentProps) {
+    const [content, setContent] = useState(note.content);
+
+    const handleSave = async () => {
+        await updateMutation.mutateAsync({
+            id: note.id,
+            data: { content }
+        });
+    };
+
     return (
         <div className="h-full flex flex-col">
             <div className="border-b border-input p-4 flex items-center justify-between">
                 <div>
-                    <h2 className="font-semibold text-foreground">{selectedNote.title}</h2>
+                    <h2 className="font-semibold text-foreground">{note.title}</h2>
                     <p className="text-sm text-muted-foreground">
-                        Last updated: {new Date(selectedNote.updatedAt).toLocaleString()}
+                        Last updated: {new Date(note.updatedAt).toLocaleString()}
                     </p>
                 </div>
                 <Button
                     onClick={handleSave}
-                    disabled={updateNoteMutation.isPending}
+                    disabled={updateMutation.isPending}
                     className="flex items-center gap-2"
                 >
                     <Save className="h-4 w-4" />
