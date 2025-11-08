@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runMigrations } from "./db/migrate.js";
 import { seedSystemPrompts } from "./db/seedSystemPrompts.js";
+import { seedDemoStory } from "./db/seedDemoStory.js";
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -25,10 +26,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-// Run migrations and seed system prompts on startup
+// Run migrations and seed data on startup
 const initializeDatabase = async () => {
     runMigrations();
     await seedSystemPrompts();
+    await seedDemoStory();
 };
 
 initializeDatabase().catch(error => {
