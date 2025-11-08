@@ -8,29 +8,31 @@ export default defineConfig(() => ({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
-            "@lexical-playground": path.resolve(
-                __dirname,
-                "src/Lexical/lexical-playground/src"
-            ),
+            "@lexical-playground": path.resolve(__dirname, "src/Lexical/lexical-playground/src"),
             shared: path.resolve(__dirname, "src/Lexical/shared/src"),
             lexical: path.resolve(__dirname, "node_modules/lexical"),
-            "@lexical/react": path.resolve(
-                __dirname,
-                "node_modules/@lexical/react"
-            ),
-        },
+            "@lexical/react": path.resolve(__dirname, "node_modules/@lexical/react")
+        }
     },
     server: {
         port: 5173,
         proxy: {
             "/api": {
                 target: "http://localhost:3001",
-                changeOrigin: true,
-            },
+                changeOrigin: true
+            }
         },
-        host: true,
+        host: true
     },
     build: {
         outDir: "dist/client",
-    },
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    // Split large markdown rendering dependencies
+                    "react-markdown": ["react-markdown", "remark-gfm", "rehype-raw", "rehype-sanitize"]
+                }
+            }
+        }
+    }
 }));
