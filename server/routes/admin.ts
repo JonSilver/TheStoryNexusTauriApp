@@ -1,4 +1,5 @@
 import { attemptPromise } from "@jfdi/attempt";
+import { eq } from "drizzle-orm";
 import express from "express";
 import multer from "multer";
 import { db, schema } from "../db/client.js";
@@ -42,6 +43,52 @@ router.get("/export", async (_, res) => {
         version: "1.0",
         exportedAt: new Date().toISOString(),
         tables: { series, stories, chapters, prompts, lorebookEntries, aiChats, sceneBeats, notes, aiSettings }
+    });
+});
+
+router.post("/demo/import", async (_, res) => {
+    const { seedDemoStory } = await import("../db/seedDemoStory.js");
+
+    const [error] = await attemptPromise(async () => {
+        await seedDemoStory();
+    });
+
+    if (error) {
+        console.error("Error importing demo story:", error);
+        res.status(500).json({ error: "Failed to import demo story", details: error.message });
+        return;
+    }
+
+    res.json({ success: true, message: "Demo story imported successfully" });
+});
+
+router.delete("/demo", async (_, res) => {
+    const [error, deletedCounts] = await attemptPromise(async () => {
+        // Delete demo data from all tables (cascade will handle related records)
+        const seriesResult = await db.delete(schema.series).where(eq(schema.series.isDemo, true));
+        const storiesResult = await db.delete(schema.stories).where(eq(schema.stories.isDemo, true));
+
+        // Note: chapters, sceneBeats, aiChats, notes will cascade automatically
+        // lorebook entries need explicit deletion
+        const lorebookResult = await db.delete(schema.lorebookEntries).where(eq(schema.lorebookEntries.isDemo, true));
+
+        return {
+            series: seriesResult.changes || 0,
+            stories: storiesResult.changes || 0,
+            lorebookEntries: lorebookResult.changes || 0
+        };
+    });
+
+    if (error) {
+        console.error("Error deleting demo data:", error);
+        res.status(500).json({ error: "Failed to delete demo data", details: error.message });
+        return;
+    }
+
+    console.log("Demo data deleted successfully:", deletedCounts);
+    res.json({
+        success: true,
+        deleted: deletedCounts
     });
 });
 
@@ -113,62 +160,44 @@ router.post("/import", upload.single("file"), async (req, res) => {
         console.log("[Import] ✓ Cleared existing data");
 
         return {
-            series: await importTable(
-                "series",
-                schema.series,
-                tables.series,
-                (s: ImportedSeries) => ({ ...s, createdAt: new Date(s.createdAt) })
-            ),
-            stories: await importTable(
-                "stories",
-                schema.stories,
-                tables.stories,
-                (s: ImportedStory) => ({ ...s, createdAt: new Date(s.createdAt) })
-            ),
-            chapters: await importTable(
-                "chapters",
-                schema.chapters,
-                tables.chapters,
-                (c: ImportedChapter) => ({ ...c, createdAt: new Date(c.createdAt) })
-            ),
-            prompts: await importTable(
-                "prompts",
-                schema.prompts,
-                tables.prompts,
-                (p: ImportedPrompt) => ({ ...p, createdAt: new Date(p.createdAt) })
-            ),
+            series: await importTable("series", schema.series, tables.series, (s: ImportedSeries) => ({
+                ...s,
+                createdAt: new Date(s.createdAt)
+            })),
+            stories: await importTable("stories", schema.stories, tables.stories, (s: ImportedStory) => ({
+                ...s,
+                createdAt: new Date(s.createdAt)
+            })),
+            chapters: await importTable("chapters", schema.chapters, tables.chapters, (c: ImportedChapter) => ({
+                ...c,
+                createdAt: new Date(c.createdAt)
+            })),
+            prompts: await importTable("prompts", schema.prompts, tables.prompts, (p: ImportedPrompt) => ({
+                ...p,
+                createdAt: new Date(p.createdAt)
+            })),
             lorebookEntries: await importTable(
                 "lorebookEntries",
                 schema.lorebookEntries,
                 tables.lorebookEntries,
                 (e: ImportedLorebookEntry) => ({ ...e, createdAt: new Date(e.createdAt) })
             ),
-            aiChats: await importTable(
-                "aiChats",
-                schema.aiChats,
-                tables.aiChats,
-                (c: ImportedAiChat) => ({
-                    ...c,
-                    createdAt: new Date(c.createdAt),
-                    updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined
-                })
-            ),
+            aiChats: await importTable("aiChats", schema.aiChats, tables.aiChats, (c: ImportedAiChat) => ({
+                ...c,
+                createdAt: new Date(c.createdAt),
+                updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined
+            })),
             sceneBeats: await importTable(
                 "sceneBeats",
                 schema.sceneBeats,
                 tables.sceneBeats,
                 (s: ImportedSceneBeat) => ({ ...s, createdAt: new Date(s.createdAt) })
             ),
-            notes: await importTable(
-                "notes",
-                schema.notes,
-                tables.notes,
-                (n: ImportedNote) => ({
-                    ...n,
-                    createdAt: new Date(n.createdAt),
-                    updatedAt: new Date(n.updatedAt)
-                })
-            ),
+            notes: await importTable("notes", schema.notes, tables.notes, (n: ImportedNote) => ({
+                ...n,
+                createdAt: new Date(n.createdAt),
+                updatedAt: new Date(n.updatedAt)
+            })),
             aiSettings: await importTable(
                 "aiSettings",
                 schema.aiSettings,

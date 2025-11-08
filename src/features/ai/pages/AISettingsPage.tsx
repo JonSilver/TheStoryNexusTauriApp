@@ -15,7 +15,7 @@ import { logger } from "@/utils/logger";
 import { toastCRUD } from "@/utils/toastUtils";
 import { attemptPromise } from "@jfdi/attempt";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronRight, Download, Loader2, Upload } from "lucide-react";
+import { AlertTriangle, ChevronRight, Download, Loader2, Trash2, Upload } from "lucide-react";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 
@@ -35,6 +35,7 @@ export default function AISettingsPage() {
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
     const [isMigrationLoading, setIsMigrationLoading] = useState(false);
     const [isImportingPrompts, setIsImportingPrompts] = useState(false);
+    const [isDeletingDemo, setIsDeletingDemo] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const promptsFileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
@@ -157,6 +158,33 @@ export default function AISettingsPage() {
 
         setIsImportingPrompts(false);
         if (promptsFileInputRef.current) promptsFileInputRef.current.value = "";
+    };
+
+    const handleDeleteDemoData = async () => {
+        if (
+            !confirm(
+                "Are you sure you want to delete all demo data? This will remove the demo story, chapters, and lorebook entries. This action cannot be undone."
+            )
+        ) {
+            return;
+        }
+
+        setIsDeletingDemo(true);
+        const [error, result] = await attemptPromise(async () => await adminApi.deleteDemoData());
+
+        if (error) {
+            logger.error("Error deleting demo data:", error);
+            toast.error("Failed to delete demo data");
+        } else {
+            const { deleted } = result;
+            toast.success(
+                `Demo data deleted: ${deleted.stories} ${deleted.stories === 1 ? "story" : "stories"}, ${deleted.lorebookEntries} lorebook ${deleted.lorebookEntries === 1 ? "entry" : "entries"}`
+            );
+            // Invalidate all queries to refresh the UI
+            queryClient.invalidateQueries();
+        }
+
+        setIsDeletingDemo(false);
     };
 
     return (
@@ -486,6 +514,45 @@ export default function AISettingsPage() {
                                         Restore database from exported JSON file
                                     </p>
                                 </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Delete Demo Data Section */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Demo Data</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-start gap-2 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-md">
+                                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-500 flex-shrink-0 mt-0.5" />
+                                <div className="text-sm text-red-800 dark:text-red-200">
+                                    <p className="font-semibold mb-1">Warning</p>
+                                    <p>
+                                        This will permanently delete all demo content including stories, chapters, and
+                                        lorebook entries marked as demo data.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Delete Demo Content</Label>
+                                <Button
+                                    onClick={handleDeleteDemoData}
+                                    disabled={isDeletingDemo}
+                                    className="w-full"
+                                    variant="destructive"
+                                >
+                                    {isDeletingDemo ? (
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                    )}
+                                    Delete All Demo Data
+                                </Button>
+                                <p className="text-xs text-muted-foreground">
+                                    Remove the demo spy thriller story and all related content
+                                </p>
                             </div>
                         </CardContent>
                     </Card>
