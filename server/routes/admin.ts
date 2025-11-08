@@ -46,6 +46,22 @@ router.get("/export", async (_, res) => {
     });
 });
 
+router.post("/demo/import", async (_, res) => {
+    const { seedDemoStory } = await import("../db/seedDemoStory.js");
+
+    const [error] = await attemptPromise(async () => {
+        await seedDemoStory();
+    });
+
+    if (error) {
+        console.error("Error importing demo story:", error);
+        res.status(500).json({ error: "Failed to import demo story", details: error.message });
+        return;
+    }
+
+    res.json({ success: true, message: "Demo story imported successfully" });
+});
+
 router.delete("/demo", async (_, res) => {
     const [error, deletedCounts] = await attemptPromise(async () => {
         // Delete demo data from all tables (cascade will handle related records)

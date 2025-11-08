@@ -281,6 +281,10 @@ export const adminApi = {
             return response.json();
         });
     },
+    importDemoData: () =>
+        fetchJSON<{ success: boolean; message: string }>("/admin/demo/import", {
+            method: "POST"
+        }),
     deleteDemoData: () =>
         fetchJSON<{ success: boolean; deleted: { series: number; stories: number; lorebookEntries: number } }>(
             "/admin/demo",

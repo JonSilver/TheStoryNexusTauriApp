@@ -7,12 +7,14 @@ import { EditStoryDialog } from "@/features/stories/components/EditStoryDialog";
 import { StoryCard } from "@/features/stories/components/StoryCard";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
 import { useStoriesQuery } from "@/features/stories/hooks/useStoriesQuery";
+import { adminApi } from "@/services/api/client";
 import { storyExportService } from "@/services/storyExportService";
 import type { Story } from "@/types/story";
 import { logger } from "@/utils/logger";
 import { attemptPromise } from "@jfdi/attempt";
-import { Upload } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { toast } from "react-toastify";
 
 export default function Home() {
     const { data: stories = [], refetch: fetchStories } = useStoriesQuery();
@@ -21,6 +23,7 @@ export default function Home() {
     const [editingStory, setEditingStory] = useState<Story | null>(null);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [selectedSeriesFilter, setSelectedSeriesFilter] = useState<string>("all");
+    const [isImportingDemo, setIsImportingDemo] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -58,6 +61,23 @@ export default function Home() {
         event.target.value = "";
     };
 
+    const handleImportDemoStory = async () => {
+        setIsImportingDemo(true);
+        const [error] = await attemptPromise(async () => {
+            await adminApi.importDemoData();
+            await fetchStories();
+        });
+
+        if (error) {
+            logger.error("Demo import failed:", error);
+            toast.error("Failed to import demo story");
+        } else {
+            toast.success("Demo story imported successfully");
+        }
+
+        setIsImportingDemo(false);
+    };
+
     const filteredStories = stories.filter(story => {
         if (selectedSeriesFilter === "all") return true;
         if (selectedSeriesFilter === "none") return !story.seriesId;
@@ -74,6 +94,10 @@ export default function Home() {
                         <Button variant="outline" onClick={handleImportClick}>
                             <Upload className="w-4 h-4 mr-2" />
                             Import Story
+                        </Button>
+                        <Button variant="outline" onClick={handleImportDemoStory} disabled={isImportingDemo}>
+                            <Download className="w-4 h-4 mr-2" />
+                            {isImportingDemo ? "Importing..." : "Import Demo Story"}
                         </Button>
                         <input
                             ref={fileInputRef}
