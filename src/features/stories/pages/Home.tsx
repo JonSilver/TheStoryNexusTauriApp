@@ -95,7 +95,7 @@ export default function Home() {
                             <Upload className="w-4 h-4 mr-2" />
                             Import Story
                         </Button>
-                        <Button variant="outline" onClick={handleImportDemoStory} disabled={isImportingDemo}>
+                        <Button variant="ghost" onClick={handleImportDemoStory} disabled={isImportingDemo}>
                             <Download className="w-4 h-4 mr-2" />
                             {isImportingDemo ? "Importing..." : "Import Demo Story"}
                         </Button>
