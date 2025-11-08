@@ -280,5 +280,12 @@ export const adminApi = {
             }
             return response.json();
         });
-    }
+    },
+    deleteDemoData: () =>
+        fetchJSON<{ success: boolean; deleted: { series: number; stories: number; lorebookEntries: number } }>(
+            "/admin/demo",
+            {
+                method: "DELETE"
+            }
+        )
 };
