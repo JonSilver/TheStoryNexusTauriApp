@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Save } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Editor from "react-simple-wysiwyg";
 import { useNoteQuery, useUpdateNoteMutation } from "../hooks/useNotesQuery";
 
@@ -13,6 +13,12 @@ export default function NoteEditor({ selectedNoteId }: NoteEditorProps) {
     const { data: selectedNote } = useNoteQuery(selectedNoteId || "");
     const updateNoteMutation = useUpdateNoteMutation();
     const [content, setContent] = useState(selectedNote?.content || "");
+
+    useEffect(() => {
+        if (selectedNote?.content !== undefined) {
+            setContent(selectedNote.content);
+        }
+    }, [selectedNote?.content]);
 
     const handleSave = async () => {
         if (!selectedNote) return;
