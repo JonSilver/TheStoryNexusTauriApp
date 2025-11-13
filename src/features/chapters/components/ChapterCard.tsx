@@ -50,6 +50,7 @@ import type { AllowedModel, Chapter, Prompt } from "../../../types/story";
 interface ChapterCardProps {
     chapter: Chapter;
     storyId: string;
+    onWriteClick?: () => void;
 }
 
 type POVType = "First Person" | "Third Person Limited" | "Third Person Omniscient";
@@ -60,7 +61,7 @@ interface EditChapterForm {
     povType?: POVType;
 }
 
-export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
+export function ChapterCard({ chapter, storyId, onWriteClick }: ChapterCardProps) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
     const expandedStateKey = `chapter-${chapter.id}-expanded`;
@@ -211,8 +212,12 @@ export function ChapterCard({ chapter, storyId }: ChapterCardProps) {
     };
 
     const handleWriteClick = () => {
-        setCurrentChapterId(chapter.id);
-        navigate(ROUTES.DASHBOARD.CHAPTER_EDITOR(storyId, chapter.id));
+        if (onWriteClick) {
+            onWriteClick();
+        } else {
+            setCurrentChapterId(chapter.id);
+            navigate(ROUTES.DASHBOARD.CHAPTER_EDITOR(storyId, chapter.id));
+        }
     };
 
     return (

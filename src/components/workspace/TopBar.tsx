@@ -1,0 +1,75 @@
+import { Bot, HelpCircle } from "lucide-react";
+import { Link } from "react-router";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useStoryContext } from "@/features/stories/context/StoryContext";
+import { useStoriesQuery } from "@/features/stories/hooks/useStoriesQuery";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { ChapterSwitcher } from "./ChapterSwitcher";
+
+export const TopBar = () => {
+    const { currentStoryId, setCurrentStoryId } = useStoryContext();
+    const { data: stories } = useStoriesQuery();
+
+    const currentStory = stories?.find(s => s.id === currentStoryId);
+
+    return (
+        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 sticky top-0 z-40">
+            <div className="flex h-14 items-center px-4 gap-4">
+                {/* App Title */}
+                <div className="flex items-center gap-2 font-semibold text-lg">Story Nexus</div>
+
+                {/* Story Selector */}
+                {currentStory && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="gap-2">
+                                {currentStory.title}
+                                <span className="text-muted-foreground">▾</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-64">
+                            {stories?.map(story => (
+                                <DropdownMenuItem
+                                    key={story.id}
+                                    onClick={() => setCurrentStoryId(story.id)}
+                                    className={story.id === currentStoryId ? "bg-accent" : ""}
+                                >
+                                    {story.title}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+
+                {/* Chapter Switcher */}
+                <ChapterSwitcher />
+
+                {/* Spacer */}
+                <div className="flex-1" />
+
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                    <Link to="/ai-settings">
+                        <Button variant="ghost" size="icon">
+                            <Bot className="h-5 w-5" />
+                        </Button>
+                    </Link>
+
+                    <Link to="/guide">
+                        <Button variant="ghost" size="icon">
+                            <HelpCircle className="h-5 w-5" />
+                        </Button>
+                    </Link>
+
+                    <ThemeToggle />
+                </div>
+            </div>
+        </header>
+    );
+};

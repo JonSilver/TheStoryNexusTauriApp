@@ -6,7 +6,7 @@ import { ToastContainer } from "react-toastify";
 import { StoryProvider } from "@/features/stories/context/StoryContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { QueryProvider } from "@/providers/QueryProvider";
-import App from "./app";
+import { Workspace } from "./components/workspace/Workspace";
 // Styles
 import "./index.css";
 import "react-toastify/dist/ReactToastify.css";
@@ -45,8 +45,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                         <StoryProvider>
                             <Suspense fallback={<PageLoadingFallback />}>
                                 <Routes>
-                                    {/* Landing page */}
-                                    <Route path="/" element={<App />} />
+                                    {/* NEW: Workspace at root */}
+                                    <Route path="/" element={<Workspace />} />
+
+                                    {/* OLD ROUTES - Keep for now, will be removed in #02-#08 */}
 
                                     {/* Routes with MainLayout */}
                                     <Route element={<MainLayout />}>
