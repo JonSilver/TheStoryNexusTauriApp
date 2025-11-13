@@ -1,316 +1,287 @@
-# Implementation Plan #01: Workspace Infrastructure
+# Plan #01: Workspace Shell
 
-**Model:** Haiku
 **Dependencies:** None (foundational)
-**Estimated Complexity:** Medium
-
----
 
 ## Objective
 
-Establish workspace infrastructure using Shadcn Sidebar and react-resizable-panels. Create minimal tool-switching state management without custom navigation components.
+Create the persistent workspace shell. ONE workspace that's always present - no landing page, no boundaries. Stories tool is just another tool in the sidebar.
 
----
+## Architectural Transformation
 
-## Key Principle
+### Current State
+- Landing page at `/`
+- Story list at `/stories`
+- Series list at `/series`
+- Story dashboard at `/dashboard/:storyId`
+- Nested routes for each feature
+- Multiple navigation contexts (feel like different "places")
 
-**Dependency-first approach:** Use Shadcn Sidebar for all navigation/collapse/responsive behaviour. Use react-resizable-panels for split views. Write minimal glue code only.
+### Target State
+- Single persistent workspace
+- Root route `/` loads workspace
+- Sidebar with 7 tools (Stories, Editor, Chapters, Lorebook, Brainstorm, Prompts, Notes)
+- Tool switching via React state, not routing
+- No navigation boundaries - always in the same workspace
 
----
+### Core Architecture
 
-## Dependencies to Install
-
-```bash
-# Shadcn Sidebar (includes all subcomponents)
-npx shadcn@latest add sidebar
-
-# Resizable panels for split views
-npm install react-resizable-panels
-
-# Command palette (used later but install now)
-npm install cmdk
+**Component hierarchy:**
+```
+App
+└─ WorkspaceProvider (context)
+   └─ Workspace (layout component)
+      ├─ TopBar (app title, story name, settings, AI config, guide)
+      ├─ Sidebar/BottomToolbar (7 tools, responsive)
+      └─ MainContent (renders active tool component)
 ```
 
----
-
-## Files to Create
-
-### 1. `src/contexts/WorkspaceContext.tsx`
-Minimal context for current tool state:
-
-```tsx
-import { createContext, useContext, useState, type ReactNode } from 'react';
-
-type Tool = 'editor' | 'chapters' | 'lorebook' | 'brainstorm' | 'prompts' | 'notes';
-
-interface WorkspaceContextType {
-  currentTool: Tool;
-  setCurrentTool: (tool: Tool) => void;
+**State structure:**
+```typescript
+WorkspaceContext {
+  currentTool: 'stories' | 'editor' | 'chapters' | 'lorebook' | 'brainstorm' | 'prompts' | 'notes'
+  currentStoryId: string | null
+  currentChapterId: string | null
+  setCurrentTool: (tool) => void
+  setCurrentStoryId: (id) => void
+  setCurrentChapterId: (id) => void
 }
-
-const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
-
-export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
-  const [currentTool, setCurrentTool] = useState<Tool>('editor');
-
-  return (
-    <WorkspaceContext.Provider value={{ currentTool, setCurrentTool }}>
-      {children}
-    </WorkspaceContext.Provider>
-  );
-};
-
-export const useWorkspace = () => {
-  const context = useContext(WorkspaceContext);
-  if (!context) throw new Error('useWorkspace must be used within WorkspaceProvider');
-  return context;
-};
 ```
 
-### 2. `src/components/workspace/AppSidebar.tsx`
-Sidebar using Shadcn components:
+**Default state on load:**
+- Check localStorage for last story ID
+- If found → `currentStoryId` = stored ID, `currentTool` = 'editor'
+- If not found → `currentStoryId` = null, `currentTool` = 'stories'
 
-```tsx
-import { Home, FileText, Book, MessageSquare, Settings, StickyNote } from 'lucide-react';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar';
-import { useWorkspace } from '@/contexts/WorkspaceContext';
+## The 7 Tools
 
-const tools = [
-  { id: 'editor', label: 'Editor', icon: FileText },
-  { id: 'chapters', label: 'Chapters', icon: Home },
-  { id: 'lorebook', label: 'Lorebook', icon: Book },
-  { id: 'brainstorm', label: 'Brainstorm', icon: MessageSquare },
-  { id: 'prompts', label: 'Prompts', icon: Settings },
-  { id: 'notes', label: 'Notes', icon: StickyNote },
-] as const;
+**1. Stories** - Story and series list/management
+- Shows when no story selected
+- Click story → sets currentStoryId, switches to Editor
+- Always accessible to switch stories
 
-export const AppSidebar = () => {
-  const { currentTool, setCurrentTool } = useWorkspace();
+**2. Editor** - Write chapter content
+- Only enabled when story selected
+- If no story: shows "Select a story first" message
 
-  return (
-    <Sidebar>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Tools</SidebarGroupLabel>
-          <SidebarMenu>
-            {tools.map((tool) => (
-              <SidebarMenuItem key={tool.id}>
-                <SidebarMenuButton
-                  onClick={() => setCurrentTool(tool.id as any)}
-                  isActive={currentTool === tool.id}
-                >
-                  <tool.icon />
-                  <span>{tool.label}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-  );
-};
+**3. Chapters** - Manage chapter list
+- Only enabled when story selected
+
+**4. Lorebook** - Manage lorebook entries
+- Only enabled when story selected
+
+**5. Brainstorm** - AI chat
+- Only enabled when story selected
+
+**6. Prompts** - Manage prompts
+- Only enabled when story selected
+
+**7. Notes** - Story notes
+- Only enabled when story selected
+
+## Key Technical Decisions
+
+### Routing Decision
+**Option A:** No routing - just `/` for everything, all state-based
+**Option B:** Optional deep linking with `/story/:storyId` but workspace always present
+
+**Recommendation:** Start with Option A for this plan. Can add B later if needed.
+
+**Implementation:**
+- Remove all existing routes (landing, stories, series, dashboard, dashboard children)
+- Single root route `/` renders Workspace
+- All navigation is tool switching via state
+
+### Sidebar vs Toolbar Pattern
+
+**Desktop (>768px):** Vertical sidebar on left
+- Tool list (icon + label)
+- Active tool highlighted
+- Collapsible button (minimize to icons only)
+- Fixed position
+
+**Mobile (<768px):** Bottom toolbar
+- Horizontal tool buttons (icon + compact label)
+- Active tool highlighted
+- Fixed position above keyboard safe area
+- May need "More" menu if all 7 don't fit
+
+**Decision point:** Use responsive breakpoint or separate components? Recommend single component with responsive styling.
+
+### Tool Switching Mechanism
+
+**User clicks tool in sidebar:**
+1. Check if story required for that tool
+2. If required and no story selected → show toast "Select a story first", don't switch
+3. If story not required or story selected → `setCurrentTool(tool)`, main content updates
+
+**Special case - Stories tool:**
+- Always enabled
+- Clicking it when story is selected: Shows story list, keeps currentStoryId (for quick story switching)
+
+### Top Bar Content
+
+**Left side:**
+- App title "Story Nexus" or logo
+- Current story name (if story selected), clickable → quick story switcher dropdown
+
+**Right side:**
+- Settings icon → settings modal
+- AI config icon → AI settings modal
+- Guide/help icon → user guide (modal or side panel)
+
+**Center (when story selected):**
+- Chapter switcher dropdown (placeholder for now, implemented in #03)
+
+### Placeholder Main Content
+
+For this plan, main content just shows:
+```
+<div>Current tool: {currentTool}</div>
+<div>Current story: {currentStoryId || 'None'}</div>
 ```
 
-### 3. `src/components/workspace/WorkspaceTopBar.tsx`
-Top bar with story title and back button:
+Actual tool implementations come in #02-#08.
 
-```tsx
-import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+## Functionality to Preserve
 
-interface WorkspaceTopBarProps {
-  storyTitle: string;
-}
+**In this plan:**
+- All existing functionality still accessible via old routes (temporarily)
+- This plan adds the workspace shell alongside existing app
+- Don't remove old routes yet - just add new workspace
 
-export const WorkspaceTopBar = ({ storyTitle }: WorkspaceTopBarProps) => {
-  const navigate = useNavigate();
-
-  return (
-    <div className="flex items-center gap-4 border-b px-4 py-2">
-      <SidebarTrigger />
-      <Button variant="ghost" size="sm" onClick={() => navigate('/stories')}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Stories
-      </Button>
-      <div className="flex-1">
-        <h1 className="text-lg font-semibold">{storyTitle}</h1>
-      </div>
-      {/* Chapter dropdown placeholder - implemented in plan #03 */}
-    </div>
-  );
-};
-```
-
-### 4. `src/pages/Workspace.tsx`
-Main workspace layout:
-
-```tsx
-import { useParams } from 'react-router-dom';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { WorkspaceProvider, useWorkspace } from '@/contexts/WorkspaceContext';
-import { AppSidebar } from '@/components/workspace/AppSidebar';
-import { WorkspaceTopBar } from '@/components/workspace/WorkspaceTopBar';
-import { useStoryQuery } from '@/features/stories/hooks/useStoryQuery';
-
-const WorkspaceContent = () => {
-  const { storyId } = useParams<{ storyId: string }>();
-  const { data: story, isLoading } = useStoryQuery(storyId!);
-  const { currentTool } = useWorkspace();
-
-  if (isLoading) return <div>Loading...</div>;
-  if (!story) return <div>Story not found</div>;
-
-  return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full">
-        <AppSidebar />
-        <div className="flex flex-1 flex-col">
-          <WorkspaceTopBar storyTitle={story.title} />
-          <main className="flex-1 overflow-auto p-4">
-            {/* Tool content placeholder - implemented in plans #03-#08 */}
-            <div className="text-muted-foreground">
-              Current tool: {currentTool}
-            </div>
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
-  );
-};
-
-export const Workspace = () => {
-  return (
-    <WorkspaceProvider>
-      <WorkspaceContent />
-    </WorkspaceProvider>
-  );
-};
-```
-
----
-
-## Files to Modify
-
-### `src/App.tsx`
-Update routing to add workspace route:
-
-**Find:**
-```tsx
-<Route path="/dashboard/:storyId/*" element={<Dashboard />} />
-```
-
-**Replace with:**
-```tsx
-<Route path="/story/:storyId" element={<Workspace />} />
-```
-
-**Add import:**
-```tsx
-import { Workspace } from '@/pages/Workspace';
-```
-
----
+**Plan #02 will:**
+- Implement Stories tool (migrate stories/series functionality)
+- Start removing old routes
 
 ## Implementation Steps
 
-1. **Install dependencies** (see above)
+1. **Create WorkspaceContext**
+   - Context file with state and setters
+   - Provider component
+   - Custom hook
 
-2. **Create WorkspaceContext** (`src/contexts/WorkspaceContext.tsx`)
-   - Simple useState for current tool
-   - Provider and hook
+2. **Create Workspace component**
+   - Fetch stories list (for story switcher)
+   - Load last story from localStorage if exists
+   - Initialize context state
+   - Render layout (TopBar + Sidebar + MainContent)
 
-3. **Create AppSidebar** (`src/components/workspace/AppSidebar.tsx`)
-   - Use Shadcn Sidebar components
-   - Map tools array to SidebarMenu items
-   - Use `isActive` prop for active tool highlighting
-   - onClick sets current tool in context
+3. **Create Sidebar component**
+   - 7 tool buttons
+   - Active state styling
+   - Disabled state for tools requiring story
+   - Collapsible functionality (desktop)
+   - Responsive → toolbar on mobile
 
-4. **Create WorkspaceTopBar** (`src/components/workspace/WorkspaceTopBar.tsx`)
-   - Back button to `/stories`
-   - SidebarTrigger for mobile toggle
-   - Story title display
-   - Chapter dropdown placeholder (comment for now)
+4. **Create TopBar component**
+   - App title
+   - Story name display (if story selected)
+   - Story switcher dropdown (if stories exist)
+   - Settings, AI config, guide icons
+   - Chapter switcher placeholder
 
-5. **Create Workspace page** (`src/pages/Workspace.tsx`)
-   - Wrap in WorkspaceProvider + SidebarProvider
-   - Fetch story using useStoryQuery
-   - Layout: AppSidebar + TopBar + main content area
-   - Placeholder for tool content (just shows current tool name)
+5. **Create MainContent component**
+   - Switch statement on currentTool
+   - For now, all tools show placeholder
+   - Loading states
 
-6. **Update routing** (`src/App.tsx`)
-   - Replace `/dashboard/:storyId/*` route with `/story/:storyId`
-   - Import Workspace component
+6. **Update App.tsx routing**
+   - Add `/` route → Workspace
+   - Keep existing routes for now (cleanup in #02)
 
-7. **Test in browser:**
-   - Navigate to `/story/:storyId`
-   - Verify sidebar renders with all tools
-   - Click tools, verify active state updates
-   - Verify SidebarTrigger collapses/expands sidebar
-   - Test mobile responsive behaviour
+7. **localStorage integration**
+   - Save currentStoryId on change
+   - Load on workspace mount
+   - Save currentTool (optional)
 
----
+## Testing Criteria
 
-## Verification Steps
+### Functional
+- [ ] Navigate to `/` loads workspace
+- [ ] Workspace shows with sidebar and top bar
+- [ ] All 7 tools listed in sidebar
+- [ ] Clicking tool updates active state
+- [ ] Tools requiring story are disabled when no story selected
+- [ ] Stories tool always enabled
+- [ ] Main content shows current tool name (placeholder)
+- [ ] If previous story in localStorage, loads with that story selected
+- [ ] If no previous story, shows Stories tool active
+- [ ] Top bar shows story name when story selected
+- [ ] Top bar story dropdown lists all stories
+- [ ] Clicking story in dropdown updates currentStoryId
+- [ ] Mobile breakpoint shows bottom toolbar instead of sidebar
+- [ ] Sidebar collapse works (desktop)
+- [ ] Settings, AI config, guide icons accessible
 
+### Technical
+- [ ] Zero lint errors
+- [ ] Zero build errors
+- [ ] No console errors
+- [ ] Context updates correctly
+- [ ] localStorage saves/loads correctly
+- [ ] Existing routes still work (old app untouched)
+
+## Known Limitations
+
+**Resolved in later plans:**
+- Stories tool not implemented (just placeholder) → #02
+- Editor tool not implemented → #03
+- Other tools not implemented → #04-#08
+- Chapter switcher not functional → #03
+- Old routes still exist → cleanup across #02-#08
+
+## Integration Points
+
+**With existing code:**
+- Use existing `useStoriesQuery` for story list
+- Use existing `useStoryQuery` for current story data
+- Use existing types (Story, Chapter, etc.)
+- Don't modify existing pages yet - they stay intact
+
+**Data fetching:**
+- Workspace needs stories list for top bar dropdown
+- Fetch with TanStack Query, same as existing pages
+- Handle loading/error states
+
+## Notes for Implementer
+
+**Do:**
+- Keep it minimal - just the shell
+- Use existing UI components (Button, DropdownMenu, etc. from shadcn)
+- Test responsive behavior thoroughly
+- Verify existing app unaffected
+
+**Don't:**
+- Remove existing routes or pages
+- Implement actual tool content (wait for #02-#08)
+- Add complex state management (keep it simple)
+- Break existing functionality
+
+**Dependencies to install:**
+
+If using Shadcn sidebar:
 ```bash
-# Lint check
-npm run lint
-
-# Build check
-npm run build
-
-# Dev server (manual testing)
-npm run dev
+npx shadcn@latest add sidebar
 ```
 
-**Expected outcomes:**
-- Zero lint errors
-- Zero build errors
-- Workspace route loads successfully
-- Sidebar renders with 6 tools
-- Tool switching updates active state
-- Mobile: sidebar collapses to overlay
-- Desktop: sidebar collapsible via trigger
+For collapsible behavior (if building custom):
+```bash
+npm install @radix-ui/react-collapsible
+```
 
----
+For command palette (install now, use in #10):
+```bash
+npm install cmdk
+```
 
-## Testing Checklist
+## Success Criteria
 
-- [ ] Navigate to `/story/:storyId` with valid story ID
-- [ ] Sidebar displays all 6 tools (Editor, Chapters, Lorebook, Brainstorm, Prompts, Notes)
-- [ ] Click each tool, verify active state highlights correctly
-- [ ] Click "Stories" back button, navigates to `/stories`
-- [ ] SidebarTrigger collapses/expands sidebar
-- [ ] Mobile viewport: sidebar becomes overlay (test at <768px width)
-- [ ] Desktop viewport: sidebar shows inline (test at >1024px width)
-- [ ] No console errors
-
----
-
-## Known Limitations (Resolved in Later Plans)
-
-- Tool switching shows placeholder text, not actual tool content (fixed in #03-#08)
-- No chapter dropdown in top bar (added in #03)
-- No actual tool pages rendered (added in #03-#08)
-- Navigation still references old `/dashboard` route in some places (cleaned up in #02)
-
----
-
-## Notes for Agent
-
-- Do NOT build custom sidebar components. Use Shadcn Sidebar exclusively.
-- Do NOT add routing logic for tools. Tool switching is pure React state, no URL changes.
-- Do NOT implement tool content yet. Just the infrastructure.
-- Shadcn Sidebar handles all responsive breakpoints automatically via its collapsible variants.
-- If `npx shadcn@latest add sidebar` prompts for config, use defaults (or check existing components.json).
+**After this plan:**
+- Workspace shell exists and loads
+- 7 tools in sidebar, switching works
+- Story selection via top bar dropdown works
+- No story selected → correct default state
+- Story selected → correct loaded state
+- Responsive layout works
+- Zero regressions in existing app
+- Foundation ready for tool implementations
