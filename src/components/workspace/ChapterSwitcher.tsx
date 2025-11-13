@@ -10,10 +10,15 @@ import { useStoryContext } from "@/features/stories/context/StoryContext";
 import { Chapter } from "@/types/story";
 
 export const ChapterSwitcher = () => {
-    const { currentStoryId, currentChapterId, setCurrentChapterId } = useStoryContext();
+    const { currentStoryId, currentChapterId, currentTool, setCurrentChapterId } = useStoryContext();
     const { data: chapters = [] } = useChaptersByStoryQuery(currentStoryId || "");
 
     const currentChapter = chapters.find((c: Chapter) => c.id === currentChapterId);
+
+    // Only show for editor tool
+    if (currentTool !== "editor") {
+        return null;
+    }
 
     if (!currentStoryId || !currentChapterId || chapters.length === 0) {
         return null;
