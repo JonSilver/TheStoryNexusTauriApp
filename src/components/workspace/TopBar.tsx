@@ -59,11 +59,11 @@ export const TopBar = () => {
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Link to="/ai-settings">
-                                    <Button variant="ghost" size="icon" className="h-9 w-9">
+                                <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                                    <Link to="/ai-settings">
                                         <Bot className="h-5 w-5" />
-                                    </Button>
-                                </Link>
+                                    </Link>
+                                </Button>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p>Settings</p>
@@ -74,11 +74,11 @@ export const TopBar = () => {
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Link to="/guide">
-                                    <Button variant="ghost" size="icon" className="h-9 w-9">
+                                <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                                    <Link to="/guide">
                                         <HelpCircle className="h-5 w-5" />
-                                    </Button>
-                                </Link>
+                                    </Link>
+                                </Button>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p>Guide</p>
