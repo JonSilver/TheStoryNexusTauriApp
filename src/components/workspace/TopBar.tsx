@@ -1,5 +1,5 @@
 import { Bot, HelpCircle } from "lucide-react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
@@ -16,6 +16,7 @@ import { ChapterSwitcher } from "./ChapterSwitcher";
 export const TopBar = () => {
     const { currentStoryId, setCurrentStoryId } = useStoryContext();
     const { data: stories } = useStoriesQuery();
+    const navigate = useNavigate();
 
     const currentStory = stories?.find(s => s.id === currentStoryId);
 
@@ -55,39 +56,43 @@ export const TopBar = () => {
                 <div className="flex-1" />
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
-                    <TooltipProvider>
+                <TooltipProvider>
+                    <div className="flex items-center gap-2">
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-                                    <Link to="/ai-settings">
-                                        <Bot className="h-5 w-5" />
-                                    </Link>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9"
+                                    onClick={() => navigate("/ai-settings")}
+                                >
+                                    <Bot className="h-5 w-5" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p>Settings</p>
                             </TooltipContent>
                         </Tooltip>
-                    </TooltipProvider>
 
-                    <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-                                    <Link to="/guide">
-                                        <HelpCircle className="h-5 w-5" />
-                                    </Link>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9"
+                                    onClick={() => navigate("/guide")}
+                                >
+                                    <HelpCircle className="h-5 w-5" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p>Guide</p>
                             </TooltipContent>
                         </Tooltip>
-                    </TooltipProvider>
 
-                    <ThemeToggle />
-                </div>
+                        <ThemeToggle />
+                    </div>
+                </TooltipProvider>
             </div>
         </header>
     );
