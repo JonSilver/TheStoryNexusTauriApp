@@ -56,13 +56,13 @@ export const TopBar = () => {
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                     <Link to="/ai-settings">
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" title="Settings">
                             <Bot className="h-5 w-5" />
                         </Button>
                     </Link>
 
                     <Link to="/guide">
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" title="Guide">
                             <HelpCircle className="h-5 w-5" />
                         </Button>
                     </Link>
