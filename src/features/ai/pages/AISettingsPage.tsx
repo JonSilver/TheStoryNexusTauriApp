@@ -190,7 +190,7 @@ export default function AISettingsPage() {
     return (
         <div className="p-8">
             <div className="max-w-2xl mx-auto">
-                <h1 className="text-3xl font-bold mb-8">AI Settings</h1>
+                <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
                 <div className="space-y-6">
                     {/* OpenAI Section */}

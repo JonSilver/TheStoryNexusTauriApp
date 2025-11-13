@@ -48,11 +48,7 @@ function NoteEditorContent({ note, updateMutation }: NoteEditorContentProps) {
                         Last updated: {new Date(note.updatedAt).toLocaleString()}
                     </p>
                 </div>
-                <Button
-                    onClick={handleSave}
-                    disabled={updateMutation.isPending}
-                    className="flex items-center gap-2"
-                >
+                <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2">
                     <Save className="h-4 w-4" />
                     Save
                 </Button>

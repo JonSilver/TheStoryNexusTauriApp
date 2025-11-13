@@ -27,9 +27,18 @@ const CATEGORIES: LorebookCategory[] = [
     "timeline"
 ];
 
-export default function LorebookPage() {
-    const { storyId, seriesId } = useParams<{ storyId?: string; seriesId?: string }>();
+interface LorebookPageProps {
+    storyId?: string;
+    seriesId?: string;
+}
+
+export default function LorebookPage({ storyId: propStoryId, seriesId: propSeriesId }: LorebookPageProps = {}) {
+    const params = useParams<{ storyId?: string; seriesId?: string }>();
     const queryClient = useQueryClient();
+
+    // Use props if provided, otherwise fall back to params
+    const storyId = propStoryId ?? params.storyId;
+    const seriesId = propSeriesId ?? params.seriesId;
 
     const [selectedCategory, setSelectedCategory] = useState<LorebookCategory>("character");
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
