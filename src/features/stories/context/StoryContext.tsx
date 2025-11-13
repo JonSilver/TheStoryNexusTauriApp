@@ -1,6 +1,14 @@
 import { createContext, ReactNode, useContext, useState, useEffect } from "react";
 
-export type WorkspaceTool = "stories" | "editor" | "chapters" | "lorebook" | "brainstorm" | "prompts" | "notes";
+export type WorkspaceTool =
+    | "stories"
+    | "series"
+    | "editor"
+    | "chapters"
+    | "lorebook"
+    | "brainstorm"
+    | "prompts"
+    | "notes";
 
 interface StoryContextType {
     currentStoryId: string | null;

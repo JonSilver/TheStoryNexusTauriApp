@@ -1,5 +1,6 @@
 import { useStoryContext } from "@/features/stories/context/StoryContext";
 import { StoriesTool } from "./tools/StoriesTool";
+import { SeriesTool } from "./tools/SeriesTool";
 import { EditorTool } from "./tools/EditorTool";
 import { ChaptersTool } from "./tools/ChaptersTool";
 import { LorebookTool } from "./tools/LorebookTool";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
 // Subtle background tints for each tool
 const toolTints = {
     stories: "bg-background",
+    series: "bg-background",
     editor: "bg-amber-50/10 dark:bg-amber-950/5",
     chapters: "bg-blue-50/10 dark:bg-blue-950/5",
     lorebook: "bg-cyan-50/10 dark:bg-cyan-950/5",
@@ -26,6 +28,8 @@ export const MainContent = () => {
         switch (currentTool) {
             case "stories":
                 return <StoriesTool />;
+            case "series":
+                return <SeriesTool />;
             case "editor":
                 return <EditorTool />;
             case "chapters":
