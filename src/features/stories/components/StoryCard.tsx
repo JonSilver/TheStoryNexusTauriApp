@@ -4,7 +4,7 @@ import { ROUTES } from "@/constants/urls";
 import { useSingleSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
 import { useDeleteStoryMutation } from "@/features/stories/hooks/useStoriesQuery";
 import { Story } from "@/types/story";
-import { Edit, FolderUp, Trash2 } from "lucide-react";
+import { BookOpen, Edit, FolderUp, Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useNavigate } from "react-router";
 import { Badge } from "../../../components/ui/badge";
@@ -37,6 +37,11 @@ export function StoryCard({ story, onEdit, onExport }: StoryCardProps) {
         onExport(story);
     };
 
+    const handleRead = (e: MouseEvent) => {
+        e.stopPropagation();
+        navigate(ROUTES.STORY_READER(story.id));
+    };
+
     const handleCardClick = () => {
         navigate(ROUTES.DASHBOARD.CHAPTERS(story.id));
     };
@@ -61,6 +66,19 @@ export function StoryCard({ story, onEdit, onExport }: StoryCardProps) {
                 {story.synopsis && <p className="text-sm text-muted-foreground">{story.synopsis}</p>}
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={handleRead}>
+                                <BookOpen className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Read story</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>

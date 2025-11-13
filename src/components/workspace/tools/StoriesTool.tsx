@@ -12,7 +12,7 @@ import { storyExportService } from "@/services/storyExportService";
 import type { Story } from "@/types/story";
 import { logger } from "@/utils/logger";
 import { attemptPromise } from "@jfdi/attempt";
-import { Download, Upload, Edit, FolderUp, Trash2 } from "lucide-react";
+import { BookOpen, Download, Upload, Edit, FolderUp, Trash2 } from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,8 @@ import { DownloadMenu } from "@/components/ui/DownloadMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSingleSeriesQuery } from "@/features/series/hooks/useSeriesQuery";
 import type { MouseEvent } from "react";
+import { useNavigate } from "react-router";
+import { ROUTES } from "@/constants/urls";
 
 // Story Card for workspace - clicks story to load it in workspace
 function WorkspaceStoryCard({
@@ -35,6 +37,7 @@ function WorkspaceStoryCard({
     const deleteStoryMutation = useDeleteStoryMutation();
     const { setCurrentStoryId } = useStoryContext();
     const { data: series } = useSingleSeriesQuery(story.seriesId);
+    const navigate = useNavigate();
 
     const handleDelete = async (e: MouseEvent) => {
         e.stopPropagation();
@@ -51,6 +54,11 @@ function WorkspaceStoryCard({
     const handleExport = (e: MouseEvent) => {
         e.stopPropagation();
         onExport(story);
+    };
+
+    const handleRead = (e: MouseEvent) => {
+        e.stopPropagation();
+        navigate(ROUTES.STORY_READER(story.id));
     };
 
     const handleCardClick = () => {
@@ -78,6 +86,19 @@ function WorkspaceStoryCard({
                 {story.synopsis && <p className="text-sm text-muted-foreground">{story.synopsis}</p>}
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={handleRead}>
+                                <BookOpen className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Read story</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>

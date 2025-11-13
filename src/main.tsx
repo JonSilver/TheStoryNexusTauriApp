@@ -17,6 +17,7 @@ import { MainLayout } from "./components/MainLayout";
 
 // Lazy loaded pages (code splitting for large features)
 const StoryDashboard = lazy(() => import("./features/stories/pages/StoryDashboard"));
+const StoryReader = lazy(() => import("./features/stories/pages/StoryReader").then(m => ({ default: m.StoryReader })));
 const Chapters = lazy(() => import("./features/chapters/pages/Chapters"));
 const ChapterEditorPage = lazy(() => import("./features/chapters/pages/ChapterEditorPage"));
 const PromptsPage = lazy(() => import("./features/prompts/pages/PromptsPage"));
@@ -54,6 +55,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                                     <Route element={<MainLayout />}>
                                         {/* Stories section */}
                                         <Route path="/stories" element={<Home />} />
+                                        <Route path="/stories/:storyId/read" element={<StoryReader />} />
                                         {/* Series section */}
                                         <Route path="/series" element={<SeriesListPage />} />
                                         <Route path="/series/:seriesId" element={<SeriesDashboard />} />
