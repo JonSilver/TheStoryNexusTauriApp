@@ -1,161 +1,255 @@
 # Workspace Redesign - Implementation Overview
 
-## Philosophy
+## Core Concept
 
-These plans describe **architectural transformations**, not code implementations. Each plan identifies:
+**ONE workspace. That's it.**
 
-1. **What changes architecturally** - component relationships, state management, routing
-2. **Problems to solve** - technical challenges, user experience issues
-3. **Key decisions** - choices to make during implementation
-4. **Integration points** - how this connects to existing code
-5. **Success criteria** - how to verify it works
+Not "enter workspace, exit workspace". Not "landing page then workspace". Not "story picker outside workspace".
 
-**What these plans are NOT:**
-- Line-by-line code instructions
-- Complete component implementations
-- Prescriptive JSX templates
-- Copy-paste solutions
+The Story Nexus IS the workspace. Opening the app = you're in the workspace. Always.
 
-## Core Transformation
+## Architectural Foundation
 
-**From:** Page-based navigation with separate routes for each feature
-**To:** Single persistent workspace with tool switching via UI state
+### The Workspace (Always Present)
 
-**Key architectural shifts:**
-1. **Routing simplification** - `/story/:storyId` replaces nested dashboard routes
-2. **Tool-based navigation** - React state controls visible tool, not router
-3. **Persistent chrome** - Top bar and sidebar never change, only main content swaps
-4. **State preservation** - Chapter context, scroll position, tool state maintained across switches
+**Persistent chrome:**
+- Top bar (app title, settings, AI config)
+- Sidebar with 7 tools:
+  1. **Stories** - list/manage stories and series
+  2. **Editor** - write chapters
+  3. **Chapters** - manage chapter list
+  4. **Lorebook** - manage entries
+  5. **Brainstorm** - AI chat
+  6. **Prompts** - manage prompts
+  7. **Notes** - story notes
+- Main content area (shows active tool)
+
+**State management:**
+- `currentTool` - which tool is active
+- `currentStoryId` - which story is loaded (null if none)
+- `currentChapterId` - which chapter is open (null if none)
+
+**No routing navigation** - tool switching is pure React state
+
+### How It Works
+
+**App loads:**
+- If no story selected → Stories tool active, main content shows story list
+- If returning with story in local storage → that story loaded, Editor tool active
+- Always the same persistent workspace chrome
+
+**User clicks story in Stories tool:**
+- Sets `currentStoryId` in context
+- Switches to Editor tool automatically
+- Loads first chapter
+- Workspace chrome never changes
+
+**User switches tools:**
+- Sidebar click updates `currentTool` state
+- Main content swaps tool component
+- Instant, no navigation feel
+- Story context preserved
+
+**User wants different story:**
+- Clicks Stories tool
+- Selects different story
+- Switches back to Editor with new story loaded
+
+### Critical: No Functionality Loss
+
+**Current functionality that MUST be preserved:**
+- Series management (create, edit, delete, group stories)
+- Story creation from series or standalone
+- Story editing (title, synopsis, settings)
+- All editor features (Lexical, scene beats, plugins)
+- All lorebook features (CRUD, categories, tags, matching)
+- All brainstorm features (chat, prompts, context)
+- All prompt management (import/export, system prompts)
+- All notes features
+- Chapter management (create, reorder, delete, outline, POV)
+- AI settings configuration
+- Export/import functionality
+- Demo content management
+- User guide access
+
+**Where this functionality goes:**
+- Series/story CRUD → Stories tool main content area
+- Story editing → Stories tool (story details panel)
+- AI settings → Top bar quick access + settings modal
+- Guide → Top bar link or help menu
+- Everything else → respective tool
+
+**No orphaned UI:**
+- Every feature must have a clear home in the workspace
+- If it's not obvious where something goes, flag it in the plan
+- Better to have too many menu items than hidden functionality
 
 ## Implementation Sequence
 
-### Foundation (Sequential - Must complete in order)
+### Phase 1: Foundation (Sequential)
 
-**#01 - Workspace Infrastructure**
-- Create workspace route and layout shell
-- Tool switching via React state (not routing)
-- Minimal context for current tool + chapter
-- Empty content area (tools added later)
+**#01 - Workspace Shell**
+- Create persistent workspace layout
+- Sidebar with 7 tools (Stories, Editor, Chapters, Lorebook, Brainstorm, Prompts, Notes)
+- Top bar (app title, settings, AI config)
+- WorkspaceContext (currentTool, currentStoryId, currentChapterId)
+- Tool switching mechanism (state-based, not routing)
+- Placeholder main content (shows current tool name)
 
-**#02 - Story List Entry Point**
-- Remove story dashboard concept
-- Story cards link directly to workspace
-- Clean up old dashboard routes
+**#02 - Stories Tool**
+- Story list view in main content area
+- Series grouping/management
+- Story creation/editing
+- Click story → sets currentStoryId, switches to Editor tool
+- All series/story CRUD functionality preserved
+- No separate "dashboard" concept
 
 **#03 - Editor Tool**
-- Refactor editor page as workspace tool
-- Chapter switching via top bar dropdown
-- State preservation (scroll, cursor position)
+- Refactor existing editor as workspace tool
+- Chapter switching (top bar dropdown)
+- Loads when story selected
+- State preservation (scroll, cursor position per chapter)
+- All existing Lexical functionality preserved
 
 **#04 - Chapters Tool**
 - Refactor chapters page as tool
-- Clicking chapter switches to Editor tool with that chapter loaded
+- Chapter list, create, reorder, delete, outline
+- Click chapter → switches to Editor with that chapter
+- All existing chapter management preserved
 
-### Remaining Tools (Can parallelize)
+### Phase 2: Remaining Tools (Can parallelize)
 
 **#05 - Lorebook Tool**
 **#06 - Brainstorm Tool**
 **#07 - Prompts Tool**
 **#08 - Notes Tool**
 
-Each tool: Refactor existing page as workspace tool, remove navigation chrome, integrate with workspace context.
+Each: Refactor existing page as workspace tool, preserve all functionality
 
-### Enhancements (After tools exist)
+### Phase 3: Enhancements
 
 **#09 - Right Panel System** (Editor contextual tools)
-**#10 - Command Palette** (Unified search)
+**#10 - Command Palette** (Unified search/navigation)
 **#11 - Brainstorm → Lorebook Workflow**
 **#12 - Editor Quick Reference**
 **#13 - Keyboard Shortcuts**
-
-### Polish
-
 **#14 - Visual Cohesion**
 
 ## Critical Technical Decisions
 
-### 1. Tool Navigation Pattern
-**Decision:** Tool switching uses React state, not routing
-**Rationale:** Instant switching, no URL changes, feels like workspace not website
-**Implementation:** WorkspaceContext holds `currentTool` state, sidebar buttons update it
+### 1. Routing Strategy
+**Decision:** Minimal or no routing
+**Options:**
+- A: Just `/` - everything state-based
+- B: `/story/:storyId` for deep linking, but workspace chrome always present
+**Recommendation:** Option A for simplicity, add B later if needed
 
-### 2. Chapter State Management
-**Decision:** Chapter ID in workspace context, not URL params
-**Rationale:** Chapter switching shouldn't feel like navigation
-**Alternative:** Could use URL query param for deep linking (`?chapter=xyz`)
-**Recommendation:** Start with context, add URL param later if needed
+### 2. Story Selection Pattern
+**Stories tool active:**
+- Main content shows story list with series grouping
+- Click story → `setCurrentStoryId(id)`, `setCurrentTool('editor')`
+- Quick story switch: Top bar shows current story name, click → dropdown to switch
 
-### 3. Mobile Layout
-**Decision:** Bottom toolbar (not collapsible sidebar)
-**Rationale:** More ergonomic for thumb reach, clearer tool switching
-**Implementation:** Responsive check swaps sidebar for toolbar at mobile breakpoint
+**No story selected:**
+- Stories tool active by default
+- Main content prompts to select or create story
+- Other tools disabled or show "select story first" state
 
-### 4. State Preservation Strategy
-**Editor scroll position:** Store in ref Map keyed by chapter ID
-**Tool state:** Keep in memory during session, don't persist across page reloads
-**Chapter selection:** Persist in context, initialize to first chapter if none
+### 3. State Persistence
+**Between sessions:**
+- Last story ID → localStorage
+- Last tool → localStorage (or default to Editor)
+- Last chapter per story → localStorage
+
+**During session:**
+- All state in WorkspaceContext
+- Editor scroll position per chapter in ref Map
+- No URL state (or minimal for deep linking)
+
+### 4. Mobile Layout
+**Same architecture, different chrome:**
+- Bottom toolbar instead of sidebar
+- Same 7 tools, same switching mechanism
+- Top bar more compact
+- Same state management
+- Responsive breakpoint swaps layout
 
 ### 5. Existing Page Integration
-**Decision:** Extract existing page components into tool wrappers, don't rebuild from scratch
-**Rationale:** Preserve working functionality, reduce risk
-**Implementation:** Create thin wrapper components that render existing pages with workspace context
+**Strategy:** Wrap, don't rebuild
+- Extract existing page components
+- Wrap in tool containers
+- Connect to workspace context
+- Preserve all functionality
+- Add only the minimal glue code needed
+
+## Functionality Preservation Checklist
+
+**Must verify after implementation:**
+- [ ] All series operations work (CRUD, grouping)
+- [ ] All story operations work (create from series, standalone, edit, delete)
+- [ ] All editor features work (Lexical, plugins, scene beats, auto-save)
+- [ ] All lorebook features work (CRUD, categories, tags, matching, disabled state)
+- [ ] All brainstorm features work (chat, prompts, message actions)
+- [ ] All prompt features work (CRUD, import/export, system prompts)
+- [ ] All notes features work (CRUD)
+- [ ] All chapter features work (CRUD, reorder, outline, POV)
+- [ ] AI settings accessible and functional
+- [ ] Export/import works for all entities
+- [ ] Demo content management works
+- [ ] User guide accessible
+- [ ] No functionality hidden or removed
 
 ## Testing Strategy
 
 ### Per-Plan Verification
 1. Lint and build (automated)
-2. Specific functionality test (human)
-3. No regressions in existing features
+2. Functionality test for features touched
+3. Regression test for existing features
 4. Explicit approval before next plan
 
-### Integration Testing Checkpoints
-- After #04: Core workspace navigation works (sidebar, tools, chapters)
+### Integration Checkpoints
+- After #02: Stories tool works, story selection works
+- After #04: Core navigation works (Stories → Editor → Chapters → back)
 - After #08: All tools accessible and functional
-- After #13: All enhancements integrated
-- After #14: Visual cohesion and polish complete
+- After #14: Full system test, all functionality verified
 
 ## Common Pitfalls to Avoid
 
-1. **Don't rebuild existing features** - Wrap and integrate, don't rewrite
-2. **Don't add routing** - Tool switching is pure React state
-3. **Don't break existing editor** - Lexical plugins must continue working
-4. **Don't over-engineer state** - Start simple, add complexity only if needed
-5. **Don't skip testing** - Each plan must be verified before continuing
+1. **Don't create boundaries** - it's one workspace, not multiple contexts
+2. **Don't hide functionality** - everything must have a clear UI home
+3. **Don't rebuild from scratch** - wrap existing components
+4. **Don't add routing complexity** - keep it state-based
+5. **Don't break existing features** - preserve everything
 
-## Success Metrics
+## Success Criteria
 
-After implementation complete:
-- **Workspace feel** - No navigation sensation, always "in" the story
-- **Tool switching** - Instant, < 100ms perceived latency
-- **Chapter switching** - < 2s to load any chapter
-- **Context preservation** - Return to editor shows exact position
-- **Mobile usability** - All tools accessible, easy toolbar switching
-- **Zero regressions** - All existing functionality still works
-
-## Execution Rules
-
-1. Complete foundation plans (#01-#04) sequentially - no exceptions
-2. Tools #05-#08 can parallelize if multiple implementers available
-3. Never start plan before dependencies verified and tested
-4. If plan fails, stop and fix before continuing
-5. Human approval required between phases
+**After implementation:**
+- ONE persistent workspace, always present
+- No landing page, no boundaries
+- All tools accessible via sidebar
+- Story selection is just another tool
+- Tool switching instant and seamless
+- All existing functionality works
+- No orphaned or hidden features
+- Mobile layout responsive and usable
+- Zero regressions
 
 ## What Makes a Good Implementation
 
 **Good:**
-- Solves the problem described in the plan
-- Makes sensible architectural decisions
+- Solves the architectural transformation described
+- Preserves all functionality
 - Integrates cleanly with existing code
-- Preserves existing functionality
-- Follows project conventions (see CLAUDE.md)
+- Makes sensible technical decisions
+- Follows project conventions
 
 **Bad:**
-- Copies code from plan verbatim
-- Ignores existing implementations
-- Rebuilds working features from scratch
-- Adds unnecessary complexity
-- Breaks existing functionality
+- Copies code from plans
+- Rebuilds instead of wrapping
+- Hides or removes functionality
+- Creates navigation boundaries
+- Breaks existing features
 
 ---
 
-**Ready to start? Read plan #01.**
+**Ready? Start with #01.**
