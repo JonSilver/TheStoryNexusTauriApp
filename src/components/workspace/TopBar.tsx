@@ -1,4 +1,4 @@
-import { Bot, HelpCircle } from "lucide-react";
+import { Bot, HelpCircle, Search } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -13,7 +13,11 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ChapterSwitcher } from "./ChapterSwitcher";
 
-export const TopBar = () => {
+interface TopBarProps {
+    onOpenCommandPalette: () => void;
+}
+
+export const TopBar = ({ onOpenCommandPalette }: TopBarProps) => {
     const { currentStoryId, setCurrentStoryId } = useStoryContext();
     const { data: stories } = useStoriesQuery();
     const navigate = useNavigate();
@@ -58,6 +62,20 @@ export const TopBar = () => {
                 {/* Actions */}
                 <TooltipProvider>
                     <div className="flex items-center gap-2">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={onOpenCommandPalette}>
+                                    <Search className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Command Palette</p>
+                                <p className="text-xs text-muted-foreground">
+                                    {navigator.platform.toUpperCase().includes("MAC") ? "⌘K" : "Ctrl+K"}
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
+
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button
