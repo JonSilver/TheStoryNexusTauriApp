@@ -4,6 +4,7 @@ import { useChaptersByStoryQuery, useChapterQuery } from "@/features/chapters/ho
 import { useStoryQuery } from "@/features/stories/hooks/useStoriesQuery";
 import { StoryEditor } from "@/features/chapters/components/StoryEditor";
 import { ChapterMatchingProvider } from "@/features/lorebook/hooks/useChapterMatching";
+import { LorebookProvider } from "@/features/lorebook/context/LorebookContext";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -82,10 +83,12 @@ export const EditorTool = () => {
 
     // Render editor
     return (
-        <ChapterMatchingProvider>
-            <div className="h-full">
-                <StoryEditor />
-            </div>
-        </ChapterMatchingProvider>
+        <LorebookProvider storyId={currentStoryId}>
+            <ChapterMatchingProvider>
+                <div className="h-full">
+                    <StoryEditor />
+                </div>
+            </ChapterMatchingProvider>
+        </LorebookProvider>
     );
 };
