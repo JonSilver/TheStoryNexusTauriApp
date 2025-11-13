@@ -11,23 +11,11 @@ import { Workspace } from "./components/workspace/Workspace";
 import "./index.css";
 import "react-toastify/dist/ReactToastify.css";
 
-// Eagerly loaded pages (for fast initial navigation)
-import Home from "./features/stories/pages/Home";
 import { MainLayout } from "./components/MainLayout";
 
-// Lazy loaded pages (code splitting for large features)
-const StoryDashboard = lazy(() => import("./features/stories/pages/StoryDashboard"));
+// Lazy loaded pages
 const StoryReader = lazy(() => import("./features/stories/pages/StoryReader").then(m => ({ default: m.StoryReader })));
-const Chapters = lazy(() => import("./features/chapters/pages/Chapters"));
-const ChapterEditorPage = lazy(() => import("./features/chapters/pages/ChapterEditorPage"));
-const PromptsPage = lazy(() => import("./features/prompts/pages/PromptsPage"));
-const AISettingsPage = lazy(() => import("./features/ai/pages/AISettingsPage"));
-const LorebookPage = lazy(() => import("./features/lorebook/pages/LorebookPage"));
-const BrainstormPage = lazy(() => import("./features/brainstorm/pages/BrainstormPage"));
-const GuidePage = lazy(() => import("./features/guide/pages/GuidePage"));
-const NotesPage = lazy(() => import("./features/notes/pages/NotesPage"));
 const SeriesListPage = lazy(() => import("./features/series/pages/SeriesListPage"));
-const SeriesDashboard = lazy(() => import("./features/series/pages/SeriesDashboard"));
 
 // Loading fallback component
 const PageLoadingFallback = () => (
@@ -46,34 +34,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                         <StoryProvider>
                             <Suspense fallback={<PageLoadingFallback />}>
                                 <Routes>
-                                    {/* NEW: Workspace at root */}
                                     <Route path="/" element={<Workspace />} />
-
-                                    {/* OLD ROUTES - Keep for now, will be removed in #02-#08 */}
-
-                                    {/* Routes with MainLayout */}
                                     <Route element={<MainLayout />}>
-                                        {/* Stories section */}
-                                        <Route path="/stories" element={<Home />} />
                                         <Route path="/stories/:storyId/read" element={<StoryReader />} />
-                                        {/* Series section */}
                                         <Route path="/series" element={<SeriesListPage />} />
-                                        <Route path="/series/:seriesId" element={<SeriesDashboard />} />
-                                        <Route path="/series/:seriesId/lorebook" element={<LorebookPage />} />
-                                        {/* AI Settings */}
-                                        <Route path="/ai-settings" element={<AISettingsPage />} />
-                                        {/* Guide */}
-                                        <Route path="/guide" element={<GuidePage />} />
-                                    </Route>
-
-                                    {/* Story Dashboard */}
-                                    <Route path="/dashboard/:storyId" element={<StoryDashboard />}>
-                                        <Route path="chapters" element={<Chapters />} />
-                                        <Route path="chapters/:chapterId" element={<ChapterEditorPage />} />
-                                        <Route path="prompts" element={<PromptsPage />} />
-                                        <Route path="lorebook" element={<LorebookPage />} />
-                                        <Route path="brainstorm" element={<BrainstormPage />} />
-                                        <Route path="notes" element={<NotesPage />} />
                                     </Route>
                                 </Routes>
                             </Suspense>
