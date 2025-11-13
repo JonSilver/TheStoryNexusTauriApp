@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import ChatInterface from "@/features/brainstorm/components/ChatInterface";
 import ChatList from "@/features/brainstorm/components/ChatList";
 import { useCreateBrainstormMutation } from "@/features/brainstorm/hooks/useBrainstormQuery";
+import { LorebookProvider } from "@/features/lorebook/context/LorebookContext";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
 import type { AIChat } from "@/types/story";
 import { randomUUID } from "@/utils/crypto";
@@ -62,34 +63,36 @@ export const BrainstormTool = () => {
     };
 
     return (
-        <div className="flex h-full">
-            <ChatList storyId={currentStoryId} selectedChat={selectedChat} onSelectChat={setSelectedChat} />
-            <div className="flex-1 h-full">
-                {selectedChat ? (
-                    <ErrorBoundary fallback={ChatErrorFallback} resetKeys={[selectedChat.id]}>
-                        <ChatInterface
-                            storyId={currentStoryId}
-                            selectedChat={selectedChat}
-                            onChatUpdate={setSelectedChat}
-                        />
-                    </ErrorBoundary>
-                ) : (
-                    <div className="flex items-center justify-center h-full flex-col gap-6 text-muted-foreground p-4">
-                        <MessageSquarePlus className="h-16 w-16 text-muted-foreground/50" />
-                        <div className="text-center max-w-md">
-                            <h3 className="text-xl font-semibold mb-2">No Chat Selected</h3>
-                            <p className="mb-6">
-                                Select an existing chat from the sidebar or create a new one to start brainstorming
-                                ideas for your story.
-                            </p>
-                            <Button onClick={handleCreateNewChat} className="flex items-center gap-2">
-                                <MessageSquarePlus className="h-4 w-4" />
-                                Create New Chat
-                            </Button>
+        <LorebookProvider storyId={currentStoryId}>
+            <div className="flex h-full">
+                <ChatList storyId={currentStoryId} selectedChat={selectedChat} onSelectChat={setSelectedChat} />
+                <div className="flex-1 h-full">
+                    {selectedChat ? (
+                        <ErrorBoundary fallback={ChatErrorFallback} resetKeys={[selectedChat.id]}>
+                            <ChatInterface
+                                storyId={currentStoryId}
+                                selectedChat={selectedChat}
+                                onChatUpdate={setSelectedChat}
+                            />
+                        </ErrorBoundary>
+                    ) : (
+                        <div className="flex items-center justify-center h-full flex-col gap-6 text-muted-foreground p-4">
+                            <MessageSquarePlus className="h-16 w-16 text-muted-foreground/50" />
+                            <div className="text-center max-w-md">
+                                <h3 className="text-xl font-semibold mb-2">No Chat Selected</h3>
+                                <p className="mb-6">
+                                    Select an existing chat from the sidebar or create a new one to start brainstorming
+                                    ideas for your story.
+                                </p>
+                                <Button onClick={handleCreateNewChat} className="flex items-center gap-2">
+                                    <MessageSquarePlus className="h-4 w-4" />
+                                    Create New Chat
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
-        </div>
+        </LorebookProvider>
     );
 };
