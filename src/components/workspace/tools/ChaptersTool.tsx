@@ -19,6 +19,7 @@ import {
     useUpdateChapterMutation
 } from "@/features/chapters/hooks/useChaptersQuery";
 import { useLorebookByStoryQuery } from "@/features/lorebook/hooks/useLorebookQuery";
+import { LorebookProvider } from "@/features/lorebook/context/LorebookContext";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
 import { Chapter } from "@/types/story";
 import { logger } from "@/utils/logger";
@@ -181,9 +182,10 @@ export const ChaptersTool = () => {
     }
 
     return (
-        <div className="container mx-auto max-w-4xl p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold">Chapters</h1>
+        <LorebookProvider storyId={currentStoryId}>
+            <div className="container mx-auto max-w-4xl p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="text-3xl font-bold">Chapters</h1>
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
@@ -291,6 +293,7 @@ export const ChaptersTool = () => {
                     </DndContext>
                 )}
             </ScrollArea>
-        </div>
+            </div>
+        </LorebookProvider>
     );
 };
