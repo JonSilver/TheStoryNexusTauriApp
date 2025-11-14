@@ -49,6 +49,8 @@ docker-compose up --build  # Run app in container, access on port 3000
 ### Code Quality
 The project uses ESLint for linting and formatting. TypeScript has `strict: false` but enables specific strict checks (`noImplicitAny`, `strictNullChecks`, `noImplicitReturns`, `noFallthroughCasesInSwitch`, `noUnusedLocals`, `noUnusedParameters`).
 
+Knip (`npm run knip`) identifies unused files, dependencies, and exports. Run periodically to prevent accumulation of dead code. After significant refactoring, check Knip output and remove genuinely unused code to maintain codebase hygiene.
+
 #### Error Handling
 
 - Only add error handling where there is likely to be a recoverable error.
