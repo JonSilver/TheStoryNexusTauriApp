@@ -1,6 +1,5 @@
 import { chaptersApi } from "@/services/api/client";
 import type { Chapter, ChapterOutline } from "@/types/story";
-import { extractPlainTextFromLexical } from "@/utils/lexicalUtils";
 import { logger } from "@/utils/logger";
 import { attemptPromise } from "@jfdi/attempt";
 
@@ -9,25 +8,6 @@ import { attemptPromise } from "@jfdi/attempt";
  * For CRUD operations, use TanStack Query hooks (useChaptersByStoryQuery, useUpdateChapterMutation, etc.)
  * For summary aggregation, use hooks from useChapterSummariesQuery.
  */
-
-export const getChapterPlainText = async (id: string): Promise<string> => {
-    const [error, chapter] = await attemptPromise(() => chaptersApi.getById(id));
-
-    if (error) {
-        logger.error("Error getting chapter plain text:", error);
-        return "";
-    }
-
-    if (!chapter || !chapter.content) {
-        logger.info("Chapter not found or has no content");
-        return "";
-    }
-
-    return extractPlainTextFromLexical(chapter.content);
-};
-
-export const extractPlainTextFromLexicalState = (editorStateJSON: string): string =>
-    extractPlainTextFromLexical(editorStateJSON);
 
 export const getPreviousChapter = async (currentChapterId: string): Promise<Chapter | null> => {
     const [error, currentChapter] = await attemptPromise(() => chaptersApi.getById(currentChapterId));
