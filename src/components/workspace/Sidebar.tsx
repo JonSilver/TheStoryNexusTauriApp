@@ -1,5 +1,6 @@
 import {
     Library,
+    Layers,
     FileEdit,
     List,
     BookOpen,
@@ -16,6 +17,7 @@ import { useState } from "react";
 
 const tools = [
     { id: "stories" as WorkspaceTool, label: "Stories", icon: Library, requiresStory: false },
+    { id: "series" as WorkspaceTool, label: "Series", icon: Layers, requiresStory: false },
     { id: "editor" as WorkspaceTool, label: "Editor", icon: FileEdit, requiresStory: true },
     { id: "chapters" as WorkspaceTool, label: "Chapters", icon: List, requiresStory: true },
     { id: "lorebook" as WorkspaceTool, label: "Lorebook", icon: BookOpen, requiresStory: true },

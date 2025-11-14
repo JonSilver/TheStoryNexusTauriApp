@@ -26,7 +26,7 @@ export function DownloadMenu({
     label = "Download",
     className = ""
 }: DownloadMenuProps) {
-    const handleDownload = async (format: "html" | "text", e: MouseEvent) => {
+    const handleDownload = async (format: "html" | "text" | "markdown" | "epub" | "pdf", e: MouseEvent) => {
         e.stopPropagation();
         const [error] = await attemptPromise(async () => {
             if (type === "story") await downloadStory(id, format);
@@ -57,6 +57,9 @@ export function DownloadMenu({
             <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={e => handleDownload("html", e)}>Download as HTML</DropdownMenuItem>
                 <DropdownMenuItem onClick={e => handleDownload("text", e)}>Download as Text</DropdownMenuItem>
+                <DropdownMenuItem onClick={e => handleDownload("markdown", e)}>Download as Markdown</DropdownMenuItem>
+                <DropdownMenuItem onClick={e => handleDownload("epub", e)}>Download as EPUB</DropdownMenuItem>
+                <DropdownMenuItem onClick={e => handleDownload("pdf", e)}>Download as PDF</DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
     );

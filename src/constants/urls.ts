@@ -19,8 +19,9 @@ export const API_URLS = {
 export const ROUTES = {
     HOME: "/",
     STORIES: "/stories",
-    AI_SETTINGS: "/ai-settings",
+    AI_SETTINGS: "/settings",
     GUIDE: "/guide",
+    STORY_READER: (storyId: string) => `/stories/${storyId}/read`,
 
     /** Dashboard routes - use with storyId parameter */
     DASHBOARD: {
