@@ -95,7 +95,8 @@ npm run db:migrate   # Apply migrations to database
 
 ### Docker Deployment
 
-Run the app in a Docker container:
+#### Local Development
+Run the app in a Docker container for local development:
 
 ```bash
 docker-compose up --build
@@ -104,6 +105,16 @@ docker-compose up --build
 Access on `http://localhost:3000` or from any device on your network using your machine's IP address.
 
 Database persists in `./data/storynexus.db` (mounted volume).
+
+#### Production Deployment from Docker Hub
+For production deployments on third-party servers, see [DEPLOYMENT.md](DEPLOYMENT.md) for complete CI/CD setup and deployment instructions.
+
+Quick deployment steps:
+1. Copy `docker-compose.deploy.yml` and `.env.deploy.example` to server
+2. Configure `.env` with your Docker Hub username
+3. Run: `docker compose -f docker-compose.deploy.yml up -d`
+
+Images are automatically built and pushed to Docker Hub via GitHub Actions on every push to `main` or version tag.
 
 ## Screenshots
 
