@@ -3,8 +3,8 @@ import type { Series } from "@/types/story";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
-// Query keys factory
-export const seriesKeys = {
+// Query keys factory (internal use only)
+const seriesKeys = {
     all: ["series"] as const,
     lists: () => [...seriesKeys.all, "list"] as const,
     list: () => [...seriesKeys.lists()] as const,
@@ -29,21 +29,6 @@ export const useSingleSeriesQuery = (id: string | undefined) =>
         enabled: !!id
     });
 
-// Query: Stories in series
-export const useSeriesStoriesQuery = (seriesId: string | undefined) =>
-    useQuery({
-        queryKey: seriesKeys.stories(seriesId!),
-        queryFn: () => seriesApi.getStories(seriesId!),
-        enabled: !!seriesId
-    });
-
-// Query: Series lorebook entries
-export const useSeriesLorebookQuery = (seriesId: string | undefined) =>
-    useQuery({
-        queryKey: seriesKeys.lorebook(seriesId!),
-        queryFn: () => seriesApi.getLorebook(seriesId!),
-        enabled: !!seriesId
-    });
 
 // Mutation: Create series
 export const useCreateSeriesMutation = () => {

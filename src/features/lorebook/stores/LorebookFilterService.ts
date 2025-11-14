@@ -164,13 +164,3 @@ export class LorebookFilterService {
     }
 }
 
-// Convenience function exports
-export const filterByLevel = LorebookFilterService.filterByLevel.bind(LorebookFilterService);
-export const filterByLevels = LorebookFilterService.filterByLevels.bind(LorebookFilterService);
-export const getGlobalEntries = LorebookFilterService.getGlobalEntries.bind(LorebookFilterService);
-export const getSeriesEntries = LorebookFilterService.getSeriesEntries.bind(LorebookFilterService);
-export const getStoryEntries = LorebookFilterService.getStoryEntries.bind(LorebookFilterService);
-export const getInheritedEntries = LorebookFilterService.getInheritedEntries.bind(LorebookFilterService);
-export const separateByLevel = LorebookFilterService.separateByLevel.bind(LorebookFilterService);
-export const getEditableEntries = LorebookFilterService.getEditableEntries.bind(LorebookFilterService);
-export const matchEntriesInText = LorebookFilterService.matchEntriesInText.bind(LorebookFilterService);

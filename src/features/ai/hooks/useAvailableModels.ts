@@ -2,7 +2,7 @@ import { aiService } from "@/services/ai/AIService";
 import type { AIModel } from "@/types/story";
 import { useQuery } from "@tanstack/react-query";
 
-export const availableModelsKeys = {
+const availableModelsKeys = {
     all: ["ai", "models"] as const
 };
 

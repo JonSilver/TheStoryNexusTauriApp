@@ -1,5 +1,5 @@
-// Base types for common fields
-export interface BaseEntity {
+// Base types for common fields (used across all entities)
+interface BaseEntity {
     id: string;
     createdAt: Date;
     isDemo?: boolean; // Flag to identify demo content
@@ -167,13 +167,6 @@ export interface LorebookEntry extends BaseEntity {
     isDisabled?: boolean;
 }
 
-// Validation helper for lorebook entry level/scopeId constraints
-export const validateLorebookEntry = (entry: LorebookEntry): boolean => {
-    if (entry.level === "global" && entry.scopeId) return false;
-    if (entry.level === "series" && !entry.scopeId) return false;
-    if (entry.level === "story" && !entry.scopeId) return false;
-    return true;
-};
 
 // Prompt Parser types
 export interface PromptParserConfig {
@@ -225,8 +218,6 @@ export interface ParsedPrompt {
     messages: PromptMessage[];
     error?: string;
 }
-
-export type VariableResolver = (context: PromptContext, ...args: string[]) => Promise<string>;
 
 // Story Export/Import types
 export interface StoryExport {

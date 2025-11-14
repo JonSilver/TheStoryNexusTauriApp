@@ -3,8 +3,8 @@ import type { Prompt } from "@/types/story";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
-// Query keys
-export const promptsKeys = {
+// Query keys (internal use only)
+const promptsKeys = {
     all: ["prompts"] as const,
     lists: () => [...promptsKeys.all, "list"] as const,
     list: (params?: { storyId?: string; promptType?: string; includeSystem?: boolean }) =>

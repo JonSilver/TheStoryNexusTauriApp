@@ -3,7 +3,7 @@
  * Reduces duplication across features that need export functionality.
  */
 
-export interface ExportData {
+interface ExportData {
     version: string;
     type: string;
     exportedAt?: string;

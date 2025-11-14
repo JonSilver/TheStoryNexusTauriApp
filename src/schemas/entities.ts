@@ -123,36 +123,6 @@ const aiChatSchema = baseEntitySchema.extend({
     updatedAt: z.coerce.date().optional()
 });
 
-// Prompt schemas
-const promptMessageSchema = z.object({
-    role: z.enum(["system", "user", "assistant"]),
-    content: z.string()
-});
-
-const aiProviderSchema = z.enum(["openai", "openrouter", "local"]);
-
-const allowedModelSchema = z.object({
-    id: z.string(),
-    provider: aiProviderSchema,
-    name: z.string()
-});
-
-const promptSchema = baseEntitySchema.extend({
-    name: z.string().min(1, "Prompt name is required"),
-    description: z.string().optional(),
-    promptType: z.enum(["scene_beat", "gen_summary", "selection_specific", "continue_writing", "other", "brainstorm"]),
-    messages: z.array(promptMessageSchema).min(1, "At least one message is required"),
-    allowedModels: z.array(allowedModelSchema),
-    storyId: z.string().uuid().optional(),
-    isSystem: z.boolean().optional(),
-    temperature: z.number().min(0).max(2).optional(),
-    maxTokens: z.number().int().positive().optional(),
-    top_p: z.number().min(0).max(1).optional(),
-    top_k: z.number().int().nonnegative().optional(),
-    repetition_penalty: z.number().nonnegative().optional(),
-    min_p: z.number().min(0).max(1).optional()
-});
-
 // Lorebook entry schema (used internally for export validation)
 const lorebookLevelSchema = z.enum(["global", "series", "story"]);
 
@@ -200,13 +170,6 @@ const lorebookEntrySchema = baseEntitySchema
         { message: "scopeId required for series/story level, forbidden for global level" }
     );
 
-// Export schemas for import/export validation
-export const promptsExportSchema = z.object({
-    version: z.string(),
-    type: z.literal("prompts"),
-    prompts: z.array(promptSchema)
-});
-
 export const lorebookExportSchema = z.object({
     version: z.string(),
     type: z.literal("lorebook"),
@@ -227,6 +190,8 @@ export const storyExportSchema = z.object({
 });
 
 // AI Model schema
+const aiProviderSchema = z.enum(["openai", "openrouter", "local"]);
+
 const aiModelSchema = z.object({
     id: z.string(),
     name: z.string(),
