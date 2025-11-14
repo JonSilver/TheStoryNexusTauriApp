@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import multer from "multer";
 import { db, schema } from "../db/client.js";
 import { createCrudRouter } from "../lib/crud.js";
+import { generateEpub } from "../services/epubGenerator.js";
 import type { InferSelectModel } from "drizzle-orm";
 
 type ImportedChapter = InferSelectModel<typeof schema.chapters>;
@@ -236,6 +237,38 @@ export default createCrudRouter({
                 });
 
                 res.status(204).send();
+            })
+        );
+
+        // Export story as EPUB
+        router.get(
+            "/:id/epub",
+            asyncHandler(async (req, res) => {
+                const storyId = req.params.id;
+
+                const [error, epubBuffer] = await attemptPromise(async () => {
+                    const [story] = await db.select().from(schema.stories).where(eq(schema.stories.id, storyId));
+                    if (!story) throw new Error("Story not found");
+
+                    const chapters = await db
+                        .select()
+                        .from(schema.chapters)
+                        .where(eq(schema.chapters.storyId, storyId))
+                        .orderBy(schema.chapters.order);
+
+                    return await generateEpub(story, chapters);
+                });
+
+                if (error) {
+                    console.error("Error generating EPUB:", error);
+                    if (error.message === "Story not found") res.status(404).json({ error: error.message });
+                    else res.status(500).json({ error: "Failed to generate EPUB", details: error.message });
+                    return;
+                }
+
+                res.setHeader("Content-Type", "application/epub+zip");
+                res.setHeader("Content-Disposition", `attachment; filename="${req.params.id}.epub"`);
+                res.send(epubBuffer);
             })
         );
     }
