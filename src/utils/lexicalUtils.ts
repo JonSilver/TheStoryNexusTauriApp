@@ -37,7 +37,7 @@ const lexicalEditorStateSchema = z
     })
     .passthrough();
 
-export interface LexicalTextExtractionOptions {
+interface LexicalTextExtractionOptions {
     /** Spacing to add after paragraphs and headings */
     paragraphSpacing: "\n" | "\n\n";
     /** Node types to exclude from text extraction */

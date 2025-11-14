@@ -18,13 +18,6 @@ export const useBrainstormByStoryQuery = (storyId: string) =>
         enabled: !!storyId
     });
 
-// Fetch single brainstorm chat
-export const useBrainstormChatQuery = (id: string) =>
-    useQuery({
-        queryKey: brainstormKeys.detail(id),
-        queryFn: () => brainstormApi.getById(id),
-        enabled: !!id
-    });
 
 // Create brainstorm chat mutation
 export const useCreateBrainstormMutation = () => {

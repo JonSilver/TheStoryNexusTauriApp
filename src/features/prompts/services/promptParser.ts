@@ -34,7 +34,7 @@ import {
 } from "./resolvers";
 import { logger } from "@/utils/logger";
 
-export interface PromptParserDependencies {
+interface PromptParserDependencies {
     entries: LorebookEntry[];
 }
 

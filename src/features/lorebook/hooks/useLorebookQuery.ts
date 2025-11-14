@@ -31,12 +31,6 @@ export const useLorebookByStoryQuery = (storyId: string) =>
         enabled: !!storyId
     });
 
-// Query: Global lorebook entries
-export const useGlobalLorebookQuery = () =>
-    useQuery({
-        queryKey: lorebookKeys.global(),
-        queryFn: lorebookApi.getGlobal
-    });
 
 // Query: Series-level lorebook entries
 export const useSeriesLorebookQuery = (seriesId: string | undefined) =>
@@ -144,28 +138,3 @@ export const useDeleteLorebookMutation = () => {
     });
 };
 
-// Mutation: Change entry level (e.g., story → series)
-// Useful for promoting/demoting entries between levels
-export const useChangeLorebookLevelMutation = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: ({
-            id,
-            newLevel,
-            newScopeId
-        }: {
-            id: string;
-            newLevel: "global" | "series" | "story";
-            newScopeId?: string;
-        }) => lorebookApi.update(id, { level: newLevel, scopeId: newScopeId }),
-        onSuccess: () => {
-            // Invalidate all lorebook queries (level changed, hard to track precisely)
-            queryClient.invalidateQueries({ queryKey: lorebookKeys.all });
-            toast.success("Lorebook entry level updated successfully");
-        },
-        onError: (error: Error) => {
-            toast.error(`Failed to change lorebook entry level: ${error.message}`);
-        }
-    });
-};

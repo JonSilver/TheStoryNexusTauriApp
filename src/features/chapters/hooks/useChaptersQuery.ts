@@ -3,8 +3,8 @@ import type { Chapter } from "@/types/story";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
-// Query keys
-export const chaptersKeys = {
+// Query keys (internal use only)
+const chaptersKeys = {
     all: ["chapters"] as const,
     byStory: (storyId: string) => ["chapters", "story", storyId] as const,
     detail: (id: string) => ["chapters", id] as const
