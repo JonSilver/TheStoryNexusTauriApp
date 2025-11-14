@@ -53,9 +53,10 @@ export const useUpdateNoteMutation = () => {
             queryClient.setQueryData<Note[]>(notesKeys.byStory(updatedNote.storyId), old =>
                 old?.map(n => (n.id === updatedNote.id ? updatedNote : n))
             );
+            toast.success("Note saved successfully");
         },
         onError: () => {
-            toast.error("Failed to update note");
+            toast.error("Failed to save note");
         }
     });
 };

@@ -28,7 +28,7 @@ export const TopBar = ({ onOpenCommandPalette }: TopBarProps) => {
         <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 sticky top-0 z-40">
             <div className="flex h-14 items-center px-4 gap-4">
                 {/* App Title */}
-                <div className="flex items-center gap-2 font-semibold text-lg">Story Nexus</div>
+                <div className="flex items-center gap-2 font-semibold text-lg whitespace-nowrap">Story Nexus</div>
 
                 {/* Story Selector */}
                 {currentStory && (

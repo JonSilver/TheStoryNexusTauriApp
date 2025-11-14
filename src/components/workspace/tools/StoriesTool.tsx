@@ -218,9 +218,9 @@ export const StoriesTool = () => {
     return (
         <div className="p-8">
             <div className="max-w-7xl mx-auto space-y-12">
-                <div className="text-center">
-                    <h1 className="text-4xl font-bold mb-8">Your Stories</h1>
-                    <div className="flex justify-center gap-4 mb-8">
+                <div className="flex items-center justify-center gap-6 mb-8">
+                    <h1 className="text-2xl font-bold">Your Stories</h1>
+                    <div className="flex gap-4">
                         <CreateStoryDialog />
                         <Button variant="outline" onClick={handleImportClick}>
                             <Upload className="w-4 h-4 mr-2" />
