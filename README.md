@@ -8,7 +8,7 @@ The Story Nexus is a local-first web application designed for writers who want t
 
 ## The Road to Here
 
-Based on work started by Vijaykumar Bhattacharji; now extensively rewritten, reworked and reimagined.
+Based on [work started by Vijaykumar Bhattacharji](https://github.com/vijayk1989/TheStoryNexusTauriApp); now extensively rewritten, reworked and reimagined.
 
 I wasn't happy with the IndexedDB-based database because I couldn't share data between devices, and I wanted a more robust backend architecture. So I rewrote the backend using Express.js and SQLite with Drizzle ORM.
 
