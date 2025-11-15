@@ -100,7 +100,7 @@ npm run db:migrate   # Apply migrations to database
 Pull and run the latest published image:
 
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+docker-compose up -d
 ```
 
 Access on `http://localhost:3000` or from any device on your network using your machine's IP address.
