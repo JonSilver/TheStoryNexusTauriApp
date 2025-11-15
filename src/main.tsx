@@ -16,7 +16,7 @@ import { MainLayout } from "./components/MainLayout";
 // Lazy loaded pages
 const StoryReader = lazy(() => import("./features/stories/pages/StoryReader").then(m => ({ default: m.StoryReader })));
 const SeriesListPage = lazy(() => import("./features/series/pages/SeriesListPage"));
-const AISettingsPage = lazy(() => import("./features/ai/pages/AISettingsPage"));
+const SettingsPage = lazy(() => import("./features/ai/pages/SettingsPage"));
 const GuidePage = lazy(() => import("./features/guide/pages/GuidePage"));
 
 // Loading fallback component
@@ -40,7 +40,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                                     <Route element={<MainLayout />}>
                                         <Route path="/stories/:storyId/read" element={<StoryReader />} />
                                         <Route path="/series" element={<SeriesListPage />} />
-                                        <Route path="/settings" element={<AISettingsPage />} />
+                                        <Route path="/settings" element={<SettingsPage />} />
                                         <Route path="/guide" element={<GuidePage />} />
                                     </Route>
                                 </Routes>

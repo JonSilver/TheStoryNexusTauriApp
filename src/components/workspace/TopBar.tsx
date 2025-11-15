@@ -1,4 +1,4 @@
-import { Bot, HelpCircle, Search } from "lucide-react";
+import { HelpCircle, Search, Settings } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -84,7 +84,7 @@ export const TopBar = ({ onOpenCommandPalette }: TopBarProps) => {
                                     className="h-9 w-9"
                                     onClick={() => navigate("/settings")}
                                 >
-                                    <Bot className="h-5 w-5" />
+                                    <Settings className="h-5 w-5" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>

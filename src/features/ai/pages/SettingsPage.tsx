@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
 
-export default function AISettingsPage() {
+export default function SettingsPage() {
     const navigate = useNavigate();
     const {
         providers,
