@@ -11,7 +11,7 @@ import { adminApi } from "@/services/api/client";
 import { logger } from "@/utils/logger";
 import { attemptPromise } from "@jfdi/attempt";
 import { AlertTriangle, ChevronRight, Loader2, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 export default function AISettingsPage() {
@@ -29,7 +29,6 @@ export default function AISettingsPage() {
 
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
     const [isDeletingDemo, setIsDeletingDemo] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         initialize();
@@ -37,34 +36,6 @@ export default function AISettingsPage() {
 
     const toggleSection = (section: string) => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
-    };
-
-    const handleExportDatabase = async () => {
-        toast.error("Database export is not currently available");
-        return;
-    };
-
-    const handleImportDatabase = async (file: File) => {
-        if (!file) return;
-
-        setIsMigrationLoading(true);
-        const [error] = await attemptPromise(async () => {
-            await adminApi.importDatabase(file);
-            toast.success("Database imported successfully. Please reload the application.");
-        });
-
-        if (error) {
-            logger.error("Error importing database:", error);
-            toast.error("Failed to import database");
-        }
-        setIsMigrationLoading(false);
-    };
-
-    const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) handleImportDatabase(file);
-
-        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const handleDeleteDemoData = async () => {
@@ -324,71 +295,6 @@ export default function AISettingsPage() {
                                     </p>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Database Migration Section */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Database Migration</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex items-start gap-2 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-md">
-                                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
-                                <div className="text-sm text-amber-800 dark:text-amber-200">
-                                    <p className="font-semibold mb-1">Warning</p>
-                                    <p>Import will replace all existing data. Export your current database first.</p>
-                                </div>
-                            </div>
-
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label>Export Database</Label>
-                                    <Button
-                                        onClick={handleExportDatabase}
-                                        disabled={isMigrationLoading}
-                                        className="w-full"
-                                        variant="outline"
-                                    >
-                                        {isMigrationLoading ? (
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        ) : (
-                                            <Download className="h-4 w-4 mr-2" />
-                                        )}
-                                        Export to JSON
-                                    </Button>
-                                    <p className="text-xs text-muted-foreground">
-                                        Download all stories, chapters, and settings as JSON
-                                    </p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Import Database</Label>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept=".json"
-                                        onChange={handleFileSelect}
-                                        className="hidden"
-                                    />
-                                    <Button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        disabled={isMigrationLoading}
-                                        className="w-full"
-                                        variant="outline"
-                                    >
-                                        {isMigrationLoading ? (
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        ) : (
-                                            <Upload className="h-4 w-4 mr-2" />
-                                        )}
-                                        Import from JSON
-                                    </Button>
-                                    <p className="text-xs text-muted-foreground">
-                                        Restore database from exported JSON file
-                                    </p>
-                                </div>
-                            </div>
                         </CardContent>
                     </Card>
 
