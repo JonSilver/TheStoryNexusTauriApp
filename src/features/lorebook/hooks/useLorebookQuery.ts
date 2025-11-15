@@ -31,7 +31,6 @@ export const useLorebookByStoryQuery = (storyId: string) =>
         enabled: !!storyId
     });
 
-
 // Query: Series-level lorebook entries
 export const useSeriesLorebookQuery = (seriesId: string | undefined) =>
     useQuery({
@@ -137,4 +136,3 @@ export const useDeleteLorebookMutation = () => {
         }
     });
 };
-

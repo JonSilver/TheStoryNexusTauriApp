@@ -73,7 +73,7 @@ export default function MarkdownRenderer({ content, className, onDelete, onEdit,
                     rehypePlugins={[rehypeRaw, rehypeSanitize]}
                     components={{
                         p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                        code: ({ node, inline, className, children, ...props }: CodeComponentProps) => {
+                        code: ({ inline, className, children, ...props }: CodeComponentProps) => {
                             const match = /language-(\w+)/.exec(className || "");
                             return !inline ? (
                                 <pre className="overflow-x-auto p-2 bg-muted rounded text-xs whitespace-pre-wrap break-all">

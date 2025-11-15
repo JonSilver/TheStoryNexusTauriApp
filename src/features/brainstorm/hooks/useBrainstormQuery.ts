@@ -18,7 +18,6 @@ export const useBrainstormByStoryQuery = (storyId: string) =>
         enabled: !!storyId
     });
 
-
 // Create brainstorm chat mutation
 export const useCreateBrainstormMutation = () => {
     const queryClient = useQueryClient();

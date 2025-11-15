@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { adminApi } from "@/services/api/client";
 import { logger } from "@/utils/logger";
 import { attemptPromise } from "@jfdi/attempt";
+import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ArrowLeft, ChevronRight, Loader2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -17,6 +18,7 @@ import { toast } from "react-toastify";
 
 export default function SettingsPage() {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const {
         providers,
         isLoading,

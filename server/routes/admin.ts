@@ -119,11 +119,11 @@ router.post("/import", upload.single("file"), async (req, res) => {
     const { tables } = jsonData;
     console.log("[Import] File parsed. Tables found:", Object.keys(tables));
 
-    const importTable = async (
+    const importTable = async <T>(
         tableName: string,
-        tableSchema: any,
-        data: any[] | undefined,
-        transform: (item: any) => any
+        tableSchema: (typeof schema)[keyof typeof schema],
+        data: T[] | undefined,
+        transform: (item: T) => Record<string, unknown>
     ) => {
         if (!data || data.length === 0) {
             console.log(`[Import] Skipping ${tableName} - no data`);

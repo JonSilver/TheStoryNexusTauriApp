@@ -29,7 +29,6 @@ export const useSingleSeriesQuery = (id: string | undefined) =>
         enabled: !!id
     });
 
-
 // Mutation: Create series
 export const useCreateSeriesMutation = () => {
     const queryClient = useQueryClient();

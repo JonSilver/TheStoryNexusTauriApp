@@ -15,10 +15,12 @@ export const MIN_ALLOWED_FONT_SIZE = 8;
 export const MAX_ALLOWED_FONT_SIZE = 72;
 export const DEFAULT_FONT_SIZE = 15;
 
-const rootTypeToRootName = {
+export const rootTypeToRootName = {
     root: "Root",
     table: "Table"
-};
+} as const;
+
+export type RootTypeToRootName = typeof rootTypeToRootName;
 
 export const blockTypeToBlockName = {
     bullet: "Bulleted List",

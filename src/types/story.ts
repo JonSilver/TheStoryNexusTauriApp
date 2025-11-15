@@ -167,7 +167,6 @@ export interface LorebookEntry extends BaseEntity {
     isDisabled?: boolean;
 }
 
-
 // Prompt Parser types
 export interface PromptParserConfig {
     storyId: string;

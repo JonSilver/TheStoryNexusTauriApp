@@ -14,7 +14,7 @@ const convertLexicalToHtml = (jsonContent: string): string => {
     const editorState = JSON.parse(jsonContent);
     if (!editorState.root?.children) return "";
 
-    const processNode = (node: any): string => {
+    const processNode = (node: { type?: string; text?: string; tag?: string; children?: unknown[] }): string => {
         if (node.type === "text") return node.text || "";
         if (node.type === "linebreak") return "<br>";
         if (node.type === "paragraph") {

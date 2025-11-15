@@ -10,31 +10,32 @@ export function WordCountPlugin() {
     const { updateToolbarState } = useToolbarState();
 
     const updateWordCount = useCallback(
-        debounce(() => {
-            let text = "";
-            editor.getEditorState().read(() => {
-                const root = editor._editorState._nodeMap.get("root");
-                if (root && $isElementNode(root)) {
-                    function traverse(node: LexicalNode) {
-                        if ($isElementNode(node)) {
-                            const children = node.getChildren();
-                            if (children.length === 0 && node.getTextContent) {
-                                // Element node with no children, treat as leaf
+        () =>
+            debounce(() => {
+                let text = "";
+                editor.getEditorState().read(() => {
+                    const root = editor._editorState._nodeMap.get("root");
+                    if (root && $isElementNode(root)) {
+                        function traverse(node: LexicalNode) {
+                            if ($isElementNode(node)) {
+                                const children = node.getChildren();
+                                if (children.length === 0 && node.getTextContent) {
+                                    // Element node with no children, treat as leaf
+                                    text += node.getTextContent() + " ";
+                                } else {
+                                    children.forEach(traverse);
+                                }
+                            } else if (node.getTextContent) {
                                 text += node.getTextContent() + " ";
-                            } else {
-                                children.forEach(traverse);
                             }
-                        } else if (node.getTextContent) {
-                            text += node.getTextContent() + " ";
                         }
+                        root.getChildren().forEach(traverse);
                     }
-                    root.getChildren().forEach(traverse);
-                }
-            });
-            updateToolbarState("wordCount", countWords(text));
-        }, 500),
+                });
+                updateToolbarState("wordCount", countWords(text));
+            }, 500),
         [editor, updateToolbarState]
-    );
+    )();
 
     useEffect(() => {
         const unregister = editor.registerUpdateListener(() => {

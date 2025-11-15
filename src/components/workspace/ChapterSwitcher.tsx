@@ -42,7 +42,9 @@ export const ChapterSwitcher = () => {
                         className={chapter.id === currentChapterId ? "bg-accent" : ""}
                     >
                         <div className="flex flex-col">
-                            <span>{index + 1}: {chapter.title}</span>
+                            <span>
+                                {index + 1}: {chapter.title}
+                            </span>
                             {chapter.wordCount && (
                                 <span className="text-xs text-muted-foreground">{chapter.wordCount} words</span>
                             )}

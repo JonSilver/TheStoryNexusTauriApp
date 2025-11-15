@@ -163,4 +163,3 @@ export class LorebookFilterService {
         return tagMap;
     }
 }
-
