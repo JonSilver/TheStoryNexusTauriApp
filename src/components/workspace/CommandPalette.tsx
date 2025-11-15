@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router";
 import { Command } from "cmdk";
 import { BookOpen, FileText, Tags, MessageSquare, FileCode, StickyNote, HelpCircle } from "lucide-react";
 import { useStoryContext } from "@/features/stories/context/StoryContext";
@@ -28,6 +29,7 @@ interface CommandPaletteProps {
 
 export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
     const { currentStoryId, setCurrentStoryId, setCurrentChapterId, setCurrentTool } = useStoryContext();
+    const navigate = useNavigate();
 
     const [search, setSearch] = useState("");
 
@@ -236,12 +238,12 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
                 keywords: ["guide", "help", "documentation"],
                 icon: <HelpCircle className="h-4 w-4 mr-2" />,
                 action: () => {
-                    window.open("/guide", "_blank");
+                    navigate("/guide");
                     onOpenChange(false);
                 }
             }
         ],
-        [onOpenChange]
+        [navigate, onOpenChange]
     );
 
     // Combine all commands
