@@ -10,7 +10,6 @@ import { promptsKeys } from "@/features/prompts/hooks/usePromptsQuery";
 import { cn } from "@/lib/utils";
 import { parseJSON, promptsExportSchema } from "@/schemas/entities";
 import { adminApi, promptsApi } from "@/services/api/client";
-import { downloadDatabaseExport } from "@/services/exportDexieDatabase";
 import { logger } from "@/utils/logger";
 import { toastCRUD } from "@/utils/toastUtils";
 import { attemptPromise } from "@jfdi/attempt";
@@ -49,17 +48,8 @@ export default function AISettingsPage() {
     };
 
     const handleExportDatabase = async () => {
-        setIsMigrationLoading(true);
-        const [error] = await attemptPromise(async () => {
-            await downloadDatabaseExport();
-            toast.success("Database exported successfully");
-        });
-
-        if (error) {
-            logger.error("Error exporting database:", error);
-            toast.error("Failed to export database");
-        }
-        setIsMigrationLoading(false);
+        toast.error("Database export is not currently available");
+        return;
     };
 
     const handleImportDatabase = async (file: File) => {
