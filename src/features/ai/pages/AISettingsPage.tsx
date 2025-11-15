@@ -6,15 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { API_URLS } from "@/constants/urls";
 import { useAIProviderState } from "@/features/ai/hooks/useAIProviderState";
-import { promptsKeys } from "@/features/prompts/hooks/usePromptsQuery";
 import { cn } from "@/lib/utils";
-import { parseJSON, promptsExportSchema } from "@/schemas/entities";
-import { adminApi, promptsApi } from "@/services/api/client";
+import { adminApi } from "@/services/api/client";
 import { logger } from "@/utils/logger";
-import { toastCRUD } from "@/utils/toastUtils";
 import { attemptPromise } from "@jfdi/attempt";
-import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronRight, Download, Loader2, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, ChevronRight, Loader2, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 
@@ -32,12 +28,8 @@ export default function AISettingsPage() {
     } = useAIProviderState();
 
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
-    const [isMigrationLoading, setIsMigrationLoading] = useState(false);
-    const [isImportingPrompts, setIsImportingPrompts] = useState(false);
     const [isDeletingDemo, setIsDeletingDemo] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const promptsFileInputRef = useRef<HTMLInputElement>(null);
-    const queryClient = useQueryClient();
 
     useEffect(() => {
         initialize();
@@ -73,81 +65,6 @@ export default function AISettingsPage() {
         if (file) handleImportDatabase(file);
 
         if (fileInputRef.current) fileInputRef.current.value = "";
-    };
-
-    const findUniqueName = async (baseName: string): Promise<string> => {
-        const MAX_IMPORT_ATTEMPTS = 100;
-
-        const generateCandidateName = (attempt: number): string => {
-            if (attempt === 0) return baseName;
-            return `${baseName} (Imported${attempt > 1 ? ` ${attempt}` : ""})`;
-        };
-
-        const attempts = Array.from({ length: MAX_IMPORT_ATTEMPTS }, (_, i) => i);
-
-        for (const attempt of attempts) {
-            const candidateName = generateCandidateName(attempt);
-
-            const [checkError, allPrompts] = await attemptPromise(() => promptsApi.getAll({ includeSystem: true }));
-
-            if (checkError) {
-                logger.error("Error checking for existing prompt", checkError);
-                throw checkError;
-            }
-
-            const existing = allPrompts.find(p => p.name === candidateName);
-
-            if (!existing) return candidateName;
-
-            if (attempt === MAX_IMPORT_ATTEMPTS - 1)
-                throw new Error(`Failed to generate unique name after ${MAX_IMPORT_ATTEMPTS} attempts`);
-        }
-
-        throw new Error("Failed to generate unique name");
-    };
-
-    const handleImportPrompts = async (jsonData: string) => {
-        const result = parseJSON(promptsExportSchema, jsonData);
-        if (!result.success) throw new Error(`Invalid prompts data: ${result.error.message}`);
-
-        const imported = result.data.prompts;
-
-        for (const p of imported) {
-            const newName = await findUniqueName(p.name || "Imported Prompt");
-
-            const { id: _id, createdAt: _createdAt, ...promptData } = p;
-
-            const dataToCreate = {
-                ...promptData,
-                name: newName,
-                isSystem: false
-            };
-
-            const [addError] = await attemptPromise(() => promptsApi.create(dataToCreate));
-
-            if (addError) logger.error(`Failed to import prompt "${newName}"`, addError);
-        }
-
-        queryClient.invalidateQueries({ queryKey: promptsKeys.lists() });
-    };
-
-    const handlePromptsFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        setIsImportingPrompts(true);
-        const [error] = await attemptPromise(async () => {
-            const text = await file.text();
-            await handleImportPrompts(text);
-        });
-
-        if (error) {
-            logger.error("Import failed", error);
-            toastCRUD.importError("prompts", error);
-        } else toastCRUD.importSuccess("Prompts");
-
-        setIsImportingPrompts(false);
-        if (promptsFileInputRef.current) promptsFileInputRef.current.value = "";
     };
 
     const handleDeleteDemoData = async () => {
@@ -407,39 +324,6 @@ export default function AISettingsPage() {
                                     </p>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Prompt Management Section */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Prompt Management</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>Import Prompts</Label>
-                                <input
-                                    ref={promptsFileInputRef}
-                                    type="file"
-                                    accept="application/json"
-                                    onChange={handlePromptsFileSelect}
-                                    className="hidden"
-                                />
-                                <Button
-                                    onClick={() => promptsFileInputRef.current?.click()}
-                                    disabled={isImportingPrompts}
-                                    className="w-full"
-                                    variant="outline"
-                                >
-                                    {isImportingPrompts ? (
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    ) : (
-                                        <Download className="h-4 w-4 mr-2" />
-                                    )}
-                                    Import from JSON
-                                </Button>
-                                <p className="text-xs text-muted-foreground">Import prompts from exported JSON file</p>
-                            </div>
                         </CardContent>
                     </Card>
 
