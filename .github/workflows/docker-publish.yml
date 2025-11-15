@@ -53,6 +53,7 @@ jobs:
         with:
           context: .
           push: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           tags: |
             jonsilver/storynexus:latest
             jonsilver/storynexus:${{ steps.version.outputs.VERSION }}
