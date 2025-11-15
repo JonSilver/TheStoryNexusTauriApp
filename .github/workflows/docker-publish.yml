@@ -58,3 +58,11 @@ jobs:
             jonsilver/storynexus:${{ steps.version.outputs.VERSION }}
           cache-from: type=registry,ref=jonsilver/storynexus:latest
           cache-to: type=inline
+
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: jonsilver/storynexus
+          readme-filepath: ./README.md
