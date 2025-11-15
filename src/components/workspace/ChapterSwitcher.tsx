@@ -30,7 +30,7 @@ export const ChapterSwitcher = () => {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2" size="sm">
-                    {currentChapterNumber ? `Ch ${currentChapterNumber}: ${currentChapter?.title}` : "Chapter"}
+                    {currentChapterNumber ? `${currentChapterNumber}: ${currentChapter?.title}` : "Chapter"}
                     <span className="text-muted-foreground">▾</span>
                 </Button>
             </DropdownMenuTrigger>
@@ -42,7 +42,7 @@ export const ChapterSwitcher = () => {
                         className={chapter.id === currentChapterId ? "bg-accent" : ""}
                     >
                         <div className="flex flex-col">
-                            <span>Ch {index + 1}: {chapter.title}</span>
+                            <span>{index + 1}: {chapter.title}</span>
                             {chapter.wordCount && (
                                 <span className="text-xs text-muted-foreground">{chapter.wordCount} words</span>
                             )}
