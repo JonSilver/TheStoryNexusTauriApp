@@ -6,10 +6,13 @@ data
 *.db-wal
 *.db-shm
 .git
+.github
 .gitignore
 *.md
 .env
 .env.local
+.vscode
+screenshots
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
