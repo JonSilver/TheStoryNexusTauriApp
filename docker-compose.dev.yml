@@ -1,18 +1,18 @@
 services:
   storynexus:
-    image: jonsilver/storynexus:latest
+    build: .
     container_name: storynexus-app
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/app/data
+      - /share/Docker Volumes/config/TheStoryNexus:/app/data
     environment:
       - NODE_ENV=production
       - PORT=3000
       - DATABASE_PATH=/app/data/storynexus.db
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
