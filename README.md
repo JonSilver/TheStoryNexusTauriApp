@@ -97,11 +97,13 @@ npm run db:migrate   # Apply migrations to database
 
 #### Production (from Docker Hub)
 
-Pull and run the latest published image:
+Pull and run the latest published image from [Docker Hub](https://hub.docker.com/r/jonsilver/storynexus):
 
 ```bash
 docker-compose up -d
 ```
+
+Supports linux/amd64, linux/arm64, and linux/arm/v7 architectures.
 
 Access on `http://localhost:3000` or from any device on your network using your machine's IP address.
 
