@@ -82,7 +82,7 @@ export const TopBar = ({ onOpenCommandPalette }: TopBarProps) => {
                                     variant="ghost"
                                     size="icon"
                                     className="h-9 w-9"
-                                    onClick={() => navigate("/ai-settings")}
+                                    onClick={() => navigate("/settings")}
                                 >
                                     <Bot className="h-5 w-5" />
                                 </Button>

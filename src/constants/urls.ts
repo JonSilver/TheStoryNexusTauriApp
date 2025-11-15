@@ -19,7 +19,7 @@ export const API_URLS = {
 export const ROUTES = {
     HOME: "/",
     STORIES: "/stories",
-    AI_SETTINGS: "/settings",
+    SETTINGS: "/settings",
     GUIDE: "/guide",
     STORY_READER: (storyId: string) => `/stories/${storyId}/read`,
 
