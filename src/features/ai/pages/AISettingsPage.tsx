@@ -10,11 +10,13 @@ import { cn } from "@/lib/utils";
 import { adminApi } from "@/services/api/client";
 import { logger } from "@/utils/logger";
 import { attemptPromise } from "@jfdi/attempt";
-import { AlertTriangle, ChevronRight, Loader2, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronRight, Loader2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
 
 export default function AISettingsPage() {
+    const navigate = useNavigate();
     const {
         providers,
         isLoading,
@@ -68,7 +70,13 @@ export default function AISettingsPage() {
     return (
         <div className="p-8">
             <div className="max-w-2xl mx-auto">
-                <h1 className="text-3xl font-bold mb-8">Settings</h1>
+                <div className="flex items-center mb-8">
+                    <Button variant="ghost" className="gap-2" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-4 w-4" />
+                        Back
+                    </Button>
+                    <h1 className="text-3xl font-bold ml-4">Settings</h1>
+                </div>
 
                 <div className="space-y-6">
                     {/* OpenAI Section */}

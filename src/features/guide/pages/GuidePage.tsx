@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,17 +11,16 @@ import PromptGuide from "../components/PromptGuide";
 import BrainstormGuide from "../components/BrainstormGuide";
 
 export default function GuidePage() {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("basics");
 
     return (
         <div className="container mx-auto py-8 max-w-5xl">
             <div className="flex items-center mb-8">
-                <Link to="/">
-                    <Button variant="ghost" className="gap-2">
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to Home
-                    </Button>
-                </Link>
+                <Button variant="ghost" className="gap-2" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                </Button>
                 <h1 className="text-3xl font-bold ml-4">The Story Nexus Guide</h1>
             </div>
 
